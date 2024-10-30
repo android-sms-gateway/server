@@ -1,0 +1,18 @@
+FROM alpine:latest  
+
+# Set the Current Working Directory inside the container
+WORKDIR /app
+
+RUN apk add --no-cache tzdata ca-certificates
+
+# Copy the Pre-built binary file from GoReleaser
+COPY ./scripts/docker-entrypoint.sh /docker-entrypoint.sh
+COPY ./smsgate-server ./app
+
+EXPOSE 3000
+
+USER guest
+HEALTHCHECK --interval=10s --timeout=3s --retries=3 --start-period=5s CMD /app/app health || exit 1
+
+# Command to run the executable
+ENTRYPOINT ["/docker-entrypoint.sh"]

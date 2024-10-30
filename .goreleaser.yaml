@@ -1,0 +1,77 @@
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+project_name: smsgate-server
+
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+    # you may remove this if you don't need go generate
+    - go install github.com/swaggo/swag/cmd/swag@latest
+    - sed -i "s/{APP_VERSION}/{{.Version}}/g" ./cmd/sms-gateway/main.go
+    - go generate ./...
+
+builds:
+  - main: ./cmd/sms-gateway
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    ldflags:
+      - -s -w -X github.com/capcom6/sms-gateway/internal/version.AppVersion={{.Version}} -X github.com/capcom6/sms-gateway/internal/version.AppRelease={{ .Env.APP_RELEASE_ID }}
+
+archives:
+  - format: tar.gz
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - README.md
+
+dockers:
+  - image_templates:
+      - "capcom6/sms-gateway:{{ .Tag }}"
+      - "capcom6/sms-gateway:v{{ .Major }}"
+      - "capcom6/sms-gateway:v{{ .Major }}.{{ .Minor }}"
+      - "capcom6/sms-gateway:latest"
+      # - "smsgate/server:{{ .Tag }}"
+      # - "smsgate/server:v{{ .Major }}"
+      # - "smsgate/server:v{{ .Major }}.{{ .Minor }}"
+      # - "smsgate/server:latest"
+      # - ghcr.io/android-sms-gateway/server:{{ .Tag }}
+      # - ghcr.io/android-sms-gateway/server:v{{ .Major }}
+      # - ghcr.io/android-sms-gateway/server:v{{ .Major }}.{{ .Minor }}
+      # - ghcr.io/android-sms-gateway/server:latest
+    dockerfile: ./build/package/Dockerfile.goreleaser
+    extra_files:
+      - scripts/
+    build_flag_templates:
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+    skip_push: false
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"

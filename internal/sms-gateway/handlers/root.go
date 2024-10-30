@@ -1,7 +1,11 @@
 package handlers
 
 import (
+	"net/http"
+
+	"github.com/capcom6/sms-gateway/pkg/swagger"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/filesystem"
 )
 
 type rootHandler struct {
@@ -18,7 +22,12 @@ func (h *rootHandler) Register(app *fiber.App) {
 	})
 
 	h.healthHandler.Register(app)
-	app.Static("/api", "api")
+	app.Use("/api", filesystem.New(filesystem.Config{
+		Root:       http.FS(swagger.Docs),
+		PathPrefix: "docs",
+		MaxAge:     1 * 24 * 60 * 60,
+	}))
+	// app.Static("/api", "api")
 }
 
 func newRootHandler(healthHandler *healthHandler) *rootHandler {

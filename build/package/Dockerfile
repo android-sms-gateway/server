@@ -22,7 +22,7 @@ COPY . .
 RUN sed -i "s/{APP_VERSION}/${APP_VERSION}/g" ./cmd/${APP}/main.go
 
 # Generate swagger docs
-RUN swag init --parseDependency -g ./cmd/${APP}/main.go -o ./api
+RUN go generate ./...
 
 # Builds the application as a staticly linked one, to allow it to run on alpine
 # RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app .
@@ -37,7 +37,6 @@ RUN apk add --no-cache tzdata
 
 COPY scripts/docker-entrypoint.sh /docker-entrypoint.sh
 
-COPY --from=build /go/src/api /app/api
 COPY --from=build /go/src/app /app
 
 # Exposes port 3000 because our program listens on that port

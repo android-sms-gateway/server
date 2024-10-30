@@ -51,7 +51,7 @@ docker-dev:
 
 api-docs:
 	swag fmt -g ./cmd/$(project_name)/main.go \
-		&& swag init --parseDependency -g ./cmd/$(project_name)/main.go -o ./api
+		&& swag init --outputTypes json,yaml --parseDependency -g ./cmd/$(project_name)/main.go -o ./pkg/swagger/docs
 
 view-docs:
 	php -S 127.0.0.1:8080 -t ./api
