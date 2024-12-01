@@ -158,3 +158,32 @@ func (s *Service) AuthorizeUser(username, password string) (models.User, error) 
 
 	return user, nil
 }
+
+func (s *Service) ChangePassword(userID string, currentPassword string, newPassword string) error {
+	user, err := s.users.GetByLogin(userID)
+	if err != nil {
+		return fmt.Errorf("failed to get user: %w", err)
+	}
+
+	if err := crypto.CompareBCryptHash(user.PasswordHash, currentPassword); err != nil {
+		return fmt.Errorf("current password is incorrect: %w", err)
+	}
+
+	newHash, err := crypto.MakeBCryptHash(newPassword)
+	if err != nil {
+		return fmt.Errorf("failed to hash new password: %w", err)
+	}
+
+	if err := s.users.UpdatePassword(userID, newHash); err != nil {
+		return fmt.Errorf("failed to update password: %w", err)
+	}
+
+	// Invalidate cache
+	hash := sha256.Sum256([]byte(userID + currentPassword))
+	cacheKey := hex.EncodeToString(hash[:])
+	if err := s.usersCache.Delete(cacheKey); err != nil {
+		s.logger.Error("can't invalidate user cache", zap.Error(err))
+	}
+
+	return nil
+}

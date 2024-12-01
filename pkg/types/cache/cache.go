@@ -61,6 +61,14 @@ func (c *Cache[T]) Get(key string) (T, error) {
 	return item.value, nil
 }
 
+func (c *Cache[T]) Delete(key string) error {
+	c.mux.Lock()
+	delete(c.items, key)
+	c.mux.Unlock()
+
+	return nil
+}
+
 func (c *Cache[T]) Drain() map[string]T {
 	t := time.Now()
 

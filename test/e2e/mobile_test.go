@@ -1,16 +1,46 @@
 package e2e
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/go-resty/resty/v2"
 )
 
-func makeClient(baseUrl string) *resty.Client {
-	return resty.New().
-		SetBaseURL(baseUrl).
-		SetTimeout(300 * time.Millisecond)
+var (
+	publicClient = resty.New().
+			SetBaseURL(PublicURL + "/mobile/v1").
+			SetTimeout(300 * time.Millisecond)
+	privateClient = resty.New().
+			SetBaseURL(PrivateURL + "/mobile/v1").
+			SetTimeout(300 * time.Millisecond)
+)
+
+type mobileRegisterResponse struct {
+	Token    string `json:"token"`
+	Password string `json:"password"`
+}
+
+func mobileDeviceRegister(t *testing.T, client *resty.Client) mobileRegisterResponse {
+	res, err := client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(`{"name": "Public Device Name", "pushToken": "token"}`).
+		Post("device")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !res.IsSuccess() {
+		t.Fatal(res.StatusCode(), res.String())
+	}
+
+	var resp mobileRegisterResponse
+	if err := json.Unmarshal(res.Body(), &resp); err != nil {
+		t.Fatal(err)
+	}
+
+	return resp
 }
 
 func TestPublicDeviceRegister(t *testing.T) {
@@ -40,15 +70,13 @@ func TestPublicDeviceRegister(t *testing.T) {
 		},
 	}
 
-	client := makeClient(PublicURL + "/mobile/v1/device")
-
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			res, err := client.R().
+			res, err := publicClient.R().
 				SetHeader("Content-Type", "application/json").
 				SetBody(`{"name": "Public Device Name", "pushToken": "token"}`).
 				SetHeaders(c.headers).
-				Post("")
+				Post("device")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -87,7 +115,7 @@ func TestPrivateDeviceRegister(t *testing.T) {
 		},
 	}
 
-	client := makeClient(PrivateURL + "/mobile/v1/device")
+	client := privateClient
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -95,7 +123,76 @@ func TestPrivateDeviceRegister(t *testing.T) {
 				SetHeader("Content-Type", "application/json").
 				SetBody(`{"name": "Private Device Name", "pushToken": "token"}`).
 				SetHeaders(c.headers).
-				Post("")
+				Post("device")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if res.StatusCode() != c.expectedStatusCode {
+				t.Fatal(res.StatusCode(), res.String())
+			}
+		})
+	}
+}
+
+func TestPublicDevicePasswordChange(t *testing.T) {
+	device := mobileDeviceRegister(t, publicClient)
+
+	cases := []struct {
+		name               string
+		headers            map[string]string
+		body               string
+		expectedStatusCode int
+	}{
+		{
+			name: "with invalid token",
+			headers: map[string]string{
+				"Authorization": "Bearer 123456789",
+			},
+			body:               `{"currentPassword": "123456789", "newPassword": "123456789"}`,
+			expectedStatusCode: 401,
+		},
+		{
+			name: "with invalid password",
+			headers: map[string]string{
+				"Authorization": "Bearer " + device.Token,
+			},
+			body:               `{"currentPassword": "123456789", "newPassword": "changemeonemoretime"}`,
+			expectedStatusCode: 401,
+		},
+		{
+			name: "short password",
+			headers: map[string]string{
+				"Authorization": "Bearer " + device.Token,
+			},
+			body:               `{"currentPassword": "` + device.Password + `", "newPassword": "changeme"}`,
+			expectedStatusCode: 400,
+		},
+		{
+			name: "success",
+			headers: map[string]string{
+				"Authorization": "Bearer " + device.Token,
+			},
+			body:               `{"currentPassword": "` + device.Password + `", "newPassword": "changemeonemoretime"}`,
+			expectedStatusCode: 204,
+		},
+		{
+			name: "success with new password",
+			headers: map[string]string{
+				"Authorization": "Bearer " + device.Token,
+			},
+			body:               `{"currentPassword": "changemeonemoretime", "newPassword": "` + device.Password + `"}`,
+			expectedStatusCode: 204,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			res, err := publicClient.R().
+				SetHeader("Content-Type", "application/json").
+				SetBody(c.body).
+				SetHeaders(c.headers).
+				Patch("user/password")
 			if err != nil {
 				t.Fatal(err)
 			}

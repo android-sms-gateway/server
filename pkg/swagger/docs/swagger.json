@@ -641,6 +641,60 @@
                 }
             }
         },
+        "/mobile/v1/user/password": {
+            "patch": {
+                "security": [
+                    {
+                        "MobileToken": []
+                    }
+                ],
+                "description": "Changes the user's password",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Device"
+                ],
+                "summary": "Change password",
+                "parameters": [
+                    {
+                        "description": "Password change request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.MobileChangePasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Password changed successfully"
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/mobile/v1/webhooks": {
             "get": {
                 "security": [
@@ -1018,6 +1072,26 @@
                     "additionalProperties": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "smsgateway.MobileChangePasswordRequest": {
+            "type": "object",
+            "required": [
+                "currentPassword",
+                "newPassword"
+            ],
+            "properties": {
+                "currentPassword": {
+                    "description": "Current password",
+                    "type": "string",
+                    "example": "cp2pydvxd2zwpx"
+                },
+                "newPassword": {
+                    "description": "New password, at least 14 characters",
+                    "type": "string",
+                    "minLength": 14,
+                    "example": "cp2pydvxd2zwpx"
                 }
             }
         },

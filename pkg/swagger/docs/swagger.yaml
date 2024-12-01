@@ -211,6 +211,21 @@ definitions:
     - recipients
     - state
     type: object
+  smsgateway.MobileChangePasswordRequest:
+    properties:
+      currentPassword:
+        description: Current password
+        example: cp2pydvxd2zwpx
+        type: string
+      newPassword:
+        description: New password, at least 14 characters
+        example: cp2pydvxd2zwpx
+        minLength: 14
+        type: string
+    required:
+    - currentPassword
+    - newPassword
+    type: object
   smsgateway.MobileDeviceResponse:
     properties:
       device:
@@ -790,6 +805,40 @@ paths:
       tags:
       - Device
       - Messages
+  /mobile/v1/user/password:
+    patch:
+      consumes:
+      - application/json
+      description: Changes the user's password
+      parameters:
+      - description: Password change request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/smsgateway.MobileChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Password changed successfully
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+      security:
+      - MobileToken: []
+      summary: Change password
+      tags:
+      - Device
   /mobile/v1/webhooks:
     get:
       description: Returns list of registered webhooks for device

@@ -178,6 +178,35 @@ func (h *mobileHandler) patchMessage(device models.Device, c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
+//	@Summary		Change password
+//	@Description	Changes the user's password
+//	@Security		MobileToken
+//	@Tags			Device
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		smsgateway.MobileChangePasswordRequest	true	"Password change request"
+//	@Success		204		{object}	nil										"Password changed successfully"
+//	@Failure		400		{object}	smsgateway.ErrorResponse				"Invalid request"
+//	@Failure		401		{object}	smsgateway.ErrorResponse				"Unauthorized"
+//	@Failure		500		{object}	smsgateway.ErrorResponse				"Internal server error"
+//	@Router			/mobile/v1/user/password [patch]
+//
+// Change password
+func (h *mobileHandler) changePassword(device models.Device, c *fiber.Ctx) error {
+	req := smsgateway.MobileChangePasswordRequest{}
+
+	if err := h.BodyParserValidator(c, &req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	if err := h.authSvc.ChangePassword(device.UserID, req.CurrentPassword, req.NewPassword); err != nil {
+		h.Logger.Error("failed to change password", zap.Error(err))
+		return fiber.NewError(fiber.StatusUnauthorized, "Invalid current password")
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
+}
+
 func (h *mobileHandler) Register(router fiber.Router) {
 	router = router.Group("/mobile/v1")
 
@@ -225,6 +254,8 @@ func (h *mobileHandler) Register(router fiber.Router) {
 
 	router.Get("/message", auth.WithDevice(h.getMessage))
 	router.Patch("/message", auth.WithDevice(h.patchMessage))
+
+	router.Patch("/user/password", auth.WithDevice(h.changePassword))
 
 	h.webhooksCtrl.Register(router.Group("/webhooks"))
 }

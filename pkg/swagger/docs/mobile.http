@@ -45,3 +45,13 @@ Content-Type: application/json
 ###
 GET {{baseUrl}}/webhooks HTTP/1.1
 Authorization: Bearer {{mobileToken}}
+
+###
+PATCH {{baseUrl}}/user/password HTTP/1.1
+Authorization: Bearer {{mobileToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "wsmgz1akhoo24o",
+  "newPassword": "wsmgz1akhoo24o"
+}
