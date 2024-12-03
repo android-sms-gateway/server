@@ -19,7 +19,7 @@ type Handler struct {
 
 func (h *Handler) BodyParserValidator(c *fiber.Ctx, out any) error {
 	if err := c.BodyParser(out); err != nil {
-		return fmt.Errorf("can't parse body: %w", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Can't parse body: %s", err.Error()))
 	}
 
 	return h.ValidateStruct(out)
@@ -27,7 +27,7 @@ func (h *Handler) BodyParserValidator(c *fiber.Ctx, out any) error {
 
 func (h *Handler) QueryParserValidator(c *fiber.Ctx, out any) error {
 	if err := c.QueryParser(out); err != nil {
-		return fmt.Errorf("can't parse query: %w", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Can't parse query: %s", err.Error()))
 	}
 
 	return h.ValidateStruct(out)
@@ -35,7 +35,7 @@ func (h *Handler) QueryParserValidator(c *fiber.Ctx, out any) error {
 
 func (h *Handler) ParamsParserValidator(c *fiber.Ctx, out any) error {
 	if err := c.ParamsParser(out); err != nil {
-		return fmt.Errorf("can't parse params: %w", err)
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Can't parse params: %s", err.Error()))
 	}
 
 	return h.ValidateStruct(out)
