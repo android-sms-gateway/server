@@ -41,7 +41,7 @@ Authorization: Basic {{credentials}}
 }
 
 ###
-GET {{baseUrl}}/api/3rdparty/v1/message/2dcIAhcLg81cez7GE_Pdp HTTP/1.1
+GET {{baseUrl}}/api/3rdparty/v1/message/K56aIsVsQ2rECdv_ajzTd HTTP/1.1
 Authorization: Basic {{credentials}}
 
 ###
@@ -54,7 +54,12 @@ Content-Type: application/json
 
 [
   {
-    "token": "eTxx88nfSla87gZuJcW5mS:APA91bHGxVgSqqRtxwFHD1q9em5Oa6xSP4gO_OZRrqOoP1wjf_7UMfXKsc4uws6rWkqn73jYCc1owyATB1v61mqak4ntpqtmRkNtTey7NQXa0Wz3uQZBWY-Ecbn2rWG2VJRihOzXRId-"
+    "token": "eTxx88nfSla87gZuJcW5mS:APA91bHGxVgSqqRtxwFHD1q9em5Oa6xSP4gO_OZRrqOoP1wjf_7UMfXKsc4uws6rWkqn73jYCc1owyATB1v61mqak4ntpqtmRkNtTey7NQXa0Wz3uQZBWY-Ecbn2rWG2VJRihOzXRId-",
+    "event": "MessagesExportRequested",
+    "data": {
+        "since": "2024-12-01T00:00:00",
+        "until": "2024-12-31T23:59:59"
+    }
   }
 ]
 

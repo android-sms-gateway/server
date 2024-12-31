@@ -1,18 +1,12 @@
 package handlers
 
 import (
-	"errors"
-	"fmt"
-
-	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
-	devicesCtrl "github.com/android-sms-gateway/server/internal/sms-gateway/handlers/devices"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/logs"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/messages"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/webhooks"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
@@ -20,21 +14,16 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	route3rdPartyGetMessage = "3rdparty.get.message"
-)
-
 type ThirdPartyHandlerParams struct {
 	fx.In
 
 	HealthHandler   *healthHandler
+	MessagesHandler *messages.ThirdPartyController
 	WebhooksHandler *webhooks.ThirdPartyController
-	DevicesHandler  *devicesCtrl.ThirdPartyController
+	DevicesHandler  *devices.ThirdPartyController
 	LogsHandler     *logs.ThirdPartyController
 
-	AuthSvc     *auth.Service
-	MessagesSvc *messages.Service
-	DevicesSvc  *devices.Service
+	AuthSvc *auth.Service
 
 	Logger    *zap.Logger
 	Validator *validator.Validate
@@ -44,102 +33,12 @@ type thirdPartyHandler struct {
 	base.Handler
 
 	healthHandler   *healthHandler
+	messagesHandler *messages.ThirdPartyController
 	webhooksHandler *webhooks.ThirdPartyController
-	devicesHandler  *devicesCtrl.ThirdPartyController
+	devicesHandler  *devices.ThirdPartyController
 	logsHandler     *logs.ThirdPartyController
 
-	authSvc     *auth.Service
-	messagesSvc *messages.Service
-	devicesSvc  *devices.Service
-}
-
-//	@Summary		Enqueue message
-//	@Description	Enqueues message for sending. If ID is not specified, it will be generated
-//	@Security		ApiAuth
-//	@Tags			User, Messages
-//	@Accept			json
-//	@Produce		json
-//	@Param			skipPhoneValidation	query		bool						false	"Skip phone validation"
-//	@Param			request				body		smsgateway.Message			true	"Send message request"
-//	@Success		202					{object}	smsgateway.MessageState		"Message enqueued"
-//	@Failure		400					{object}	smsgateway.ErrorResponse	"Invalid request"
-//	@Failure		401					{object}	smsgateway.ErrorResponse	"Unauthorized"
-//	@Failure		409					{object}	smsgateway.ErrorResponse	"Message with such ID already exists"
-//	@Failure		500					{object}	smsgateway.ErrorResponse	"Internal server error"
-//	@Header			202					{string}	Location					"Get message state URL"
-//	@Router			/3rdparty/v1/message [post]
-//
-// Enqueue message
-func (h *thirdPartyHandler) postMessage(user models.User, c *fiber.Ctx) error {
-	req := smsgateway.Message{}
-	if err := h.BodyParserValidator(c, &req); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
-	}
-
-	skipPhoneValidation := c.QueryBool("skipPhoneValidation", false)
-
-	devices, err := h.devicesSvc.Select(devices.WithUserID(user.ID))
-	if err != nil {
-		h.Logger.Error("Failed to select devices", zap.Error(err), zap.String("user_id", user.ID))
-		return fiber.NewError(fiber.StatusInternalServerError, "Can't select devices. Please contact support")
-	}
-
-	if len(devices) < 1 {
-		return fiber.NewError(fiber.StatusBadRequest, "No devices registered")
-	}
-
-	device := devices[0]
-	state, err := h.messagesSvc.Enqeue(device, req, messages.EnqueueOptions{SkipPhoneValidation: skipPhoneValidation})
-	if err != nil {
-		var errValidation messages.ErrValidation
-		if isBadRequest := errors.As(err, &errValidation); isBadRequest {
-			return fiber.NewError(fiber.StatusBadRequest, errValidation.Error())
-		}
-		if isConflict := errors.Is(err, messages.ErrMessageAlreadyExists); isConflict {
-			return fiber.NewError(fiber.StatusConflict, err.Error())
-		}
-
-		return fmt.Errorf("can't enqueue message: %w", err)
-	}
-
-	location, err := c.GetRouteURL(route3rdPartyGetMessage, fiber.Map{
-		"id": state.ID,
-	})
-	if err != nil {
-		h.Logger.Warn("Failed to get route URL", zap.String("route", route3rdPartyGetMessage), zap.Error(err))
-	} else {
-		c.Location(location)
-	}
-
-	return c.Status(fiber.StatusAccepted).JSON(state)
-}
-
-//	@Summary		Get message state
-//	@Description	Returns message state by ID
-//	@Security		ApiAuth
-//	@Tags			User, Messages
-//	@Produce		json
-//	@Param			id	path		string						true	"Message ID"
-//	@Success		200	{object}	smsgateway.MessageState		"Message state"
-//	@Failure		400	{object}	smsgateway.ErrorResponse	"Invalid request"
-//	@Failure		401	{object}	smsgateway.ErrorResponse	"Unauthorized"
-//	@Failure		500	{object}	smsgateway.ErrorResponse	"Internal server error"
-//	@Router			/3rdparty/v1/message/{id} [get]
-//
-// Get message state
-func (h *thirdPartyHandler) getMessage(user models.User, c *fiber.Ctx) error {
-	id := c.Params("id")
-
-	state, err := h.messagesSvc.GetState(user, id)
-	if err != nil {
-		if errors.Is(err, messages.ErrMessageNotFound) {
-			return fiber.NewError(fiber.StatusNotFound, err.Error())
-		}
-
-		return err
-	}
-
-	return c.JSON(state)
+	authSvc *auth.Service
 }
 
 func (h *thirdPartyHandler) Register(router fiber.Router) {
@@ -166,12 +65,14 @@ func (h *thirdPartyHandler) Register(router fiber.Router) {
 		return c.Next()
 	})
 
-	router.Post("/message", auth.WithUser(h.postMessage))
-	router.Get("/message/:id", auth.WithUser(h.getMessage)).Name(route3rdPartyGetMessage)
+	h.messagesHandler.Register(router.Group("/message")) // TODO: remove after 2025-12-31
+	h.messagesHandler.Register(router.Group("/messages"))
 
 	h.devicesHandler.Register(router.Group("/device")) // TODO: remove after 2025-07-11
 	h.devicesHandler.Register(router.Group("/devices"))
+
 	h.webhooksHandler.Register(router.Group("/webhooks"))
+
 	h.logsHandler.Register(router.Group("/logs"))
 }
 
@@ -179,11 +80,10 @@ func newThirdPartyHandler(params ThirdPartyHandlerParams) *thirdPartyHandler {
 	return &thirdPartyHandler{
 		Handler:         base.Handler{Logger: params.Logger.Named("ThirdPartyHandler"), Validator: params.Validator},
 		healthHandler:   params.HealthHandler,
+		messagesHandler: params.MessagesHandler,
 		webhooksHandler: params.WebhooksHandler,
 		devicesHandler:  params.DevicesHandler,
 		logsHandler:     params.LogsHandler,
 		authSvc:         params.AuthSvc,
-		messagesSvc:     params.MessagesSvc,
-		devicesSvc:      params.DevicesSvc,
 	}
 }
