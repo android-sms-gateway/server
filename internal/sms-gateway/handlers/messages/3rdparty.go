@@ -126,9 +126,47 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 	return c.JSON(state)
 }
 
+//	@Summary		Request inbox messages export
+//	@Description	Initiates process of inbox messages export via webhooks. For each message the `sms:received` webhook will be triggered. The webhooks will be triggered without specific order.
+//	@Security		ApiAuth
+//	@Tags			User, Messages
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		smsgateway.MessagesExportRequest	true	"Export inbox request"
+//	@Success		202		{object}	object								"Inbox export request accepted"
+//	@Failure		400		{object}	smsgateway.ErrorResponse			"Invalid request"
+//	@Failure		401		{object}	smsgateway.ErrorResponse			"Unauthorized"
+//	@Failure		500		{object}	smsgateway.ErrorResponse			"Internal server error"
+//	@Router			/3rdparty/v1/inbox/export [post]
+//
+// Export inbox
+func (h *ThirdPartyController) postInboxExport(user models.User, c *fiber.Ctx) error {
+	req := smsgateway.MessagesExportRequest{}
+	if err := h.BodyParserValidator(c, &req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	device, err := h.devicesSvc.Get(devices.WithUserID(user.ID), devices.WithID(req.DeviceID))
+	if err != nil {
+		if errors.Is(err, devices.ErrNotFound) {
+			return fiber.NewError(fiber.StatusBadRequest, "Invalid device ID")
+		}
+
+		return err
+	}
+
+	if err := h.messagesSvc.ExportInbox(device, req.Since, req.Until); err != nil {
+		return err
+	}
+
+	return c.SendStatus(fiber.StatusAccepted)
+}
+
 func (h *ThirdPartyController) Register(router fiber.Router) {
 	router.Post("", auth.WithUser(h.post))
 	router.Get(":id", auth.WithUser(h.get))
+
+	router.Post("inbox/export", auth.WithUser(h.postInboxExport))
 }
 
 func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyController {

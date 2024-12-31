@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/domain"
 	"github.com/android-sms-gateway/server/pkg/types/cache"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -36,7 +37,7 @@ type Service struct {
 
 	client client
 
-	cache *cache.Cache[Event]
+	cache *cache.Cache[domain.Event]
 
 	enqueuedCounter *prometheus.CounterVec
 
@@ -61,7 +62,7 @@ func New(params Params) *Service {
 	return &Service{
 		config:          params.Config,
 		client:          params.Client,
-		cache:           cache.New[Event](cache.Config{}),
+		cache:           cache.New[domain.Event](cache.Config{}),
 		enqueuedCounter: enqueuedCounter,
 		logger:          params.Logger,
 	}
@@ -83,7 +84,7 @@ func (s *Service) Run(ctx context.Context) {
 }
 
 // Enqueue adds the data to the cache and immediately sends all messages if the debounce is 0.
-func (s *Service) Enqueue(token string, event *Event) error {
+func (s *Service) Enqueue(token string, event *domain.Event) error {
 	if err := s.cache.Set(token, *event); err != nil {
 		return fmt.Errorf("can't add message to cache: %w", err)
 	}

@@ -211,6 +211,26 @@ definitions:
     - recipients
     - state
     type: object
+  smsgateway.MessagesExportRequest:
+    properties:
+      deviceId:
+        description: DeviceID is the ID of the device to export messages for.
+        example: PyDmBQZZXYmyxMwED8Fzy
+        maxLength: 21
+        type: string
+      since:
+        description: Since is the start of the time range to export.
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      until:
+        description: Until is the end of the time range to export.
+        example: "2024-01-01T23:59:59Z"
+        type: string
+    required:
+    - deviceId
+    - since
+    - until
+    type: object
   smsgateway.MobileChangePasswordRequest:
     properties:
       currentPassword:
@@ -305,10 +325,12 @@ definitions:
     enum:
     - MessageEnqueued
     - WebhooksUpdated
+    - MessagesExportRequested
     type: string
     x-enum-varnames:
     - PushMessageEnqueued
     - PushWebhooksUpdated
+    - PushMessagesExportRequested
   smsgateway.PushNotification:
     properties:
       data:
@@ -324,6 +346,7 @@ definitions:
         enum:
         - MessageEnqueued
         - WebhooksUpdated
+        - MessagesExportRequested
         example: MessageEnqueued
       token:
         description: The token of the device that receives the notification.
@@ -444,6 +467,45 @@ paths:
       summary: Health check
       tags:
       - System
+  /3rdparty/v1/inbox/export:
+    post:
+      consumes:
+      - application/json
+      description: Initiates process of inbox messages export via webhooks. For each
+        message the `sms:received` webhook will be triggered. The webhooks will be
+        triggered without specific order.
+      parameters:
+      - description: Export inbox request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/smsgateway.MessagesExportRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Inbox export request accepted
+          schema:
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+      security:
+      - ApiAuth: []
+      summary: Request inbox messages export
+      tags:
+      - User
+      - Messages
   /3rdparty/v1/logs:
     get:
       description: Retrieve a list of log entries within a specified time range.
@@ -487,7 +549,7 @@ paths:
       tags:
       - System
       - Logs
-  /3rdparty/v1/message:
+  /3rdparty/v1/messages:
     post:
       consumes:
       - application/json
@@ -537,7 +599,7 @@ paths:
       tags:
       - User
       - Messages
-  /3rdparty/v1/message/{id}:
+  /3rdparty/v1/messages/{id}:
     get:
       description: Returns message state by ID
       parameters:

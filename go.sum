@@ -28,6 +28,10 @@ github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 h1:TngWCqHvy9oXAN6lEV
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5/go.mod h1:lmUJ/7eu/Q8D7ML55dXQrVaamCz2vxCfdQBasLZfHKk=
 github.com/android-sms-gateway/client-go v1.2.0 h1:P02e/Nm2XY6gpxVQVZiaxh1ZfInVkwfOLzz8Mp/1dy0=
 github.com/android-sms-gateway/client-go v1.2.0/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
+github.com/android-sms-gateway/client-go v1.2.1-0.20241231005427-53ab5bf34e4f h1:BfLaSqzXTRwAiXafZO/kA7kK8uPEXNB/32iHfSJlOSE=
+github.com/android-sms-gateway/client-go v1.2.1-0.20241231005427-53ab5bf34e4f/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
+github.com/android-sms-gateway/client-go v1.2.1-0.20241231042455-ce468dd89fdb h1:c3ll8h375G/oL4Qzexo35XBxHrw9HgGOqmxK6CPX5Bg=
+github.com/android-sms-gateway/client-go v1.2.1-0.20241231042455-ce468dd89fdb/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
 github.com/andybalholm/brotli v1.1.0 h1:eLKJA0d02Lf0mVpIDgYnqXcUn0GqVmEFny3VuID1U3M=
 github.com/andybalholm/brotli v1.1.0/go.mod h1:sms7XGricyQI9K10gOSf56VKKWS4oLer58Q+mhRPtnY=
 github.com/ansrivas/fiberprometheus/v2 v2.6.1 h1:wac3pXaE6BYYTF04AC6K0ktk6vCD+MnDOJZ3SK66kXM=

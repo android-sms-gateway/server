@@ -3,6 +3,7 @@ package messages
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -242,6 +243,16 @@ func (s *Service) Enqeue(device models.Device, message smsgateway.Message, opts 
 	s.messagesCounter.WithLabelValues(string(state.State)).Inc()
 
 	return state, nil
+}
+
+func (s *Service) ExportInbox(device models.Device, since, until time.Time) error {
+	if device.PushToken == nil {
+		return errors.New("no push token")
+	}
+
+	event := push.NewMessagesExportRequestedEvent(since, until)
+
+	return s.pushSvc.Enqueue(*device.PushToken, event)
 }
 
 func (s *Service) Clean(ctx context.Context) error {
