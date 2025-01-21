@@ -29,7 +29,7 @@ RUN go generate ./...
 RUN CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags="-w -s -X github.com/android-sms-gateway/server/internal/version.AppVersion=${APP_VERSION} -X github.com/android-sms-gateway/server/internal/version.AppRelease=${APP_RELEASE_ID}" -o app ./cmd/${APP}/main.go
 
 # Moving the binary to the 'final Image' to make it smaller
-FROM alpine:3 as prod
+FROM alpine:3 AS prod
 
 WORKDIR /app
 
