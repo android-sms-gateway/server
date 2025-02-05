@@ -56,7 +56,7 @@ Content-Type: application/json
 }
 
 ###
-GET {{baseUrl}}/api/3rdparty/v1/devices HTTP/1.1
+GET {{baseUrl}}/3rdparty/v1/devices HTTP/1.1
 Authorization: Basic {{credentials}}
 
 ###

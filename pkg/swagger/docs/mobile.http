@@ -1,6 +1,7 @@
-@baseUrl={{$dotenv CLOUD__URL}}/api/mobile/v1
+@baseUrl={{$dotenv CLOUD__URL}}/mobile/v1
 @mobileToken={{$dotenv MOBILE__TOKEN}}
 @phone={{$dotenv PHONE}}
+@credentials={{$dotenv CLOUD__CREDENTIALS}}
 
 ###
 GET {{baseUrl}}/device HTTP/1.1
@@ -8,12 +9,13 @@ Authorization: Bearer {{mobileToken}}
 
 ###
 POST {{baseUrl}}/device HTTP/1.1
-Authorization: Bearer 123456789
+# Authorization: Bearer 123456789
+Authorization: Basic {{credentials}}
 Content-Type: application/json
 
 {
   "name": "Android Phone",
-  "pushToken": "eTxx88nfSla87gZuJcW5mS:APA91bHGxVgSqqRtxwFHD1q9em5Oa6xSP4gO_OZRrqOoP1wjf_7UMfXKsc4uws6rWkqn73jYCc1owyATB1v61mqak4ntpqtmRkNtTey7NQXa0Wz3uQZBWY-Ecbn2rWG2VJRihOzXRId-"
+  "pushToken": ""
 }
 
 ###

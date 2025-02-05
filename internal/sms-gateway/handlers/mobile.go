@@ -8,6 +8,7 @@ import (
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/converters"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/webhooks"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
@@ -65,20 +66,30 @@ func (h *mobileHandler) getDevice(device models.Device, c *fiber.Ctx) error {
 //	@Router			/mobile/v1/device [post]
 //
 // Register device
-func (h *mobileHandler) postDevice(c *fiber.Ctx) error {
+func (h *mobileHandler) postDevice(c *fiber.Ctx) (err error) {
 	req := smsgateway.MobileRegisterRequest{}
 
-	if err := h.BodyParserValidator(c, &req); err != nil {
+	if err = h.BodyParserValidator(c, &req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	id := h.idGen()
-	login := strings.ToUpper(id[:6])
-	password := strings.ToLower(id[7:])
+	var (
+		user     models.User
+		login    string
+		password string
+	)
 
-	user, err := h.authSvc.RegisterUser(login, password)
-	if err != nil {
-		return fmt.Errorf("can't create user: %w", err)
+	if userauth.HasUser(c) {
+		user = userauth.GetUser(c)
+	} else {
+		id := h.idGen()
+		login = strings.ToUpper(id[:6])
+		password = strings.ToLower(id[7:])
+
+		user, err = h.authSvc.RegisterUser(login, password)
+		if err != nil {
+			return fmt.Errorf("can't create user: %w", err)
+		}
 	}
 
 	device, err := h.authSvc.RegisterDevice(user, req.Name, req.PushToken)
@@ -86,12 +97,13 @@ func (h *mobileHandler) postDevice(c *fiber.Ctx) error {
 		return fmt.Errorf("can't register device: %w", err)
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(smsgateway.MobileRegisterResponse{
-		Id:       device.ID,
-		Token:    device.AuthToken,
-		Login:    login,
-		Password: password,
-	})
+	return c.Status(fiber.StatusCreated).
+		JSON(smsgateway.MobileRegisterResponse{
+			Id:       device.ID,
+			Token:    device.AuthToken,
+			Login:    login,
+			Password: password,
+		})
 }
 
 //	@Summary		Update device
@@ -212,8 +224,13 @@ func (h *mobileHandler) Register(router fiber.Router) {
 
 	router.Post("/device",
 		limiter.New(),
+		userauth.New(h.authSvc),
 		keyauth.New(keyauth.Config{
-			Next: func(c *fiber.Ctx) bool { return h.authSvc.IsPublic() },
+			Next: func(c *fiber.Ctx) bool {
+				// skip server key authorization...
+				return h.authSvc.IsPublic() || // ...if public mode
+					userauth.HasUser(c) // ...if registration with existing user
+			},
 			Validator: func(c *fiber.Ctx, token string) (bool, error) {
 				err := h.authSvc.AuthorizeRegistration(token)
 				return err == nil, err
