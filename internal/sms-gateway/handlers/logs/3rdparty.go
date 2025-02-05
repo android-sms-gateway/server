@@ -2,8 +2,8 @@ package logs
 
 import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
@@ -40,7 +40,7 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 }
 
 func (h *ThirdPartyController) Register(router fiber.Router) {
-	router.Get("", auth.WithUser(h.get))
+	router.Get("", userauth.WithUser(h.get))
 }
 
 func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyController {

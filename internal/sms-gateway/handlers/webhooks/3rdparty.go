@@ -5,8 +5,8 @@ import (
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/webhooks"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -104,9 +104,9 @@ func (h *ThirdPartyController) delete(user models.User, c *fiber.Ctx) error {
 }
 
 func (h *ThirdPartyController) Register(router fiber.Router) {
-	router.Get("", auth.WithUser(h.get))
-	router.Post("", auth.WithUser(h.post))
-	router.Delete("/:id", auth.WithUser(h.delete))
+	router.Get("", userauth.WithUser(h.get))
+	router.Post("", userauth.WithUser(h.post))
+	router.Delete("/:id", userauth.WithUser(h.delete))
 }
 
 func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyController {

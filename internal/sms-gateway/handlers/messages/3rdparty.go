@@ -6,8 +6,8 @@ import (
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 	"github.com/go-playground/validator/v10"
@@ -163,10 +163,10 @@ func (h *ThirdPartyController) postInboxExport(user models.User, c *fiber.Ctx) e
 }
 
 func (h *ThirdPartyController) Register(router fiber.Router) {
-	router.Post("", auth.WithUser(h.post))
-	router.Get(":id", auth.WithUser(h.get))
+	router.Post("", userauth.WithUser(h.post))
+	router.Get(":id", userauth.WithUser(h.get))
 
-	router.Post("inbox/export", auth.WithUser(h.postInboxExport))
+	router.Post("inbox/export", userauth.WithUser(h.postInboxExport))
 }
 
 func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyController {

@@ -5,8 +5,8 @@ import (
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/pkg/types"
 	"github.com/capcom6/go-helpers/slices"
@@ -62,7 +62,7 @@ func (h *ThirdPartyController) getDevices(user models.User, c *fiber.Ctx) error 
 }
 
 func (h *ThirdPartyController) Register(router fiber.Router) {
-	router.Get("", auth.WithUser(h.getDevices))
+	router.Get("", userauth.WithUser(h.getDevices))
 }
 
 func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyController {
