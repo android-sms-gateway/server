@@ -777,7 +777,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Registers new device and returns credentials
+      description: Registers new device for new or existing user. Returns user credentials
+        only for new users
       parameters:
       - description: Device registration request
         in: body
@@ -808,6 +809,9 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/smsgateway.ErrorResponse'
+      security:
+      - ApiAuth: []
+      - ServerKey: []
       summary: Register device
       tags:
       - Device
@@ -968,6 +972,11 @@ securityDefinitions:
     type: basic
   MobileToken:
     description: Mobile device token
+    in: header
+    name: Authorization
+    type: apiKey
+  ServerKey:
+    description: Private server authentication
     in: header
     name: Authorization
     type: apiKey

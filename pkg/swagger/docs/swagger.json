@@ -506,7 +506,15 @@
                 }
             },
             "post": {
-                "description": "Registers new device and returns credentials",
+                "security": [
+                    {
+                        "ApiAuth": []
+                    },
+                    {
+                        "ServerKey": []
+                    }
+                ],
+                "description": "Registers new device for new or existing user. Returns user credentials only for new users",
                 "consumes": [
                     "application/json"
                 ],
@@ -1409,6 +1417,12 @@
         },
         "MobileToken": {
             "description": "Mobile device token",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "ServerKey": {
+            "description": "Private server authentication",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"

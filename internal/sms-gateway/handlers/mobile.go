@@ -53,7 +53,9 @@ func (h *mobileHandler) getDevice(device models.Device, c *fiber.Ctx) error {
 }
 
 //	@Summary		Register device
-//	@Description	Registers new device and returns credentials
+//	@Description	Registers new device for new or existing user. Returns user credentials only for new users
+//	@Security		ApiAuth
+//	@Security		ServerKey
 //	@Tags			Device
 //	@Accept			json
 //	@Produce		json
@@ -227,9 +229,10 @@ func (h *mobileHandler) Register(router fiber.Router) {
 		userauth.New(h.authSvc),
 		keyauth.New(keyauth.Config{
 			Next: func(c *fiber.Ctx) bool {
-				// skip server key authorization...
-				return h.authSvc.IsPublic() || // ...if public mode
-					userauth.HasUser(c) // ...if registration with existing user
+				// Skip server key authorization in the following cases:
+				// 1. Public mode is enabled - allowing open registration
+				// 2. User is already authenticated - allowing device registration for existing users
+				return h.authSvc.IsPublic() || userauth.HasUser(c)
 			},
 			Validator: func(c *fiber.Ctx, token string) (bool, error) {
 				err := h.authSvc.AuthorizeRegistration(token)
