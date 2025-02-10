@@ -7,7 +7,7 @@ import (
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/converters"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
-	"github.com/android-sms-gateway/server/pkg/types"
+	"github.com/capcom6/go-helpers/anys"
 	"github.com/go-playground/assert/v2"
 )
 
@@ -18,26 +18,26 @@ func TestDeviceToDTO(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		device   *models.Device
-		expected *smsgateway.Device
+		device   models.Device
+		expected smsgateway.Device
 	}{
 		{
 			name:     "empty device",
-			device:   &models.Device{},
-			expected: nil,
+			device:   models.Device{},
+			expected: smsgateway.Device{},
 		},
 		{
 			name: "non-empty device",
-			device: &models.Device{
+			device: models.Device{
 				ID:       "test-id",
-				Name:     types.AsPointer("test-name"),
+				Name:     anys.AsPointer("test-name"),
 				LastSeen: lastSeenAt,
 				TimedModel: models.TimedModel{
 					CreatedAt: createdAt,
 					UpdatedAt: updatedAt,
 				},
 			},
-			expected: &smsgateway.Device{
+			expected: smsgateway.Device{
 				ID:        "test-id",
 				Name:      "test-name",
 				CreatedAt: createdAt,
@@ -46,9 +46,15 @@ func TestDeviceToDTO(t *testing.T) {
 			},
 		},
 		{
-			name:     "nil device",
-			device:   nil,
-			expected: nil,
+			name: "device with nil name",
+			device: models.Device{
+				ID:   "test-id",
+				Name: nil,
+			},
+			expected: smsgateway.Device{
+				ID:   "test-id",
+				Name: "",
+			},
 		},
 	}
 

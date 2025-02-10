@@ -60,6 +60,61 @@
                 }
             }
         },
+        "/3rdparty/v1/devices/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiAuth": []
+                    }
+                ],
+                "description": "Removes device",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Remove device",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully removed"
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Device not found",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/3rdparty/v1/health": {
             "get": {
                 "description": "Checks if service is healthy",
@@ -214,7 +269,7 @@
                         "ApiAuth": []
                     }
                 ],
-                "description": "Enqueues message for sending. If ID is not specified, it will be generated",
+                "description": "Enqueues message for sending. If multiple devices are registered, it will be sent via a random one",
                 "consumes": [
                     "application/json"
                 ],
@@ -506,7 +561,15 @@
                 }
             },
             "post": {
-                "description": "Registers new device and returns credentials",
+                "security": [
+                    {
+                        "ApiAuth": []
+                    },
+                    {
+                        "ServerKey": []
+                    }
+                ],
+                "description": "Registers new device for new or existing user. Returns user credentials only for new users",
                 "consumes": [
                     "application/json"
                 ],
@@ -1222,12 +1285,12 @@
                     "example": "QslD_GefqiYV6RQXdkM6V"
                 },
                 "login": {
-                    "description": "User login",
+                    "description": "User login, empty if registration in existing user",
                     "type": "string",
                     "example": "VQ4GII"
                 },
                 "password": {
-                    "description": "User password",
+                    "description": "User password, empty if registration in existing user",
                     "type": "string",
                     "example": "cp2pydvxd2zwpx"
                 },
@@ -1409,6 +1472,12 @@
         },
         "MobileToken": {
             "description": "Mobile device token",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "ServerKey": {
+            "description": "Private server authentication",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"

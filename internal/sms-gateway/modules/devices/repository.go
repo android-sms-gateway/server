@@ -59,6 +59,15 @@ func (r *repository) UpdateLastSeen(id string) error {
 	return r.db.Model(&models.Device{}).Where("id", id).Update("last_seen", time.Now()).Error
 }
 
+func (r *repository) Remove(filter ...SelectFilter) error {
+	if len(filter) == 0 {
+		return ErrInvalidFilter
+	}
+
+	f := newFilter(filter...)
+	return f.apply(r.db).Delete(&models.Device{}).Error
+}
+
 func (r *repository) removeUnused(ctx context.Context, since time.Time) (int64, error) {
 	res := r.db.
 		WithContext(ctx).

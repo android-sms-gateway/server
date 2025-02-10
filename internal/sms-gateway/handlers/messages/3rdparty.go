@@ -6,10 +6,11 @@ import (
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
+	"github.com/capcom6/go-helpers/slices"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
@@ -38,7 +39,7 @@ type ThirdPartyController struct {
 }
 
 //	@Summary		Enqueue message
-//	@Description	Enqueues message for sending. If ID is not specified, it will be generated
+//	@Description	Enqueues message for sending. If multiple devices are registered, it will be sent via a random one
 //	@Security		ApiAuth
 //	@Tags			User, Messages
 //	@Accept			json
@@ -62,7 +63,7 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 
 	skipPhoneValidation := c.QueryBool("skipPhoneValidation", false)
 
-	devices, err := h.devicesSvc.Select(devices.WithUserID(user.ID))
+	devices, err := h.devicesSvc.Select(user.ID)
 	if err != nil {
 		h.Logger.Error("Failed to select devices", zap.Error(err), zap.String("user_id", user.ID))
 		return fiber.NewError(fiber.StatusInternalServerError, "Can't select devices. Please contact support")
@@ -72,7 +73,11 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "No devices registered")
 	}
 
-	device := devices[0]
+	device, err := slices.Random(devices)
+	if err != nil {
+		return fmt.Errorf("can't get random device: %w", err)
+	}
+
 	state, err := h.messagesSvc.Enqeue(device, req, messages.EnqueueOptions{SkipPhoneValidation: skipPhoneValidation})
 	if err != nil {
 		var errValidation messages.ErrValidation
@@ -146,7 +151,7 @@ func (h *ThirdPartyController) postInboxExport(user models.User, c *fiber.Ctx) e
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	device, err := h.devicesSvc.Get(devices.WithUserID(user.ID), devices.WithID(req.DeviceID))
+	device, err := h.devicesSvc.Get(user.ID, devices.WithID(req.DeviceID))
 	if err != nil {
 		if errors.Is(err, devices.ErrNotFound) {
 			return fiber.NewError(fiber.StatusBadRequest, "Invalid device ID")
@@ -163,10 +168,10 @@ func (h *ThirdPartyController) postInboxExport(user models.User, c *fiber.Ctx) e
 }
 
 func (h *ThirdPartyController) Register(router fiber.Router) {
-	router.Post("", auth.WithUser(h.post))
-	router.Get(":id", auth.WithUser(h.get))
+	router.Post("", userauth.WithUser(h.post))
+	router.Get(":id", userauth.WithUser(h.get))
 
-	router.Post("inbox/export", auth.WithUser(h.postInboxExport))
+	router.Post("inbox/export", userauth.WithUser(h.postInboxExport))
 }
 
 func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyController {

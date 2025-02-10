@@ -5,11 +5,11 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/logs"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/messages"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/webhooks"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/basicauth"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -46,24 +46,10 @@ func (h *thirdPartyHandler) Register(router fiber.Router) {
 
 	h.healthHandler.Register(router)
 
-	router.Use(basicauth.New(basicauth.Config{
-		Authorizer: func(username string, password string) bool {
-			return len(username) > 0 && len(password) > 0
-		},
-	}), func(c *fiber.Ctx) error {
-		username := c.Locals("username").(string)
-		password := c.Locals("password").(string)
-
-		user, err := h.authSvc.AuthorizeUser(username, password)
-		if err != nil {
-			h.Logger.Error("failed to authorize user", zap.Error(err))
-			return fiber.ErrUnauthorized
-		}
-
-		c.Locals("user", user)
-
-		return c.Next()
-	})
+	router.Use(
+		userauth.New(h.authSvc),
+		userauth.UserRequired(),
+	)
 
 	h.messagesHandler.Register(router.Group("/message")) // TODO: remove after 2025-12-31
 	h.messagesHandler.Register(router.Group("/messages"))

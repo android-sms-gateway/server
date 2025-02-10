@@ -10,7 +10,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/pkg/crypto"
-	"github.com/android-sms-gateway/server/pkg/types/cache"
+	"github.com/capcom6/go-helpers/cache"
 	"github.com/jaevor/go-nanoid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -84,7 +84,7 @@ func (s *Service) RegisterDevice(user models.User, name, pushToken *string) (mod
 		PushToken: pushToken,
 	}
 
-	return device, s.devicesSvc.Insert(user, &device)
+	return device, s.devicesSvc.Insert(user.ID, &device)
 }
 
 func (s *Service) UpdateDevice(id, pushToken string) error {
@@ -113,7 +113,7 @@ func (s *Service) AuthorizeDevice(token string) (models.Device, error) {
 
 	device, err := s.devicesCache.Get(cacheKey)
 	if err != nil {
-		device, err = s.devicesSvc.Get(devices.WithToken(token))
+		device, err = s.devicesSvc.GetByToken(token)
 		if err != nil {
 			return device, fmt.Errorf("can't get device: %w", err)
 		}

@@ -277,11 +277,11 @@ definitions:
         example: QslD_GefqiYV6RQXdkM6V
         type: string
       login:
-        description: User login
+        description: User login, empty if registration in existing user
         example: VQ4GII
         type: string
       password:
-        description: User password
+        description: User password, empty if registration in existing user
         example: cp2pydvxd2zwpx
         type: string
       token:
@@ -450,6 +450,41 @@ paths:
       summary: List devices
       tags:
       - User
+  /3rdparty/v1/devices/{id}:
+    delete:
+      description: Removes device
+      parameters:
+      - description: Device ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Successfully removed
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+        "404":
+          description: Device not found
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+      security:
+      - ApiAuth: []
+      summary: Remove device
+      tags:
+      - User
   /3rdparty/v1/health:
     get:
       description: Checks if service is healthy
@@ -553,8 +588,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Enqueues message for sending. If ID is not specified, it will be
-        generated
+      description: Enqueues message for sending. If multiple devices are registered,
+        it will be sent via a random one
       parameters:
       - description: Skip phone validation
         in: query
@@ -777,7 +812,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Registers new device and returns credentials
+      description: Registers new device for new or existing user. Returns user credentials
+        only for new users
       parameters:
       - description: Device registration request
         in: body
@@ -808,6 +844,9 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/smsgateway.ErrorResponse'
+      security:
+      - ApiAuth: []
+      - ServerKey: []
       summary: Register device
       tags:
       - Device
@@ -968,6 +1007,11 @@ securityDefinitions:
     type: basic
   MobileToken:
     description: Mobile device token
+    in: header
+    name: Authorization
+    type: apiKey
+  ServerKey:
+    description: Private server authentication
     in: header
     name: Authorization
     type: apiKey

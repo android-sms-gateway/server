@@ -5,11 +5,17 @@ import (
 )
 
 //	@securitydefinitions.basic	ApiAuth
+//	@description				User authentication
 
 //	@securitydefinitions.apikey	MobileToken
 //	@in							header
 //	@name						Authorization
 //	@description				Mobile device token
+
+//	@securitydefinitions.apikey	ServerKey
+//	@in							header
+//	@name						Authorization
+//	@description				Private server authentication
 
 //	@title			SMS Gateway for Android™ API
 //	@version		{APP_VERSION}
