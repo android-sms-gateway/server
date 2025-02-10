@@ -53,11 +53,12 @@ func HasDevice(c *fiber.Ctx) bool {
 // GetDevice returns the device stored in the Locals under the key LocalsDevice.
 // If the Locals do not contain a device, it returns an empty device.
 func GetDevice(c *fiber.Ctx) models.Device {
-	if !HasDevice(c) {
+	device, ok := c.Locals(LocalsDevice).(models.Device)
+	if !ok {
 		return models.Device{}
 	}
 
-	return c.Locals(LocalsDevice).(models.Device)
+	return device
 }
 
 // DeviceRequired is a middleware that ensures a device is present in the request's Locals.

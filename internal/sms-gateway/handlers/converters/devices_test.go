@@ -45,6 +45,17 @@ func TestDeviceToDTO(t *testing.T) {
 				LastSeen:  lastSeenAt,
 			},
 		},
+		{
+			name: "device with nil name",
+			device: models.Device{
+				ID:   "test-id",
+				Name: nil,
+			},
+			expected: smsgateway.Device{
+				ID:   "test-id",
+				Name: "",
+			},
+		},
 	}
 
 	for _, test := range tests {
