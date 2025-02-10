@@ -64,9 +64,9 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 //
 // Register webhook
 func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
-	dto := &smsgateway.Webhook{}
+	dto := smsgateway.Webhook{}
 
-	if err := h.BodyParserValidator(c, dto); err != nil {
+	if err := h.BodyParserValidator(c, &dto); err != nil {
 		return err
 	}
 

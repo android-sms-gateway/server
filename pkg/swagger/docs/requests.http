@@ -60,6 +60,10 @@ GET {{baseUrl}}/3rdparty/v1/devices HTTP/1.1
 Authorization: Basic {{credentials}}
 
 ###
+DELETE {{baseUrl}}/3rdparty/v1/devices/MxKw03Q2ZVoomrLeDLlMO HTTP/1.1
+Authorization: Basic {{credentials}}
+
+###
 POST {{baseUrl}}/api/upstream/v1/push HTTP/1.1
 Content-Type: application/json
 

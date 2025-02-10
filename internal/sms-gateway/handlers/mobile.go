@@ -8,12 +8,13 @@ import (
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/converters"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/deviceauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/webhooks"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
+	"github.com/android-sms-gateway/server/pkg/types"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/keyauth"
@@ -45,8 +46,11 @@ type mobileHandler struct {
 // Get device information
 func (h *mobileHandler) getDevice(device models.Device, c *fiber.Ctx) error {
 	res := smsgateway.MobileDeviceResponse{
-		Device:     converters.DeviceToDTO(&device),
 		ExternalIP: c.IP(),
+	}
+
+	if !device.IsEmpty() {
+		res.Device = types.AsPointer(converters.DeviceToDTO(device))
 	}
 
 	return c.JSON(res)
@@ -242,40 +246,20 @@ func (h *mobileHandler) Register(router fiber.Router) {
 		h.postDevice,
 	)
 
-	router.Use(func(c *fiber.Ctx) (err error) {
-		header := c.Get(fiber.HeaderAuthorization)
-		device := models.Device{}
-		if len(header) > 7 && header[:7] == "Bearer " {
-			token := header[7:]
-			device, err = h.authSvc.AuthorizeDevice(token)
-			if err != nil && err != devices.ErrNotFound {
-				h.Logger.Error("Can't authorize device", zap.Error(err))
-				return fiber.ErrUnauthorized
-			}
-		}
+	router.Use(
+		deviceauth.New(h.authSvc),
+	)
 
-		c.Locals("device", device)
+	router.Get("/device", deviceauth.WithDevice(h.getDevice))
 
-		return c.Next()
-	})
+	router.Use(deviceauth.DeviceRequired())
 
-	router.Get("/device", auth.WithDevice(h.getDevice))
+	router.Patch("/device", deviceauth.WithDevice(h.patchDevice))
 
-	router.Use(func(c *fiber.Ctx) error {
-		device := c.Locals("device").(models.Device)
-		if device.IsEmpty() {
-			return fiber.ErrUnauthorized
-		}
+	router.Get("/message", deviceauth.WithDevice(h.getMessage))
+	router.Patch("/message", deviceauth.WithDevice(h.patchMessage))
 
-		return c.Next()
-	})
-
-	router.Patch("/device", auth.WithDevice(h.patchDevice))
-
-	router.Get("/message", auth.WithDevice(h.getMessage))
-	router.Patch("/message", auth.WithDevice(h.patchMessage))
-
-	router.Patch("/user/password", auth.WithDevice(h.changePassword))
+	router.Patch("/user/password", deviceauth.WithDevice(h.changePassword))
 
 	h.webhooksCtrl.Register(router.Group("/webhooks"))
 }

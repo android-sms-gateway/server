@@ -450,6 +450,41 @@ paths:
       summary: List devices
       tags:
       - User
+  /3rdparty/v1/devices/{id}:
+    delete:
+      description: Removes device
+      parameters:
+      - description: Device ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Successfully removed
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+        "404":
+          description: Device not found
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+      security:
+      - ApiAuth: []
+      summary: Remove device
+      tags:
+      - User
   /3rdparty/v1/health:
     get:
       description: Checks if service is healthy

@@ -62,7 +62,7 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 
 	skipPhoneValidation := c.QueryBool("skipPhoneValidation", false)
 
-	devices, err := h.devicesSvc.Select(devices.WithUserID(user.ID))
+	devices, err := h.devicesSvc.Select(user.ID)
 	if err != nil {
 		h.Logger.Error("Failed to select devices", zap.Error(err), zap.String("user_id", user.ID))
 		return fiber.NewError(fiber.StatusInternalServerError, "Can't select devices. Please contact support")
@@ -146,7 +146,7 @@ func (h *ThirdPartyController) postInboxExport(user models.User, c *fiber.Ctx) e
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	device, err := h.devicesSvc.Get(devices.WithUserID(user.ID), devices.WithID(req.DeviceID))
+	device, err := h.devicesSvc.Get(user.ID, devices.WithID(req.DeviceID))
 	if err != nil {
 		if errors.Is(err, devices.ErrNotFound) {
 			return fiber.NewError(fiber.StatusBadRequest, "Invalid device ID")

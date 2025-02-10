@@ -18,17 +18,17 @@ func TestDeviceToDTO(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		device   *models.Device
-		expected *smsgateway.Device
+		device   models.Device
+		expected smsgateway.Device
 	}{
 		{
 			name:     "empty device",
-			device:   &models.Device{},
-			expected: nil,
+			device:   models.Device{},
+			expected: smsgateway.Device{},
 		},
 		{
 			name: "non-empty device",
-			device: &models.Device{
+			device: models.Device{
 				ID:       "test-id",
 				Name:     types.AsPointer("test-name"),
 				LastSeen: lastSeenAt,
@@ -37,18 +37,13 @@ func TestDeviceToDTO(t *testing.T) {
 					UpdatedAt: updatedAt,
 				},
 			},
-			expected: &smsgateway.Device{
+			expected: smsgateway.Device{
 				ID:        "test-id",
 				Name:      "test-name",
 				CreatedAt: createdAt,
 				UpdatedAt: updatedAt,
 				LastSeen:  lastSeenAt,
 			},
-		},
-		{
-			name:     "nil device",
-			device:   nil,
-			expected: nil,
 		},
 	}
 

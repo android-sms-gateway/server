@@ -46,9 +46,8 @@ func NewService(params ServiceParams) *Service {
 	}
 }
 
-func (s *Service) Select(userID string, filters ...SelectFilter) ([]smsgateway.Webhook, error) {
-	filters = append(filters, WithUserID(userID))
-
+// _select retrieves a list of webhooks that match the provided filters.
+func (s *Service) _select(filters ...SelectFilter) ([]smsgateway.Webhook, error) {
 	items, err := s.webhooks.Select(filters...)
 	if err != nil {
 		return nil, fmt.Errorf("can't select webhooks: %w", err)
@@ -57,7 +56,17 @@ func (s *Service) Select(userID string, filters ...SelectFilter) ([]smsgateway.W
 	return slices.Map(items, webhookToDTO), nil
 }
 
-func (s *Service) Replace(userID string, webhook *smsgateway.Webhook) error {
+// Select returns a list of webhooks for a specific user that match the provided filters.
+// It ensures that the filter includes the user's ID.
+func (s *Service) Select(userID string, filters ...SelectFilter) ([]smsgateway.Webhook, error) {
+	filters = append(filters, WithUserID(userID))
+
+	return s._select(filters...)
+}
+
+// Replace creates or updates a webhook for a given user. After replacing the webhook,
+// it asynchronously notifies all the user's devices. Returns an error if the operation fails.
+func (s *Service) Replace(userID string, webhook smsgateway.Webhook) error {
 	if !smsgateway.IsValidWebhookEvent(webhook.Event) {
 		return newValidationError("event", string(webhook.Event), fmt.Errorf("enum value expected"))
 	}
@@ -82,6 +91,8 @@ func (s *Service) Replace(userID string, webhook *smsgateway.Webhook) error {
 	return nil
 }
 
+// Delete removes webhooks for a specific user that match the provided filters.
+// It ensures that the filter includes the user's ID.
 func (s *Service) Delete(userID string, filters ...SelectFilter) error {
 	filters = append(filters, WithUserID(userID))
 	if err := s.webhooks.Delete(filters...); err != nil {
@@ -93,10 +104,11 @@ func (s *Service) Delete(userID string, filters ...SelectFilter) error {
 	return nil
 }
 
+// notifyDevices sends a push notification to all devices associated with the given user.
 func (s *Service) notifyDevices(userID string) {
 	s.logger.Info("Notifying devices", zap.String("user_id", userID))
 
-	devices, err := s.devicesSvc.Select(devices.WithUserID(userID))
+	devices, err := s.devicesSvc.Select(userID)
 	if err != nil {
 		s.logger.Error("Failed to select devices", zap.String("user_id", userID), zap.Error(err))
 		return

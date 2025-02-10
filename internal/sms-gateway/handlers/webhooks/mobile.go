@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/deviceauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/webhooks"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
@@ -47,7 +47,7 @@ func (h *MobileController) get(device models.Device, c *fiber.Ctx) error {
 }
 
 func (h *MobileController) Register(router fiber.Router) {
-	router.Get("", auth.WithDevice(h.get))
+	router.Get("", deviceauth.WithDevice(h.get))
 }
 
 func NewMobileController(params mobileControllerParams) *MobileController {
