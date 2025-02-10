@@ -10,7 +10,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/pkg/crypto"
-	"github.com/android-sms-gateway/server/pkg/types/cache"
+	"github.com/capcom6/go-helpers/cache"
 	"github.com/jaevor/go-nanoid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"

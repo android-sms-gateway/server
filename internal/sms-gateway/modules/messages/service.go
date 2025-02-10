@@ -12,7 +12,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/db"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push"
-	"github.com/android-sms-gateway/server/pkg/types"
+	"github.com/capcom6/go-helpers/anys"
 	"github.com/capcom6/go-helpers/slices"
 	"github.com/nyaruka/phonenumbers"
 	"github.com/prometheus/client_golang/prometheus"
@@ -119,7 +119,7 @@ func (s *Service) SelectPending(deviceID string) ([]smsgateway.Message, error) {
 			ID:                 v.ExtID,
 			Message:            v.Message,
 			SimNumber:          v.SimNumber,
-			WithDeliveryReport: types.AsPointer[bool](v.WithDeliveryReport),
+			WithDeliveryReport: anys.AsPointer[bool](v.WithDeliveryReport),
 			IsEncrypted:        v.IsEncrypted,
 			PhoneNumbers:       s.recipientsToDomain(v.Recipients),
 			TTL:                ttl,
@@ -206,7 +206,7 @@ func (s *Service) Enqeue(device models.Device, message smsgateway.Message, opts 
 
 	var validUntil *time.Time = message.ValidUntil
 	if message.TTL != nil && *message.TTL > 0 {
-		validUntil = types.AsPointer(time.Now().Add(time.Duration(*message.TTL) * time.Second))
+		validUntil = anys.AsPointer(time.Now().Add(time.Duration(*message.TTL) * time.Second))
 	}
 
 	msg := models.Message{
@@ -215,7 +215,7 @@ func (s *Service) Enqeue(device models.Device, message smsgateway.Message, opts 
 		Message:            message.Message,
 		ValidUntil:         validUntil,
 		SimNumber:          message.SimNumber,
-		WithDeliveryReport: types.OrDefault[bool](message.WithDeliveryReport, true),
+		WithDeliveryReport: anys.OrDefault[bool](message.WithDeliveryReport, true),
 		IsEncrypted:        message.IsEncrypted,
 		Device:             device,
 		Recipients:         s.recipientsToModel(message.PhoneNumbers),

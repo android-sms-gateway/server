@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/domain"
-	"github.com/android-sms-gateway/server/pkg/types/cache"
+	"github.com/capcom6/go-helpers/cache"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/fx"

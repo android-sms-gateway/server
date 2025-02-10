@@ -7,7 +7,7 @@ import (
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/converters"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
-	"github.com/android-sms-gateway/server/pkg/types"
+	"github.com/capcom6/go-helpers/anys"
 	"github.com/go-playground/assert/v2"
 )
 
@@ -30,7 +30,7 @@ func TestDeviceToDTO(t *testing.T) {
 			name: "non-empty device",
 			device: models.Device{
 				ID:       "test-id",
-				Name:     types.AsPointer("test-name"),
+				Name:     anys.AsPointer("test-name"),
 				LastSeen: lastSeenAt,
 				TimedModel: models.TimedModel{
 					CreatedAt: createdAt,

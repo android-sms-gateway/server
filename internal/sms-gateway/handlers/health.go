@@ -5,7 +5,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/health"
 	"github.com/android-sms-gateway/server/internal/version"
-	"github.com/android-sms-gateway/server/pkg/maps"
+	"github.com/capcom6/go-helpers/maps"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 	"go.uber.org/zap"

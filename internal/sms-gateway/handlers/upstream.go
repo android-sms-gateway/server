@@ -6,7 +6,7 @@ import (
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push"
-	"github.com/android-sms-gateway/server/pkg/types"
+	"github.com/capcom6/go-helpers/anys"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
@@ -69,7 +69,7 @@ func (h *upstreamHandler) postPush(c *fiber.Ctx) error {
 		}
 
 		event := push.Event{
-			Event: types.ZeroDefault(v.Event, smsgateway.PushMessageEnqueued),
+			Event: anys.ZeroDefault(v.Event, smsgateway.PushMessageEnqueued),
 			Data:  v.Data,
 		}
 

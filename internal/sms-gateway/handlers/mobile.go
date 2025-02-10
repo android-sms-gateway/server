@@ -14,7 +14,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
-	"github.com/android-sms-gateway/server/pkg/types"
+	"github.com/capcom6/go-helpers/anys"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/keyauth"
@@ -50,7 +50,7 @@ func (h *mobileHandler) getDevice(device models.Device, c *fiber.Ctx) error {
 	}
 
 	if !device.IsEmpty() {
-		res.Device = types.AsPointer(converters.DeviceToDTO(device))
+		res.Device = anys.AsPointer(converters.DeviceToDTO(device))
 	}
 
 	return c.JSON(res)
