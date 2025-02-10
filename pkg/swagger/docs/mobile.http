@@ -14,8 +14,7 @@ Authorization: Basic {{credentials}}
 Content-Type: application/json
 
 {
-  "name": "Android Phone",
-  "pushToken": ""
+  "name": "Android Phone"
 }
 
 ###

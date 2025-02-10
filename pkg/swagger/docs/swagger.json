@@ -269,7 +269,7 @@
                         "ApiAuth": []
                     }
                 ],
-                "description": "Enqueues message for sending. If ID is not specified, it will be generated",
+                "description": "Enqueues message for sending. If multiple devices are registered, it will be sent via a random one",
                 "consumes": [
                     "application/json"
                 ],
@@ -1285,12 +1285,12 @@
                     "example": "QslD_GefqiYV6RQXdkM6V"
                 },
                 "login": {
-                    "description": "User login",
+                    "description": "User login, empty if registration in existing user",
                     "type": "string",
                     "example": "VQ4GII"
                 },
                 "password": {
-                    "description": "User password",
+                    "description": "User password, empty if registration in existing user",
                     "type": "string",
                     "example": "cp2pydvxd2zwpx"
                 },

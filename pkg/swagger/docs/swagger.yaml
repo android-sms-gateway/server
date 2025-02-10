@@ -277,11 +277,11 @@ definitions:
         example: QslD_GefqiYV6RQXdkM6V
         type: string
       login:
-        description: User login
+        description: User login, empty if registration in existing user
         example: VQ4GII
         type: string
       password:
-        description: User password
+        description: User password, empty if registration in existing user
         example: cp2pydvxd2zwpx
         type: string
       token:
@@ -588,8 +588,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Enqueues message for sending. If ID is not specified, it will be
-        generated
+      description: Enqueues message for sending. If multiple devices are registered,
+        it will be sent via a random one
       parameters:
       - description: Skip phone validation
         in: query

@@ -10,6 +10,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
+	"github.com/capcom6/go-helpers/slices"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
@@ -38,7 +39,7 @@ type ThirdPartyController struct {
 }
 
 //	@Summary		Enqueue message
-//	@Description	Enqueues message for sending. If ID is not specified, it will be generated
+//	@Description	Enqueues message for sending. If multiple devices are registered, it will be sent via a random one
 //	@Security		ApiAuth
 //	@Tags			User, Messages
 //	@Accept			json
@@ -72,7 +73,11 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "No devices registered")
 	}
 
-	device := devices[0]
+	device, err := slices.Random(devices)
+	if err != nil {
+		return fmt.Errorf("can't get random device: %w", err)
+	}
+
 	state, err := h.messagesSvc.Enqeue(device, req, messages.EnqueueOptions{SkipPhoneValidation: skipPhoneValidation})
 	if err != nil {
 		var errValidation messages.ErrValidation
