@@ -87,6 +87,7 @@ func (h *mobileHandler) postDevice(c *fiber.Ctx) (err error) {
 
 	if userauth.HasUser(c) {
 		user = userauth.GetUser(c)
+		login = user.ID
 	} else {
 		id := h.idGen()
 		login = strings.ToUpper(id[:6])
