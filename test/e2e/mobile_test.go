@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"testing"
 	"time"
@@ -19,6 +20,7 @@ var (
 
 type mobileRegisterResponse struct {
 	Token    string `json:"token"`
+	Login    string `json:"login"`
 	Password string `json:"password"`
 }
 
@@ -199,6 +201,72 @@ func TestPublicDevicePasswordChange(t *testing.T) {
 
 			if res.StatusCode() != c.expectedStatusCode {
 				t.Fatal(res.StatusCode(), res.String())
+			}
+		})
+	}
+}
+
+func TestPublicDeviceRegisterWithCredentials(t *testing.T) {
+	// won't work with registration rate limits
+	t.SkipNow()
+
+	firstDevice := mobileDeviceRegister(t, publicClient)
+
+	cases := []struct {
+		name               string
+		headers            map[string]string
+		expectedStatusCode int
+		expectedLogin      string
+		expectedPassword   string
+	}{
+		{
+			name: "Valid Credentials",
+			headers: map[string]string{
+				"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(firstDevice.Login+":"+firstDevice.Password)),
+			},
+			expectedStatusCode: 201,
+			expectedLogin:      "",
+			expectedPassword:   "",
+		},
+		{
+			name: "Invalid Credentials",
+			headers: map[string]string{
+				"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte("a:1")),
+			},
+			expectedStatusCode: 401,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			res, err := publicClient.R().
+				SetHeader("Content-Type", "application/json").
+				SetBody(`{"name": "Public Device Name", "pushToken": "token"}`).
+				SetHeaders(c.headers).
+				Post("device")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if res.StatusCode() != c.expectedStatusCode {
+				t.Fatal(res.StatusCode(), res.String())
+			}
+
+			if !res.IsSuccess() {
+				return
+			}
+
+			var resp mobileRegisterResponse
+			if err := json.Unmarshal(res.Body(), &resp); err != nil {
+				t.Fatal(err)
+			}
+
+			if resp.Login != c.expectedLogin {
+				t.Fatalf("expected login %s, got %s", c.expectedLogin, resp.Login)
+			}
+
+			if resp.Password != c.expectedPassword {
+				t.Fatalf("expected password %s, got %s", c.expectedPassword, resp.Password)
 			}
 		})
 	}
