@@ -10,13 +10,10 @@ import (
 	"github.com/gofiber/fiber/v2/utils"
 )
 
-const LocalsUser = "user"
+const localsUser = "user"
 
-// New returns a middleware that will check if the request contains a valid
-// "Authorization" header in the form of "Basic <base64 encoded username:password>".
-// If the header is valid, the middleware will authorize the user and store the user
-// in the request's Locals under the key LocalsUser. If the header is invalid, the
-// middleware will call c.Next() and continue with the request.
+// New returns a middleware that checks for a valid "Authorization" header
+// in the form of "Basic <base64-encoded credentials>" and authorizes the user.
 func New(authSvc *auth.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// Get authorization header
@@ -30,7 +27,7 @@ func New(authSvc *auth.Service) fiber.Handler {
 		// Decode the header contents
 		raw, err := base64.StdEncoding.DecodeString(auth[6:])
 		if err != nil {
-			return c.Next()
+			return fiber.ErrUnauthorized
 		}
 
 		// Get the credentials
@@ -40,7 +37,7 @@ func New(authSvc *auth.Service) fiber.Handler {
 		// which is "username:password".
 		index := strings.Index(creds, ":")
 		if index == -1 {
-			return c.Next()
+			return fiber.ErrUnauthorized
 		}
 
 		// Get the username and password
@@ -49,10 +46,10 @@ func New(authSvc *auth.Service) fiber.Handler {
 
 		user, err := authSvc.AuthorizeUser(username, password)
 		if err != nil {
-			return c.Next()
+			return fiber.ErrUnauthorized
 		}
 
-		c.Locals(LocalsUser, user)
+		c.Locals(localsUser, user)
 
 		return c.Next()
 	}
@@ -62,7 +59,7 @@ func New(authSvc *auth.Service) fiber.Handler {
 // It returns true if the Locals contain a user under the key LocalsUser,
 // otherwise returns false.
 func HasUser(c *fiber.Ctx) bool {
-	return c.Locals(LocalsUser) != nil
+	return c.Locals(localsUser) != nil
 }
 
 // GetUser returns the user stored in the Locals under the key LocalsUser.
@@ -71,7 +68,7 @@ func HasUser(c *fiber.Ctx) bool {
 //
 // It panics if the value stored in Locals is not a models.User.
 func GetUser(c *fiber.Ctx) models.User {
-	return c.Locals(LocalsUser).(models.User)
+	return c.Locals(localsUser).(models.User)
 }
 
 // UserRequired is a middleware that ensures a user is present in the request's Locals.
