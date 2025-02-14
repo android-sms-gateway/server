@@ -1,6 +1,7 @@
 package devices
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
@@ -68,7 +69,11 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 func (h *ThirdPartyController) remove(user models.User, c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	if err := h.devicesSvc.Remove(user.ID, devices.WithID(id)); err != nil {
+	err := h.devicesSvc.Remove(user.ID, devices.WithID(id))
+	if errors.Is(err, devices.ErrNotFound) {
+		return fiber.NewError(fiber.StatusNotFound, err.Error())
+	}
+	if err != nil {
 		return fmt.Errorf("can't remove device: %w", err)
 	}
 

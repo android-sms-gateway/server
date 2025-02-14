@@ -2,10 +2,14 @@ package devices
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"time"
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/db"
+	"github.com/capcom6/go-helpers/cache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -25,7 +29,8 @@ type ServiceParams struct {
 type Service struct {
 	config Config
 
-	devices *repository
+	devices     *repository
+	tokensCache *cache.Cache[models.Device]
 
 	idGen db.IDGen
 
@@ -62,11 +67,26 @@ func (s *Service) Get(userID string, filter ...SelectFilter) (models.Device, err
 // This method is used to retrieve a device by its auth token. If the device
 // does not exist, it returns ErrNotFound.
 func (s *Service) GetByToken(token string) (models.Device, error) {
-	return s.devices.Get(WithToken(token))
+	hash := sha256.Sum256([]byte(token))
+	cacheKey := hex.EncodeToString(hash[:])
+
+	device, err := s.tokensCache.Get(cacheKey)
+	if err != nil {
+		device, err = s.devices.Get(WithToken(token))
+		if err != nil {
+			return device, fmt.Errorf("can't get device: %w", err)
+		}
+
+		if err := s.tokensCache.Set(cacheKey, device); err != nil {
+			s.logger.Error("can't cache device", zap.Error(err))
+		}
+	}
+
+	return device, nil
 }
 
-func (s *Service) UpdateToken(deviceId string, token string) error {
-	return s.devices.UpdateToken(deviceId, token)
+func (s *Service) UpdatePushToken(deviceId string, token string) error {
+	return s.devices.UpdatePushToken(deviceId, token)
 }
 
 func (s *Service) UpdateLastSeen(deviceId string) error {
@@ -77,6 +97,15 @@ func (s *Service) UpdateLastSeen(deviceId string) error {
 // It ensures that the filter includes the user's ID.
 func (s *Service) Remove(userID string, filter ...SelectFilter) error {
 	filter = append(filter, WithUserID(userID))
+
+	device, err := s.Get(userID, filter...)
+	if err != nil {
+		return err
+	}
+
+	if err := s.tokensCache.Delete(device.AuthToken); err != nil {
+		s.logger.Error("can't invalidate token cache", zap.Error(err))
+	}
 
 	return s.devices.Remove(filter...)
 }
@@ -90,9 +119,10 @@ func (s *Service) Clean(ctx context.Context) error {
 
 func NewService(params ServiceParams) *Service {
 	return &Service{
-		config:  params.Config,
-		devices: params.Devices,
-		idGen:   params.IDGen,
-		logger:  params.Logger.Named("service"),
+		config:      params.Config,
+		devices:     params.Devices,
+		tokensCache: cache.New[models.Device](cache.Config{TTL: 10 * time.Minute}),
+		idGen:       params.IDGen,
+		logger:      params.Logger.Named("service"),
 	}
 }

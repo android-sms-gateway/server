@@ -51,7 +51,7 @@ func (r *repository) Insert(device *models.Device) error {
 	return r.db.Create(device).Error
 }
 
-func (r *repository) UpdateToken(id, token string) error {
+func (r *repository) UpdatePushToken(id, token string) error {
 	return r.db.Model(&models.Device{}).Where("id", id).Update("push_token", token).Error
 }
 

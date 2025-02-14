@@ -18,6 +18,16 @@ Content-Type: application/json
 }
 
 ###
+PATCH {{baseUrl}}/device HTTP/1.1
+Authorization: Bearer {{mobileToken}}
+Content-Type: application/json
+
+{
+  "name": "Android Phone"
+}
+
+
+###
 GET {{baseUrl}}/message HTTP/1.1
 Authorization: Bearer {{mobileToken}}
 

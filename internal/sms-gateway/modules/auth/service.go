@@ -38,8 +38,7 @@ type Service struct {
 	users      *repository
 	usersCache *cache.Cache[models.User]
 
-	devicesSvc   *devices.Service
-	devicesCache *cache.Cache[models.Device]
+	devicesSvc *devices.Service
 
 	logger *zap.Logger
 
@@ -56,8 +55,7 @@ func New(params Params) *Service {
 		logger:     params.Logger.Named("Service"),
 		idgen:      idgen,
 
-		usersCache:   cache.New[models.User](cache.Config{TTL: 1 * time.Hour}),
-		devicesCache: cache.New[models.Device](cache.Config{TTL: 10 * time.Minute}),
+		usersCache: cache.New[models.User](cache.Config{TTL: 1 * time.Hour}),
 	}
 }
 
@@ -87,10 +85,6 @@ func (s *Service) RegisterDevice(user models.User, name, pushToken *string) (mod
 	return device, s.devicesSvc.Insert(user.ID, &device)
 }
 
-func (s *Service) UpdateDevice(id, pushToken string) error {
-	return s.devicesSvc.UpdateToken(id, pushToken)
-}
-
 func (s *Service) IsPublic() bool {
 	return s.config.Mode == ModePublic
 }
@@ -108,19 +102,9 @@ func (s *Service) AuthorizeRegistration(token string) error {
 }
 
 func (s *Service) AuthorizeDevice(token string) (models.Device, error) {
-	hash := sha256.Sum256([]byte(token))
-	cacheKey := hex.EncodeToString(hash[:])
-
-	device, err := s.devicesCache.Get(cacheKey)
+	device, err := s.devicesSvc.GetByToken(token)
 	if err != nil {
-		device, err = s.devicesSvc.GetByToken(token)
-		if err != nil {
-			return device, fmt.Errorf("can't get device: %w", err)
-		}
-
-		if err := s.devicesCache.Set(cacheKey, device); err != nil {
-			s.logger.Error("can't cache device", zap.Error(err))
-		}
+		return device, err
 	}
 
 	go func(id string) {

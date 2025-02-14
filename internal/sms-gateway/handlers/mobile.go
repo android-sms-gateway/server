@@ -13,6 +13,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/webhooks"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 	"github.com/capcom6/go-helpers/anys"
 	"github.com/go-playground/validator/v10"
@@ -28,6 +29,7 @@ type mobileHandler struct {
 	base.Handler
 
 	authSvc     *auth.Service
+	devicesSvc  *devices.Service
 	messagesSvc *messages.Service
 
 	webhooksCtrl *webhooks.MobileController
@@ -137,7 +139,7 @@ func (h *mobileHandler) patchDevice(device models.Device, c *fiber.Ctx) error {
 		return fiber.ErrForbidden
 	}
 
-	if err := h.authSvc.UpdateDevice(req.Id, req.PushToken); err != nil {
+	if err := h.devicesSvc.UpdatePushToken(req.Id, req.PushToken); err != nil {
 		return err
 	}
 
@@ -272,6 +274,7 @@ type mobileHandlerParams struct {
 	Validator *validator.Validate
 
 	AuthSvc     *auth.Service
+	DevicesSvc  *devices.Service
 	MessagesSvc *messages.Service
 
 	WebhooksCtrl *webhooks.MobileController
@@ -283,6 +286,7 @@ func newMobileHandler(params mobileHandlerParams) *mobileHandler {
 	return &mobileHandler{
 		Handler:      base.Handler{Logger: params.Logger, Validator: params.Validator},
 		authSvc:      params.AuthSvc,
+		devicesSvc:   params.DevicesSvc,
 		messagesSvc:  params.MessagesSvc,
 		webhooksCtrl: params.WebhooksCtrl,
 		idGen:        idGen,
