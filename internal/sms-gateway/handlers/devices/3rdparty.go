@@ -31,7 +31,7 @@ type ThirdPartyController struct {
 //	@Summary		List devices
 //	@Description	Returns list of registered devices
 //	@Security		ApiAuth
-//	@Tags			User
+//	@Tags			User, Devices
 //	@Produce		json
 //	@Success		200	{object}	[]smsgateway.Device			"Device list"
 //	@Failure		400	{object}	smsgateway.ErrorResponse	"Invalid request"
@@ -54,7 +54,7 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 //	@Summary		Remove device
 //	@Description	Removes device
 //	@Security		ApiAuth
-//	@Tags			User
+//	@Tags			User, Devices
 //	@Produce		json
 //	@Param			id	path	string	true	"Device ID"
 //	@Success		204	"Successfully removed"

@@ -26,7 +26,8 @@
                     "application/json"
                 ],
                 "tags": [
-                    "User"
+                    "User",
+                    "Devices"
                 ],
                 "summary": "List devices",
                 "responses": {
@@ -72,7 +73,8 @@
                     "application/json"
                 ],
                 "tags": [
-                    "User"
+                    "User",
+                    "Devices"
                 ],
                 "summary": "Remove device",
                 "parameters": [

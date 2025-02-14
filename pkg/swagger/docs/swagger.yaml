@@ -450,6 +450,7 @@ paths:
       summary: List devices
       tags:
       - User
+      - Devices
   /3rdparty/v1/devices/{id}:
     delete:
       description: Removes device
@@ -485,6 +486,7 @@ paths:
       summary: Remove device
       tags:
       - User
+      - Devices
   /3rdparty/v1/health:
     get:
       description: Checks if service is healthy
