@@ -277,11 +277,11 @@ definitions:
         example: QslD_GefqiYV6RQXdkM6V
         type: string
       login:
-        description: User login, empty if registration in existing user
+        description: User login
         example: VQ4GII
         type: string
       password:
-        description: User password, empty if registration in existing user
+        description: User password, empty for existing user
         example: cp2pydvxd2zwpx
         type: string
       token:
@@ -365,7 +365,7 @@ definitions:
         description: Phone number or first 16 symbols of SHA256 hash
         example: "79990001234"
         maxLength: 128
-        minLength: 10
+        minLength: 1
         type: string
       state:
         allOf:

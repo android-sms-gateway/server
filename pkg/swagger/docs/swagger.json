@@ -1287,12 +1287,12 @@
                     "example": "QslD_GefqiYV6RQXdkM6V"
                 },
                 "login": {
-                    "description": "User login, empty if registration in existing user",
+                    "description": "User login",
                     "type": "string",
                     "example": "VQ4GII"
                 },
                 "password": {
-                    "description": "User password, empty if registration in existing user",
+                    "description": "User password, empty for existing user",
                     "type": "string",
                     "example": "cp2pydvxd2zwpx"
                 },
@@ -1407,7 +1407,7 @@
                     "description": "Phone number or first 16 symbols of SHA256 hash",
                     "type": "string",
                     "maxLength": 128,
-                    "minLength": 10,
+                    "minLength": 1,
                     "example": "79990001234"
                 },
                 "state": {
