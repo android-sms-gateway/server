@@ -39,6 +39,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: stable
+          cache-dependency-path: test/e2e/go.sum
 
       # step 3: start services
       - name: Start services
