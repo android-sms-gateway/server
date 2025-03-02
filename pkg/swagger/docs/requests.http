@@ -79,11 +79,11 @@ Content-Type: application/json
 ]
 
 ###
-GET {{baseUrl}}/api/3rdparty/v1/webhooks HTTP/1.1
+GET {{baseUrl}}/3rdparty/v1/webhooks HTTP/1.1
 Authorization: Basic {{credentials}}
 
 ###
-POST {{baseUrl}}/api/3rdparty/v1/webhooks HTTP/1.1
+POST {{baseUrl}}/3rdparty/v1/webhooks HTTP/1.1
 Authorization: Basic {{credentials}}
 Content-Type: application/json
 
@@ -94,7 +94,7 @@ Content-Type: application/json
 }
 
 ###
-DELETE {{baseUrl}}/api/3rdparty/v1/webhooks/MYofX8bTd5Bov0wWFZLRP HTTP/1.1
+DELETE {{baseUrl}}/3rdparty/v1/webhooks/MYofX8bTd5Bov0wWFZLRP HTTP/1.1
 Authorization: Basic {{credentials}}
 
 ###
