@@ -68,6 +68,32 @@ resource "docker_service" "app" {
     label = "traefik.docker.network"
     value = data.docker_network.proxy.name
   }
+
+  #region rate-limit_5-per-1m Middleware
+  labels {
+    label = "traefik.http.middlewares.rate-limit_5-per-1m.ratelimit.average"
+    value = "5"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.rate-limit_5-per-1m.ratelimit.period"
+    value = "1m"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.rate-limit_5-per-1m.ratelimit.sourcecriterion.ipstrategy.depth"
+    value = "1"
+  }
+  #endregion
+
+  #region Add Prefix Middleware
+  labels {
+    label = "traefik.http.middlewares.${var.app-name}-new-addprefix.addprefix.prefix"
+    value = "/api"
+  }
+  #endregion
+
+  #region Deprecated
   labels {
     label = "traefik.http.routers.${var.app-name}.rule"
     value = "Host(`${var.app-host}`) && PathPrefix(`/api`)"
@@ -80,10 +106,31 @@ resource "docker_service" "app" {
     label = "traefik.http.routers.${var.app-name}.tls.certresolver"
     value = "le"
   }
+  #endregion
 
+  #region Deprecated Limited
   labels {
-    label = "traefik.http.middlewares.${var.app-name}-new-addprefix.addprefix.prefix"
-    value = "/api"
+    label = "traefik.http.routers.${var.app-name}_limited.rule"
+    value = "Host(`${var.app-host}`) && PathPrefix(`/api/mobile/v1/device`) && Method(`POST`)"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}_limited.middlewares"
+    value = "rate-limit_5-per-1m"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}_limited.entrypoints"
+    value = "https"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}_limited.tls.certresolver"
+    value = "le"
+  }
+  #endregion
+
+  #region Primary
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new.rule"
+    value = "Host(`api.sms-gate.app`)"
   }
   labels {
     label = "traefik.http.routers.${var.app-name}-new.entrypoints"
@@ -94,13 +141,29 @@ resource "docker_service" "app" {
     value = "${var.app-name}-new-addprefix"
   }
   labels {
-    label = "traefik.http.routers.${var.app-name}-new.rule"
-    value = "Host(`api.sms-gate.app`)"
-  }
-  labels {
     label = "traefik.http.routers.${var.app-name}-new.tls.certresolver"
     value = "le"
   }
+  #endregion
+
+  #region Primary Limited
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new_limited.rule"
+    value = "Host(`api.sms-gate.app`) && PathPrefix(`/mobile/v1/device`) && Method(`POST`)"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new_limited.entrypoints"
+    value = "https"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new_limited.middlewares"
+    value = "rate-limit_5-per-1m,${var.app-name}-new-addprefix"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new_limited.tls.certresolver"
+    value = "le"
+  }
+  #endregion
 
   labels {
     label = "traefik.http.services.${var.app-name}.loadbalancer.server.port"

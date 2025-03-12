@@ -19,7 +19,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/keyauth"
-	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/jaevor/go-nanoid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -232,7 +231,6 @@ func (h *mobileHandler) Register(router fiber.Router) {
 	router = router.Group("/mobile/v1")
 
 	router.Post("/device",
-		limiter.New(),
 		userauth.New(h.authSvc),
 		keyauth.New(keyauth.Config{
 			Next: func(c *fiber.Ctx) bool {
