@@ -1,6 +1,6 @@
 module github.com/android-sms-gateway/server
 
-go 1.22.0
+go 1.23
 
 require (
 	firebase.google.com/go/v4 v4.12.1

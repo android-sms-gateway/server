@@ -1,6 +1,6 @@
 module github.com/android-sms-gateway/server/test/e2e
 
-go 1.22.0
+go 1.23
 
 require github.com/go-resty/resty/v2 v2.16.2
 

@@ -1,5 +1,5 @@
 # Building the binary of the App
-FROM golang:1.22-alpine AS build
+FROM golang:1.23-alpine AS build
 
 ARG APP
 ARG APP_VERSION=1.0.0
