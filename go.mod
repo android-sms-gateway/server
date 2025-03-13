@@ -1,6 +1,8 @@
 module github.com/android-sms-gateway/server
 
-go 1.23
+go 1.23.0
+
+toolchain go1.23.2
 
 require (
 	firebase.google.com/go/v4 v4.12.1
@@ -17,7 +19,7 @@ require (
 	github.com/prometheus/client_golang v1.19.1
 	go.uber.org/fx v1.20.1
 	go.uber.org/zap v1.26.0
-	golang.org/x/crypto v0.32.0
+	golang.org/x/crypto v0.36.0
 	golang.org/x/exp v0.0.0-20240525044651-4c93da0ed11d
 	google.golang.org/api v0.148.0
 	gorm.io/gorm v1.25.7-0.20240204074919-46816ad31dde
@@ -76,11 +78,11 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/dig v1.17.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/net v0.34.0 // indirect
+	golang.org/x/net v0.37.0 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/sync v0.12.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/appengine/v2 v2.0.5 // indirect
