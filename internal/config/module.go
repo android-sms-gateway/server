@@ -42,6 +42,9 @@ var Module = fx.Module(
 			Database: cfg.Database.Database,
 			Timezone: cfg.Database.Timezone,
 			Debug:    cfg.Database.Debug,
+
+			MaxOpenConns: cfg.Database.MaxOpenConns,
+			MaxIdleConns: cfg.Database.MaxIdleConns,
 		}
 	}),
 	fx.Provide(func(cfg Config) push.Config {

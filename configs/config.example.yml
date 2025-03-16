@@ -13,6 +13,8 @@ database: # database
   password: root # database password [DATABASE__PASSWORD]
   database: sms # database name [DATABASE__DATABASE]
   timezone: UTC # database timezone (important for message TTL calculation) [DATABASE__TIMEZONE]
+  max_open_conns: 4 # database max open connections (default: 4 * CPU) [DATABASE__MAX_OPEN_CONNS]
+  max_idle_conns: 2 # database max idle connections (default: 2 * CPU) [DATABASE__MAX_IDLE_CONNS]
 fcm: # firebase cloud messaging config
   credentials_json: "{}" # firebase credentials json (for public mode only) [FCM__CREDENTIALS_JSON]
   timeout_seconds: 1 # push notification send timeout [FCM__DEBOUNCE_SECONDS]

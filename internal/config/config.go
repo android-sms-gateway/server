@@ -34,6 +34,9 @@ type Database struct {
 	Database string `yaml:"database" envconfig:"DATABASE__DATABASE"` // database name
 	Timezone string `yaml:"timezone" envconfig:"DATABASE__TIMEZONE"` // database timezone
 	Debug    bool   `yaml:"debug"    envconfig:"DATABASE__DEBUG"`    // debug mode
+
+	MaxOpenConns int `yaml:"max_open_conns" envconfig:"DATABASE__MAX_OPEN_CONNS"` // max open connections
+	MaxIdleConns int `yaml:"max_idle_conns" envconfig:"DATABASE__MAX_IDLE_CONNS"` // max idle connections
 }
 
 type FCMConfig struct {
