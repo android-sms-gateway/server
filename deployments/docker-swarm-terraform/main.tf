@@ -147,6 +147,7 @@ resource "docker_service" "app" {
   #endregion
 
   #region Primary Limited
+  #region Device Registration
   labels {
     label = "traefik.http.routers.${var.app-name}-new_limited.rule"
     value = "Host(`api.sms-gate.app`) && PathPrefix(`/mobile/v1/device`) && Method(`POST`)"
@@ -163,6 +164,25 @@ resource "docker_service" "app" {
     label = "traefik.http.routers.${var.app-name}-new_limited.tls.certresolver"
     value = "le"
   }
+  #endregion
+  #region User Operations
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new_limited-user.rule"
+    value = "Host(`api.sms-gate.app`) && PathPrefix(`/mobile/v1/user`)"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new_limited-user.entrypoints"
+    value = "https"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new_limited-user.middlewares"
+    value = "rate-limit_5-per-1m,${var.app-name}-new-addprefix"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new_limited-user.tls.certresolver"
+    value = "le"
+  }
+  #endregion
   #endregion
 
   labels {
