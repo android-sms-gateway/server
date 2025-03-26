@@ -12,14 +12,15 @@ import (
 
 const localsUser = "user"
 
-// New returns a middleware that checks for a valid "Authorization" header
-// in the form of "Basic <base64-encoded credentials>" and authorizes the user.
-func New(authSvc *auth.Service) fiber.Handler {
+// NewBasic returns a middleware that will check if the request contains a valid
+// "Authorization" header in the form of "Basic <base64 encoded username:password>".
+// If the header is valid, the middleware will authorize the user and store the
+// user in the request's Locals under the key LocalsUser. If the header is invalid,
+// the middleware will call c.Next() and continue with the request.
+func NewBasic(authSvc *auth.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Get authorization header
 		auth := c.Get(fiber.HeaderAuthorization)
 
-		// Check if the header contains content besides "basic".
 		if len(auth) <= 6 || !strings.EqualFold(auth[:6], "basic ") {
 			return c.Next()
 		}
@@ -45,6 +46,33 @@ func New(authSvc *auth.Service) fiber.Handler {
 		password := creds[index+1:]
 
 		user, err := authSvc.AuthorizeUser(username, password)
+		if err != nil {
+			return fiber.ErrUnauthorized
+		}
+
+		c.Locals(localsUser, user)
+
+		return c.Next()
+	}
+}
+
+// NewCode returns a middleware that will check if the request contains a valid
+// "Authorization" header in the form of "Code <one-time user authorization code>".
+// If the header is valid, the middleware will authorize the user and store the
+// user in the request's Locals under the key LocalsUser. If the header is invalid,
+// the middleware will call c.Next() and continue with the request.
+func NewCode(authSvc *auth.Service) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		auth := c.Get(fiber.HeaderAuthorization)
+
+		if len(auth) <= 5 || !strings.EqualFold(auth[:5], "code ") {
+			return c.Next()
+		}
+
+		// Get the code
+		code := auth[5:]
+
+		user, err := authSvc.AuthorizeUserByCode(code)
 		if err != nil {
 			return fiber.ErrUnauthorized
 		}

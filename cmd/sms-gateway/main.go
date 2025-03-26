@@ -7,6 +7,11 @@ import (
 //	@securitydefinitions.basic	ApiAuth
 //	@description				User authentication
 
+//	@securitydefinitions.apikey	UserCode
+//	@in							header
+//	@name						Authorization
+//	@description				User one-time code authentication
+
 //	@securitydefinitions.apikey	MobileToken
 //	@in							header
 //	@name						Authorization

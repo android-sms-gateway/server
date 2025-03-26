@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
@@ -36,6 +38,7 @@ type Service struct {
 	config Config
 
 	users      *repository
+	codesCache *cache.Cache[string]
 	usersCache *cache.Cache[models.User]
 
 	devicesSvc *devices.Service
@@ -55,8 +58,37 @@ func New(params Params) *Service {
 		logger:     params.Logger.Named("Service"),
 		idgen:      idgen,
 
+		codesCache: cache.New[string](cache.Config{}),
 		usersCache: cache.New[models.User](cache.Config{TTL: 1 * time.Hour}),
 	}
+}
+
+// GenerateUserCode generates a unique one-time user authorization code
+func (s *Service) GenerateUserCode(userID string) (AuthCode, error) {
+	var code string
+	var err error
+
+	b := make([]byte, 3)
+	validUntil := time.Now().Add(codeTTL)
+	for range 3 {
+		if _, err = rand.Read(b); err != nil {
+			continue
+		}
+		num := (int(b[0]) << 16) | (int(b[1]) << 8) | int(b[2])
+		code = fmt.Sprintf("%06d", num%1000000)
+
+		if err = s.codesCache.SetOrFail(code, userID, cache.WithValidUntil(validUntil)); err != nil {
+			continue
+		}
+
+		break
+	}
+
+	if err != nil {
+		return AuthCode{}, fmt.Errorf("can't generate code: %w", err)
+	}
+
+	return AuthCode{Code: code, ValidUntil: validUntil}, nil
 }
 
 func (s *Service) RegisterUser(login, password string) (models.User, error) {
@@ -143,6 +175,21 @@ func (s *Service) AuthorizeUser(username, password string) (models.User, error) 
 	return user, nil
 }
 
+// AuthorizeUserByCode authorizes a user by one-time code.
+func (s *Service) AuthorizeUserByCode(code string) (models.User, error) {
+	userID, err := s.codesCache.GetAndDelete(code)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	user, err := s.users.GetByID(userID)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return user, nil
+}
+
 func (s *Service) ChangePassword(userID string, currentPassword string, newPassword string) error {
 	user, err := s.users.GetByLogin(userID)
 	if err != nil {
@@ -170,4 +217,25 @@ func (s *Service) ChangePassword(userID string, currentPassword string, newPassw
 	}
 
 	return nil
+}
+
+// Run starts a ticker that triggers the clean function every hour.
+// It runs indefinitely until the provided context is canceled.
+func (s *Service) Run(ctx context.Context) {
+	ticker := time.NewTicker(1 * time.Hour)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			s.clean(ctx)
+		}
+	}
+}
+
+func (s *Service) clean(_ context.Context) {
+	s.codesCache.Cleanup()
+	s.usersCache.Cleanup()
 }

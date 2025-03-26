@@ -568,6 +568,9 @@
                         "ApiAuth": []
                     },
                     {
+                        "UserCode": []
+                    },
+                    {
                         "ServerKey": []
                     }
                 ],
@@ -753,6 +756,40 @@
                         "description": "Invalid request",
                         "schema": {
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/mobile/v1/user/code": {
+            "get": {
+                "security": [
+                    {
+                        "ApiAuth": []
+                    }
+                ],
+                "description": "Returns one-time code for device registration",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Device"
+                ],
+                "summary": "Get one-time code for device registration",
+                "responses": {
+                    "200": {
+                        "description": "User code",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.MobileUserCodeResponse"
                         }
                     },
                     "500": {
@@ -1319,6 +1356,19 @@
                 }
             }
         },
+        "smsgateway.MobileUserCodeResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "123456"
+                },
+                "validUntil": {
+                    "type": "string",
+                    "example": "2020-01-01T00:00:00Z"
+                }
+            }
+        },
         "smsgateway.ProcessingState": {
             "type": "string",
             "enum": [
@@ -1480,6 +1530,12 @@
         },
         "ServerKey": {
             "description": "Private server authentication",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "UserCode": {
+            "description": "User one-time code authentication",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"

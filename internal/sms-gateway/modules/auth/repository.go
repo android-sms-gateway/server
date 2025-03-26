@@ -15,6 +15,13 @@ func newRepository(db *gorm.DB) *repository {
 	}
 }
 
+// GetByID returns a user by their ID.
+func (r *repository) GetByID(id string) (models.User, error) {
+	user := models.User{}
+
+	return user, r.db.Where("id = ?", id).Take(&user).Error
+}
+
 func (r *repository) GetByLogin(login string) (models.User, error) {
 	user := models.User{}
 

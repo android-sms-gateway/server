@@ -60,6 +60,7 @@ func (h *mobileHandler) getDevice(device models.Device, c *fiber.Ctx) error {
 //	@Summary		Register device
 //	@Description	Registers new device for new or existing user. Returns user credentials only for new users
 //	@Security		ApiAuth
+//	@Security		UserCode
 //	@Security		ServerKey
 //	@Tags			Device
 //	@Accept			json
@@ -198,6 +199,29 @@ func (h *mobileHandler) patchMessage(device models.Device, c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
+//	@Summary		Get one-time code for device registration
+//	@Description	Returns one-time code for device registration
+//	@Security		ApiAuth
+//	@Tags			Device
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	smsgateway.MobileUserCodeResponse	"User code"
+//	@Failure		500	{object}	smsgateway.ErrorResponse			"Internal server error"
+//	@Router			/mobile/v1/user/code [get]
+//
+// Get user code
+func (h *mobileHandler) getUserCode(user models.User, c *fiber.Ctx) error {
+	code, err := h.authSvc.GenerateUserCode(user.ID)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(smsgateway.MobileUserCodeResponse{
+		Code:       code.Code,
+		ValidUntil: code.ValidUntil,
+	})
+}
+
 //	@Summary		Change password
 //	@Description	Changes the user's password
 //	@Security		MobileToken
@@ -231,7 +255,8 @@ func (h *mobileHandler) Register(router fiber.Router) {
 	router = router.Group("/mobile/v1")
 
 	router.Post("/device",
-		userauth.New(h.authSvc),
+		userauth.NewBasic(h.authSvc),
+		userauth.NewCode(h.authSvc),
 		keyauth.New(keyauth.Config{
 			Next: func(c *fiber.Ctx) bool {
 				// Skip server key authorization in the following cases:
@@ -247,6 +272,12 @@ func (h *mobileHandler) Register(router fiber.Router) {
 		h.postDevice,
 	)
 
+	router.Get("/user/code",
+		userauth.NewBasic(h.authSvc),
+		userauth.UserRequired(),
+		userauth.WithUser(h.getUserCode),
+	)
+
 	router.Use(
 		deviceauth.New(h.authSvc),
 	)
@@ -260,6 +291,7 @@ func (h *mobileHandler) Register(router fiber.Router) {
 	router.Get("/message", deviceauth.WithDevice(h.getMessage))
 	router.Patch("/message", deviceauth.WithDevice(h.patchMessage))
 
+	// Should be under `userauth.NewBasic` protection instead of `deviceauth`
 	router.Patch("/user/password", deviceauth.WithDevice(h.changePassword))
 
 	h.webhooksCtrl.Register(router.Group("/webhooks"))

@@ -47,7 +47,7 @@ func (h *thirdPartyHandler) Register(router fiber.Router) {
 	h.healthHandler.Register(router)
 
 	router.Use(
-		userauth.New(h.authSvc),
+		userauth.NewBasic(h.authSvc),
 		userauth.UserRequired(),
 	)
 

@@ -301,6 +301,15 @@ definitions:
         maxLength: 256
         type: string
     type: object
+  smsgateway.MobileUserCodeResponse:
+    properties:
+      code:
+        example: "123456"
+        type: string
+      validUntil:
+        example: "2020-01-01T00:00:00Z"
+        type: string
+    type: object
   smsgateway.ProcessingState:
     enum:
     - Pending
@@ -848,6 +857,7 @@ paths:
             $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
       - ApiAuth: []
+      - UserCode: []
       - ServerKey: []
       summary: Register device
       tags:
@@ -908,6 +918,27 @@ paths:
       tags:
       - Device
       - Messages
+  /mobile/v1/user/code:
+    get:
+      consumes:
+      - application/json
+      description: Returns one-time code for device registration
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User code
+          schema:
+            $ref: '#/definitions/smsgateway.MobileUserCodeResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+      security:
+      - ApiAuth: []
+      summary: Get one-time code for device registration
+      tags:
+      - Device
   /mobile/v1/user/password:
     patch:
       consumes:
@@ -1014,6 +1045,11 @@ securityDefinitions:
     type: apiKey
   ServerKey:
     description: Private server authentication
+    in: header
+    name: Authorization
+    type: apiKey
+  UserCode:
+    description: User one-time code authentication
     in: header
     name: Authorization
     type: apiKey
