@@ -101,12 +101,7 @@ func (s *Service) SelectPending(deviceID string) ([]MessageOut, error) {
 		return nil, err
 	}
 
-	result := make([]MessageOut, len(messages))
-	for i, v := range messages {
-		result[i] = messageToDTO(&v)
-	}
-
-	return result, nil
+	return slices.Map(messages, messageToDomain), nil
 }
 
 func (s *Service) UpdateState(deviceID string, message smsgateway.MessageState) error {

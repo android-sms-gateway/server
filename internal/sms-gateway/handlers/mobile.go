@@ -168,21 +168,7 @@ func (h *mobileHandler) getMessage(device models.Device, c *fiber.Ctx) error {
 		smsgateway.MobileGetMessagesResponse(
 			slices.Map(
 				msgs,
-				func(m messages.MessageOut) smsgateway.MobileMessage {
-					return smsgateway.MobileMessage{
-						Message: smsgateway.Message{
-							ID:                 m.ID,
-							Message:            m.Message,
-							SimNumber:          m.SimNumber,
-							WithDeliveryReport: m.WithDeliveryReport,
-							IsEncrypted:        m.IsEncrypted,
-							PhoneNumbers:       m.PhoneNumbers,
-							TTL:                m.TTL,
-							ValidUntil:         m.ValidUntil,
-						},
-						CreatedAt: m.CreatedAt,
-					}
-				},
+				converters.MessageToDTO,
 			),
 		),
 	)

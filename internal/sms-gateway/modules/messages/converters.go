@@ -7,7 +7,7 @@ import (
 	"github.com/capcom6/go-helpers/slices"
 )
 
-func messageToDTO(input *models.Message) MessageOut {
+func messageToDomain(input models.Message) MessageOut {
 	var ttl *uint64 = nil
 	if input.ValidUntil != nil {
 		delta := time.Until(*input.ValidUntil).Seconds()
@@ -24,7 +24,7 @@ func messageToDTO(input *models.Message) MessageOut {
 		MessageIn: MessageIn{
 			ID:                 input.ExtID,
 			Message:            input.Message,
-			PhoneNumbers:       slices.Map(input.Recipients, func(r models.MessageRecipient) string { return r.PhoneNumber }),
+			PhoneNumbers:       slices.Map(input.Recipients, recipientToDomain),
 			IsEncrypted:        input.IsEncrypted,
 			SimNumber:          input.SimNumber,
 			WithDeliveryReport: &input.WithDeliveryReport,
@@ -33,4 +33,8 @@ func messageToDTO(input *models.Message) MessageOut {
 		},
 		CreatedAt: input.CreatedAt,
 	}
+}
+
+func recipientToDomain(input models.MessageRecipient) string {
+	return input.PhoneNumber
 }
