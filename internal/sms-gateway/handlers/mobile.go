@@ -16,6 +16,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 	"github.com/capcom6/go-helpers/anys"
+	"github.com/capcom6/go-helpers/slices"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/keyauth"
@@ -163,7 +164,11 @@ func (h *mobileHandler) getMessage(device models.Device, c *fiber.Ctx) error {
 		return fmt.Errorf("can't get messages: %w", err)
 	}
 
-	return c.JSON(messages)
+	return c.JSON(
+		smsgateway.MobileGetMessagesReponse(
+			slices.Map(messages, func(m smsgateway.Message) smsgateway.MobileMessage { return smsgateway.MobileMessage(m) }),
+		),
+	)
 }
 
 //	@Summary		Update message state

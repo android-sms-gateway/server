@@ -103,28 +103,7 @@ func (s *Service) SelectPending(deviceID string) ([]smsgateway.Message, error) {
 
 	result := make([]smsgateway.Message, len(messages))
 	for i, v := range messages {
-		var ttl *uint64 = nil
-		if v.ValidUntil != nil {
-			delta := time.Until(*v.ValidUntil).Seconds()
-			if delta > 0 {
-				deltaInt := uint64(delta)
-				ttl = &deltaInt
-			} else {
-				deltaInt := uint64(0)
-				ttl = &deltaInt
-			}
-		}
-
-		result[i] = smsgateway.Message{
-			ID:                 v.ExtID,
-			Message:            v.Message,
-			SimNumber:          v.SimNumber,
-			WithDeliveryReport: anys.AsPointer[bool](v.WithDeliveryReport),
-			IsEncrypted:        v.IsEncrypted,
-			PhoneNumbers:       s.recipientsToDomain(v.Recipients),
-			TTL:                ttl,
-			ValidUntil:         v.ValidUntil,
-		}
+		result[i] = messageToDTO(&v)
 	}
 
 	return result, nil
@@ -264,16 +243,6 @@ func (s *Service) Clean(ctx context.Context) error {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
-func (s *Service) recipientsToDomain(input []models.MessageRecipient) []string {
-	output := make([]string, len(input))
-
-	for i, v := range input {
-		output[i] = v.PhoneNumber
-	}
-
-	return output
-}
 
 func (s *Service) recipientsToModel(input []string) []models.MessageRecipient {
 	output := make([]models.MessageRecipient, len(input))
