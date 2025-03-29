@@ -153,8 +153,8 @@ func (h *mobileHandler) patchDevice(device models.Device, c *fiber.Ctx) error {
 //	@Tags			Device, Messages
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{array}		smsgateway.Message			"List of pending messages"
-//	@Failure		500	{object}	smsgateway.ErrorResponse	"Internal server error"
+//	@Success		200	{object}	smsgateway.MobileGetMessagesResponse	"List of pending messages"
+//	@Failure		500	{object}	smsgateway.ErrorResponse				"Internal server error"
 //	@Router			/mobile/v1/message [get]
 //
 // Get messages for sending
