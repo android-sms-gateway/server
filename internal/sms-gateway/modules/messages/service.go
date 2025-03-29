@@ -95,13 +95,13 @@ func (s *Service) RunBackgroundTasks(ctx context.Context, wg *sync.WaitGroup) {
 	}()
 }
 
-func (s *Service) SelectPending(deviceID string) ([]smsgateway.Message, error) {
+func (s *Service) SelectPending(deviceID string) ([]MessageOut, error) {
 	messages, err := s.messages.SelectPending(deviceID)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]smsgateway.Message, len(messages))
+	result := make([]MessageOut, len(messages))
 	for i, v := range messages {
 		result[i] = messageToDTO(&v)
 	}
@@ -157,7 +157,7 @@ func (s *Service) GetState(user models.User, ID string) (smsgateway.MessageState
 	return modelToMessageState(message), nil
 }
 
-func (s *Service) Enqeue(device models.Device, message smsgateway.Message, opts EnqueueOptions) (smsgateway.MessageState, error) {
+func (s *Service) Enqeue(device models.Device, message MessageIn, opts EnqueueOptions) (smsgateway.MessageState, error) {
 	state := smsgateway.MessageState{
 		ID:         "",
 		State:      smsgateway.ProcessingStatePending,

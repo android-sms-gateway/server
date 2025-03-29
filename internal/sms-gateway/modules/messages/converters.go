@@ -3,13 +3,11 @@ package messages
 import (
 	"time"
 
-	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
-	"github.com/capcom6/go-helpers/anys"
 	"github.com/capcom6/go-helpers/slices"
 )
 
-func messageToDTO(input *models.Message) smsgateway.Message {
+func messageToDTO(input *models.Message) MessageOut {
 	var ttl *uint64 = nil
 	if input.ValidUntil != nil {
 		delta := time.Until(*input.ValidUntil).Seconds()
@@ -22,17 +20,17 @@ func messageToDTO(input *models.Message) smsgateway.Message {
 		}
 	}
 
-	return smsgateway.Message{
-		ID:           input.ExtID,
-		Message:      input.Message,
-		PhoneNumbers: slices.Map(input.Recipients, func(r models.MessageRecipient) string { return r.PhoneNumber }),
-
-		SimNumber:          input.SimNumber,
-		WithDeliveryReport: anys.AsPointer(input.WithDeliveryReport),
-		IsEncrypted:        input.IsEncrypted,
-		TTL:                ttl,
-		ValidUntil:         input.ValidUntil,
-
+	return MessageOut{
+		MessageIn: MessageIn{
+			ID:                 input.ExtID,
+			Message:            input.Message,
+			PhoneNumbers:       slices.Map(input.Recipients, func(r models.MessageRecipient) string { return r.PhoneNumber }),
+			IsEncrypted:        input.IsEncrypted,
+			SimNumber:          input.SimNumber,
+			WithDeliveryReport: &input.WithDeliveryReport,
+			TTL:                ttl,
+			ValidUntil:         input.ValidUntil,
+		},
 		CreatedAt: input.CreatedAt,
 	}
 }

@@ -159,14 +159,31 @@ func (h *mobileHandler) patchDevice(device models.Device, c *fiber.Ctx) error {
 //
 // Get messages for sending
 func (h *mobileHandler) getMessage(device models.Device, c *fiber.Ctx) error {
-	messages, err := h.messagesSvc.SelectPending(device.ID)
+	msgs, err := h.messagesSvc.SelectPending(device.ID)
 	if err != nil {
 		return fmt.Errorf("can't get messages: %w", err)
 	}
 
 	return c.JSON(
-		smsgateway.MobileGetMessagesReponse(
-			slices.Map(messages, func(m smsgateway.Message) smsgateway.MobileMessage { return smsgateway.MobileMessage(m) }),
+		smsgateway.MobileGetMessagesResponse(
+			slices.Map(
+				msgs,
+				func(m messages.MessageOut) smsgateway.MobileMessage {
+					return smsgateway.MobileMessage{
+						Message: smsgateway.Message{
+							ID:                 m.ID,
+							Message:            m.Message,
+							SimNumber:          m.SimNumber,
+							WithDeliveryReport: m.WithDeliveryReport,
+							IsEncrypted:        m.IsEncrypted,
+							PhoneNumbers:       m.PhoneNumbers,
+							TTL:                m.TTL,
+							ValidUntil:         m.ValidUntil,
+						},
+						CreatedAt: m.CreatedAt,
+					}
+				},
+			),
 		),
 	)
 }
