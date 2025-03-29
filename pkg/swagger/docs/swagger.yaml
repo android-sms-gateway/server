@@ -257,6 +257,57 @@ definitions:
         description: External IP
         type: string
     type: object
+  smsgateway.MobileMessage:
+    properties:
+      createdAt:
+        description: Message creation time
+        example: "2020-01-01T00:00:00Z"
+        type: string
+      id:
+        description: ID (if not set - will be generated)
+        example: PyDmBQZZXYmyxMwED8Fzy
+        maxLength: 36
+        type: string
+      isEncrypted:
+        description: Is encrypted
+        example: true
+        type: boolean
+      message:
+        description: Content
+        example: Hello World!
+        maxLength: 65535
+        type: string
+      phoneNumbers:
+        description: Recipients (phone numbers)
+        example:
+        - "79990001234"
+        items:
+          type: string
+        maxItems: 100
+        minItems: 1
+        type: array
+      simNumber:
+        description: SIM card number (1-3), if not set - default SIM will be used
+        example: 1
+        maximum: 3
+        type: integer
+      ttl:
+        description: Time to live in seconds (conflicts with `validUntil`)
+        example: 86400
+        minimum: 5
+        type: integer
+      validUntil:
+        description: Valid until (conflicts with `ttl`)
+        example: "2020-01-01T00:00:00Z"
+        type: string
+      withDeliveryReport:
+        description: With delivery report
+        example: true
+        type: boolean
+    required:
+    - message
+    - phoneNumbers
+    type: object
   smsgateway.MobileRegisterRequest:
     properties:
       name:
@@ -304,9 +355,11 @@ definitions:
   smsgateway.MobileUserCodeResponse:
     properties:
       code:
+        description: One-time code
         example: "123456"
         type: string
       validUntil:
+        description: One-time code expiration time
         example: "2020-01-01T00:00:00Z"
         type: string
     type: object
@@ -874,7 +927,7 @@ paths:
           description: List of pending messages
           schema:
             items:
-              $ref: '#/definitions/smsgateway.Message'
+              $ref: '#/definitions/smsgateway.MobileMessage'
             type: array
         "500":
           description: Internal server error
