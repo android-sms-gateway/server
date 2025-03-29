@@ -704,7 +704,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/smsgateway.Message"
+                                "$ref": "#/definitions/smsgateway.MobileMessage"
                             }
                         }
                     },
@@ -1164,6 +1164,7 @@
                 },
                 "priority": {
                     "description": "Priority, messages with values greater than `99` will bypass limits and delays",
+                    "default": 0,
                     "maximum": 127,
                     "minimum": -128,
                     "allOf": [
@@ -1206,12 +1207,12 @@
                 127
             ],
             "x-enum-comments": {
-                "PriorityExpedited": "This and higher priority messages will bypass limits and delays"
+                "PriorityBypassThreshold": "Threshold at which messages bypass limits and delays"
             },
             "x-enum-varnames": [
                 "PriorityMinimum",
                 "PriorityDefault",
-                "PriorityExpedited",
+                "PriorityBypassThreshold",
                 "PriorityMaximum"
             ]
         },
@@ -1324,6 +1325,83 @@
                 "externalIp": {
                     "description": "External IP",
                     "type": "string"
+                }
+            }
+        },
+        "smsgateway.MobileMessage": {
+            "type": "object",
+            "required": [
+                "message",
+                "phoneNumbers"
+            ],
+            "properties": {
+                "createdAt": {
+                    "description": "Message creation time",
+                    "type": "string",
+                    "example": "2020-01-01T00:00:00Z"
+                },
+                "id": {
+                    "description": "ID (if not set - will be generated)",
+                    "type": "string",
+                    "maxLength": 36,
+                    "example": "PyDmBQZZXYmyxMwED8Fzy"
+                },
+                "isEncrypted": {
+                    "description": "Is encrypted",
+                    "type": "boolean",
+                    "example": true
+                },
+                "message": {
+                    "description": "Content",
+                    "type": "string",
+                    "maxLength": 65535,
+                    "example": "Hello World!"
+                },
+                "phoneNumbers": {
+                    "description": "Recipients (phone numbers)",
+                    "type": "array",
+                    "maxItems": 100,
+                    "minItems": 1,
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "79990001234"
+                    ]
+                },
+                "priority": {
+                    "description": "Priority, messages with values greater than `99` will bypass limits and delays",
+                    "default": 0,
+                    "maximum": 127,
+                    "minimum": -128,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.MessagePriority"
+                        }
+                    ],
+                    "example": 0
+                },
+                "simNumber": {
+                    "description": "SIM card number (1-3), if not set - default SIM will be used",
+                    "type": "integer",
+                    "maximum": 3,
+                    "example": 1
+                },
+                "ttl": {
+                    "description": "Time to live in seconds (conflicts with `validUntil`)",
+                    "type": "integer",
+                    "minimum": 5,
+                    "example": 86400
+                },
+                "validUntil": {
+                    "description": "Valid until (conflicts with `ttl`)",
+                    "type": "string",
+                    "example": "2020-01-01T00:00:00Z"
+                },
+                "withDeliveryReport": {
+                    "description": "With delivery report",
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },

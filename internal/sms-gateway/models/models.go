@@ -58,6 +58,7 @@ type Message struct {
 	ValidUntil         *time.Time      `gorm:"type:datetime"`
 	SimNumber          *uint8          `gorm:"type:tinyint(1) unsigned"`
 	WithDeliveryReport bool            `gorm:"not null;type:tinyint(1) unsigned"`
+	Priority           int8            `gorm:"not null;type:tinyint;default:0"`
 
 	IsHashed    bool `gorm:"not null;type:tinyint(1) unsigned;default:0"`
 	IsEncrypted bool `gorm:"not null;type:tinyint(1) unsigned;default:0"`

@@ -53,7 +53,8 @@ func (t *HashingTask) Run(ctx context.Context) {
 	}
 }
 
-func (t *HashingTask) Enqeue(id uint64) {
+// Enqueue adds a message ID to the processing queue to be hashed in the next batch
+func (t *HashingTask) Enqueue(id uint64) {
 	t.mux.Lock()
 	t.queue[id] = struct{}{}
 	t.mux.Unlock()

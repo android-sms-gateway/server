@@ -78,7 +78,19 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 		return fmt.Errorf("can't get random device: %w", err)
 	}
 
-	state, err := h.messagesSvc.Enqeue(device, req, messages.EnqueueOptions{SkipPhoneValidation: skipPhoneValidation})
+	msg := messages.MessageIn{
+		ID:           req.ID,
+		Message:      req.Message,
+		PhoneNumbers: req.PhoneNumbers,
+		IsEncrypted:  req.IsEncrypted,
+
+		SimNumber:          req.SimNumber,
+		WithDeliveryReport: req.WithDeliveryReport,
+		TTL:                req.TTL,
+		ValidUntil:         req.ValidUntil,
+		Priority:           req.Priority,
+	}
+	state, err := h.messagesSvc.Enqueue(device, msg, messages.EnqueueOptions{SkipPhoneValidation: skipPhoneValidation})
 	if err != nil {
 		var errValidation messages.ErrValidation
 		if isBadRequest := errors.As(err, &errValidation); isBadRequest {

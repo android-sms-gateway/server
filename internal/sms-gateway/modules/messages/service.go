@@ -95,39 +95,13 @@ func (s *Service) RunBackgroundTasks(ctx context.Context, wg *sync.WaitGroup) {
 	}()
 }
 
-func (s *Service) SelectPending(deviceID string) ([]smsgateway.Message, error) {
+func (s *Service) SelectPending(deviceID string) ([]MessageOut, error) {
 	messages, err := s.messages.SelectPending(deviceID)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]smsgateway.Message, len(messages))
-	for i, v := range messages {
-		var ttl *uint64 = nil
-		if v.ValidUntil != nil {
-			delta := time.Until(*v.ValidUntil).Seconds()
-			if delta > 0 {
-				deltaInt := uint64(delta)
-				ttl = &deltaInt
-			} else {
-				deltaInt := uint64(0)
-				ttl = &deltaInt
-			}
-		}
-
-		result[i] = smsgateway.Message{
-			ID:                 v.ExtID,
-			Message:            v.Message,
-			SimNumber:          v.SimNumber,
-			WithDeliveryReport: anys.AsPointer[bool](v.WithDeliveryReport),
-			IsEncrypted:        v.IsEncrypted,
-			PhoneNumbers:       s.recipientsToDomain(v.Recipients),
-			TTL:                ttl,
-			ValidUntil:         v.ValidUntil,
-		}
-	}
-
-	return result, nil
+	return slices.Map(messages, messageToDomain), nil
 }
 
 func (s *Service) UpdateState(deviceID string, message smsgateway.MessageState) error {
@@ -154,7 +128,7 @@ func (s *Service) UpdateState(deviceID string, message smsgateway.MessageState) 
 		return err
 	}
 
-	s.hashingTask.Enqeue(existing.ID)
+	s.hashingTask.Enqueue(existing.ID)
 
 	s.messagesCounter.WithLabelValues(string(existing.State)).Inc()
 
@@ -178,7 +152,7 @@ func (s *Service) GetState(user models.User, ID string) (smsgateway.MessageState
 	return modelToMessageState(message), nil
 }
 
-func (s *Service) Enqeue(device models.Device, message smsgateway.Message, opts EnqueueOptions) (smsgateway.MessageState, error) {
+func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueOptions) (smsgateway.MessageState, error) {
 	state := smsgateway.MessageState{
 		ID:         "",
 		State:      smsgateway.ProcessingStatePending,
@@ -210,16 +184,18 @@ func (s *Service) Enqeue(device models.Device, message smsgateway.Message, opts 
 	}
 
 	msg := models.Message{
-		DeviceID:           device.ID,
-		ExtID:              message.ID,
-		Message:            message.Message,
-		ValidUntil:         validUntil,
+		ExtID:       message.ID,
+		Message:     message.Message,
+		Recipients:  s.recipientsToModel(message.PhoneNumbers),
+		IsEncrypted: message.IsEncrypted,
+
+		DeviceID: device.ID,
+
 		SimNumber:          message.SimNumber,
-		WithDeliveryReport: anys.OrDefault[bool](message.WithDeliveryReport, true),
-		IsEncrypted:        message.IsEncrypted,
-		Device:             device,
-		Recipients:         s.recipientsToModel(message.PhoneNumbers),
-		TimedModel:         models.TimedModel{},
+		WithDeliveryReport: anys.OrDefault(message.WithDeliveryReport, true),
+
+		Priority:   int8(message.Priority),
+		ValidUntil: validUntil,
 	}
 	if msg.ExtID == "" {
 		msg.ExtID = s.idgen()
@@ -264,16 +240,6 @@ func (s *Service) Clean(ctx context.Context) error {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
-func (s *Service) recipientsToDomain(input []models.MessageRecipient) []string {
-	output := make([]string, len(input))
-
-	for i, v := range input {
-		output[i] = v.PhoneNumber
-	}
-
-	return output
-}
 
 func (s *Service) recipientsToModel(input []string) []models.MessageRecipient {
 	output := make([]models.MessageRecipient, len(input))

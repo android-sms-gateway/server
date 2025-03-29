@@ -16,6 +16,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 	"github.com/capcom6/go-helpers/anys"
+	"github.com/capcom6/go-helpers/slices"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/keyauth"
@@ -152,18 +153,25 @@ func (h *mobileHandler) patchDevice(device models.Device, c *fiber.Ctx) error {
 //	@Tags			Device, Messages
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{array}		smsgateway.Message			"List of pending messages"
-//	@Failure		500	{object}	smsgateway.ErrorResponse	"Internal server error"
+//	@Success		200	{object}	smsgateway.MobileGetMessagesResponse	"List of pending messages"
+//	@Failure		500	{object}	smsgateway.ErrorResponse				"Internal server error"
 //	@Router			/mobile/v1/message [get]
 //
 // Get messages for sending
 func (h *mobileHandler) getMessage(device models.Device, c *fiber.Ctx) error {
-	messages, err := h.messagesSvc.SelectPending(device.ID)
+	msgs, err := h.messagesSvc.SelectPending(device.ID)
 	if err != nil {
 		return fmt.Errorf("can't get messages: %w", err)
 	}
 
-	return c.JSON(messages)
+	return c.JSON(
+		smsgateway.MobileGetMessagesResponse(
+			slices.Map(
+				msgs,
+				converters.MessageToDTO,
+			),
+		),
+	)
 }
 
 //	@Summary		Update message state
