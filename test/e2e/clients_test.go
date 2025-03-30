@@ -9,10 +9,6 @@ import (
 const (
 	PublicURL  = "http://localhost:3000/api"
 	PrivateURL = "http://localhost:3001/api"
-
-	DemoToken    = "s66lg7znmIm8EsDX3oLxT"
-	DemoLogin    = "O8VLVH"
-	DemoPassword = "ts_tdtqml1pvji"
 )
 
 var (
