@@ -53,7 +53,7 @@ func (t *HashingTask) Run(ctx context.Context) {
 	}
 }
 
-func (t *HashingTask) Enqeue(id uint64) {
+func (t *HashingTask) Enqueue(id uint64) {
 	t.mux.Lock()
 	t.queue[id] = struct{}{}
 	t.mux.Unlock()

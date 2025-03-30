@@ -128,7 +128,7 @@ func (s *Service) UpdateState(deviceID string, message smsgateway.MessageState) 
 		return err
 	}
 
-	s.hashingTask.Enqeue(existing.ID)
+	s.hashingTask.Enqueue(existing.ID)
 
 	s.messagesCounter.WithLabelValues(string(existing.State)).Inc()
 
