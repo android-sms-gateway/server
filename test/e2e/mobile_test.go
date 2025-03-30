@@ -4,45 +4,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"testing"
-	"time"
-
-	"github.com/go-resty/resty/v2"
-)
-
-var (
-	publicClient = resty.New().
-			SetBaseURL(PublicURL + "/mobile/v1").
-			SetTimeout(300 * time.Millisecond)
-	privateClient = resty.New().
-			SetBaseURL(PrivateURL + "/mobile/v1").
-			SetTimeout(300 * time.Millisecond)
 )
 
 type mobileRegisterResponse struct {
 	Token    string `json:"token"`
 	Login    string `json:"login"`
 	Password string `json:"password"`
-}
-
-func mobileDeviceRegister(t *testing.T, client *resty.Client) mobileRegisterResponse {
-	res, err := client.R().
-		SetHeader("Content-Type", "application/json").
-		SetBody(`{"name": "Public Device Name", "pushToken": "token"}`).
-		Post("device")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !res.IsSuccess() {
-		t.Fatal(res.StatusCode(), res.String())
-	}
-
-	var resp mobileRegisterResponse
-	if err := json.Unmarshal(res.Body(), &resp); err != nil {
-		t.Fatal(err)
-	}
-
-	return resp
 }
 
 func TestPublicDeviceRegister(t *testing.T) {
@@ -74,7 +41,7 @@ func TestPublicDeviceRegister(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			res, err := publicClient.R().
+			res, err := publicMobileClient.R().
 				SetHeader("Content-Type", "application/json").
 				SetBody(`{"name": "Public Device Name", "pushToken": "token"}`).
 				SetHeaders(c.headers).
@@ -117,7 +84,7 @@ func TestPrivateDeviceRegister(t *testing.T) {
 		},
 	}
 
-	client := privateClient
+	client := privateMobileClient
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -138,7 +105,7 @@ func TestPrivateDeviceRegister(t *testing.T) {
 }
 
 func TestPublicDevicePasswordChange(t *testing.T) {
-	device := mobileDeviceRegister(t, publicClient)
+	device := mobileDeviceRegister(t, publicMobileClient)
 
 	cases := []struct {
 		name               string
@@ -190,7 +157,7 @@ func TestPublicDevicePasswordChange(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			res, err := publicClient.R().
+			res, err := publicMobileClient.R().
 				SetHeader("Content-Type", "application/json").
 				SetBody(c.body).
 				SetHeaders(c.headers).
@@ -210,7 +177,7 @@ func TestPublicDeviceRegisterWithCredentials(t *testing.T) {
 	// won't work with registration rate limits
 	t.SkipNow()
 
-	firstDevice := mobileDeviceRegister(t, publicClient)
+	firstDevice := mobileDeviceRegister(t, publicMobileClient)
 
 	cases := []struct {
 		name               string
@@ -239,7 +206,7 @@ func TestPublicDeviceRegisterWithCredentials(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			res, err := publicClient.R().
+			res, err := publicMobileClient.R().
 				SetHeader("Content-Type", "application/json").
 				SetBody(`{"name": "Public Device Name", "pushToken": "token"}`).
 				SetHeaders(c.headers).

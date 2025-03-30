@@ -1,3 +1,5 @@
+github.com/capcom6/go-helpers v0.2.0 h1:OUcUnVbjBiwaTzvyaxkxqRKtrOXv1ifYalQ1NXzFBNM=
+github.com/capcom6/go-helpers v0.2.0/go.mod h1:WDqc7HZNqHxUTisArkYIBZtqUfJBVyPWeQI+FMwEzAw=
 github.com/go-resty/resty/v2 v2.16.2 h1:CpRqTjIzq/rweXUt9+GxzzQdlkqMdt8Lm/fuK/CAbAg=
 github.com/go-resty/resty/v2 v2.16.2/go.mod h1:0fHAoK7JoBy/Ch36N8VFeMsK7xQOHhvWaC3iOktwmIU=
 golang.org/x/net v0.37.0 h1:1zLorHbz+LYj7MQlSf1+2tPIIgibq2eL5xkrGk6f+2c=
