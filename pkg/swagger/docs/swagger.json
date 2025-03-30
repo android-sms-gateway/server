@@ -1162,6 +1162,17 @@
                         "79990001234"
                     ]
                 },
+                "priority": {
+                    "description": "Priority, messages with values greater than `99` will bypass limits and delays",
+                    "maximum": 127,
+                    "minimum": -128,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.MessagePriority"
+                        }
+                    ],
+                    "example": 0
+                },
                 "simNumber": {
                     "description": "SIM card number (1-3), if not set - default SIM will be used",
                     "type": "integer",
@@ -1185,6 +1196,24 @@
                     "example": true
                 }
             }
+        },
+        "smsgateway.MessagePriority": {
+            "type": "integer",
+            "enum": [
+                -128,
+                0,
+                100,
+                127
+            ],
+            "x-enum-comments": {
+                "PriorityBypassThreshold": "Threshold at which messages bypass limits and delays"
+            },
+            "x-enum-varnames": [
+                "PriorityMinimum",
+                "PriorityDefault",
+                "PriorityBypassThreshold",
+                "PriorityMaximum"
+            ]
         },
         "smsgateway.MessageState": {
             "type": "object",
@@ -1338,6 +1367,17 @@
                     "example": [
                         "79990001234"
                     ]
+                },
+                "priority": {
+                    "description": "Priority, messages with values greater than `99` will bypass limits and delays",
+                    "maximum": 127,
+                    "minimum": -128,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.MessagePriority"
+                        }
+                    ],
+                    "example": 0
                 },
                 "simNumber": {
                     "description": "SIM card number (1-3), if not set - default SIM will be used",
