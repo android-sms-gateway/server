@@ -152,7 +152,7 @@ func (s *Service) GetState(user models.User, ID string) (smsgateway.MessageState
 	return modelToMessageState(message), nil
 }
 
-func (s *Service) Enqeue(device models.Device, message MessageIn, opts EnqueueOptions) (smsgateway.MessageState, error) {
+func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueOptions) (smsgateway.MessageState, error) {
 	state := smsgateway.MessageState{
 		ID:         "",
 		State:      smsgateway.ProcessingStatePending,

@@ -90,7 +90,7 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 		ValidUntil:         req.ValidUntil,
 		Priority:           req.Priority,
 	}
-	state, err := h.messagesSvc.Enqeue(device, msg, messages.EnqueueOptions{SkipPhoneValidation: skipPhoneValidation})
+	state, err := h.messagesSvc.Enqueue(device, msg, messages.EnqueueOptions{SkipPhoneValidation: skipPhoneValidation})
 	if err != nil {
 		var errValidation messages.ErrValidation
 		if isBadRequest := errors.As(err, &errValidation); isBadRequest {

@@ -1,6 +1,7 @@
 package messages
 
 import (
+	"math"
 	"time"
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
@@ -11,14 +12,8 @@ import (
 func messageToDomain(input models.Message) MessageOut {
 	var ttl *uint64 = nil
 	if input.ValidUntil != nil {
-		delta := time.Until(*input.ValidUntil).Seconds()
-		if delta > 0 {
-			deltaInt := uint64(delta)
-			ttl = &deltaInt
-		} else {
-			deltaInt := uint64(0)
-			ttl = &deltaInt
-		}
+		secondsUntil := uint64(math.Max(0, time.Until(*input.ValidUntil).Seconds()))
+		ttl = &secondsUntil
 	}
 
 	return MessageOut{
