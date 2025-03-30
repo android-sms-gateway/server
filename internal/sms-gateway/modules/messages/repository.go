@@ -24,7 +24,7 @@ type repository struct {
 func (r *repository) SelectPending(deviceID string) (messages []models.Message, err error) {
 	err = r.db.
 		Where("device_id = ? AND state = ?", deviceID, models.ProcessingStatePending).
-		Order("id DESC").
+		Order("priority DESC, id DESC").
 		Limit(100).
 		Preload("Recipients").
 		Find(&messages).

@@ -88,6 +88,7 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 		WithDeliveryReport: req.WithDeliveryReport,
 		TTL:                req.TTL,
 		ValidUntil:         req.ValidUntil,
+		Priority:           req.Priority,
 	}
 	state, err := h.messagesSvc.Enqeue(device, msg, messages.EnqueueOptions{SkipPhoneValidation: skipPhoneValidation})
 	if err != nil {

@@ -184,16 +184,18 @@ func (s *Service) Enqeue(device models.Device, message MessageIn, opts EnqueueOp
 	}
 
 	msg := models.Message{
-		DeviceID:           device.ID,
-		ExtID:              message.ID,
-		Message:            message.Message,
-		ValidUntil:         validUntil,
+		ExtID:       message.ID,
+		Message:     message.Message,
+		Recipients:  s.recipientsToModel(message.PhoneNumbers),
+		IsEncrypted: message.IsEncrypted,
+
+		DeviceID: device.ID,
+
 		SimNumber:          message.SimNumber,
-		WithDeliveryReport: anys.OrDefault[bool](message.WithDeliveryReport, true),
-		IsEncrypted:        message.IsEncrypted,
-		Device:             device,
-		Recipients:         s.recipientsToModel(message.PhoneNumbers),
-		TimedModel:         models.TimedModel{},
+		WithDeliveryReport: anys.OrDefault(message.WithDeliveryReport, true),
+
+		Priority:   int8(message.Priority),
+		ValidUntil: validUntil,
 	}
 	if msg.ExtID == "" {
 		msg.ExtID = s.idgen()

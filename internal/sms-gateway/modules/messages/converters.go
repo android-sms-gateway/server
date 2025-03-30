@@ -3,6 +3,7 @@ package messages
 import (
 	"time"
 
+	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/capcom6/go-helpers/slices"
 )
@@ -30,6 +31,7 @@ func messageToDomain(input models.Message) MessageOut {
 			WithDeliveryReport: &input.WithDeliveryReport,
 			TTL:                ttl,
 			ValidUntil:         input.ValidUntil,
+			Priority:           smsgateway.MessagePriority(input.Priority),
 		},
 		CreatedAt: input.CreatedAt,
 	}

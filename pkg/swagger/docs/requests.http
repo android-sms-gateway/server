@@ -20,8 +20,9 @@ Authorization: Basic {{credentials}}
     "phoneNumbers": [
         "{{phone}}"
     ],
-    "simNumber": {{$randomInt 1 2}},
-    "withDeliveryReport": true
+    "withDeliveryReport": true,
+    "priority": 128,
+    "simNumber": {{$randomInt 1 2}}
 }
 
 ###

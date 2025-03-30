@@ -1,6 +1,10 @@
 package messages
 
-import "time"
+import (
+	"time"
+
+	"github.com/android-sms-gateway/client-go/smsgateway"
+)
 
 type MessageIn struct {
 	ID           string
@@ -12,6 +16,7 @@ type MessageIn struct {
 	WithDeliveryReport *bool
 	TTL                *uint64
 	ValidUntil         *time.Time
+	Priority           smsgateway.MessagePriority
 }
 
 type MessageOut struct {

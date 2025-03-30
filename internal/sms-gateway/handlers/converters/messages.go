@@ -16,6 +16,7 @@ func MessageToDTO(m messages.MessageOut) smsgateway.MobileMessage {
 			PhoneNumbers:       m.PhoneNumbers,
 			TTL:                m.TTL,
 			ValidUntil:         m.ValidUntil,
+			Priority:           m.Priority,
 		},
 		CreatedAt: m.CreatedAt,
 	}
