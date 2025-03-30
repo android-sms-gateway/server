@@ -11,11 +11,6 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-const (
-	PublicURL  = "http://localhost:3000/api"
-	PrivateURL = "http://localhost:3001/api"
-)
-
 func isOnline() bool {
 	for _, v := range []string{PublicURL, PrivateURL} {
 		_, err := resty.New().
@@ -34,6 +29,8 @@ func isOnline() bool {
 }
 
 func TestMain(m *testing.M) {
+	hasErrors := false
+
 	log.Println("running e2e tests")
 
 	if _, ok := os.LookupEnv("CI"); !ok {
@@ -46,13 +43,18 @@ func TestMain(m *testing.M) {
 				log.Fatal(fmt.Errorf("docker-compose down -v: %w", err))
 			}
 			log.Println("e2e tests finished")
+
+			if hasErrors {
+				log.Fatal("e2e tests failed")
+			}
 		}()
 	}
 
 	startedAt := time.Now()
 	for {
-		if time.Since(startedAt) > 20*time.Second {
+		if time.Since(startedAt) > 30*time.Second {
 			log.Println("timeout")
+			hasErrors = true
 			return
 		}
 
