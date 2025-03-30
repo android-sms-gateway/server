@@ -154,6 +154,14 @@ definitions:
         maxItems: 100
         minItems: 1
         type: array
+      priority:
+        allOf:
+        - $ref: '#/definitions/smsgateway.MessagePriority'
+        description: Priority, messages with values greater than `99` will bypass
+          limits and delays
+        example: 0
+        maximum: 127
+        minimum: -128
       simNumber:
         description: SIM card number (1-3), if not set - default SIM will be used
         example: 1
@@ -176,6 +184,21 @@ definitions:
     - message
     - phoneNumbers
     type: object
+  smsgateway.MessagePriority:
+    enum:
+    - -128
+    - 0
+    - 100
+    - 127
+    type: integer
+    x-enum-comments:
+      PriorityExpedited: This and higher priority messages will bypass limits and
+        delays
+    x-enum-varnames:
+    - PriorityMinimum
+    - PriorityDefault
+    - PriorityExpedited
+    - PriorityMaximum
   smsgateway.MessageState:
     properties:
       id:
@@ -304,9 +327,11 @@ definitions:
   smsgateway.MobileUserCodeResponse:
     properties:
       code:
+        description: One-time code
         example: "123456"
         type: string
       validUntil:
+        description: One-time code expiration time
         example: "2020-01-01T00:00:00Z"
         type: string
     type: object

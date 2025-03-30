@@ -1162,6 +1162,17 @@
                         "79990001234"
                     ]
                 },
+                "priority": {
+                    "description": "Priority, messages with values greater than `99` will bypass limits and delays",
+                    "maximum": 127,
+                    "minimum": -128,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.MessagePriority"
+                        }
+                    ],
+                    "example": 0
+                },
                 "simNumber": {
                     "description": "SIM card number (1-3), if not set - default SIM will be used",
                     "type": "integer",
@@ -1185,6 +1196,24 @@
                     "example": true
                 }
             }
+        },
+        "smsgateway.MessagePriority": {
+            "type": "integer",
+            "enum": [
+                -128,
+                0,
+                100,
+                127
+            ],
+            "x-enum-comments": {
+                "PriorityExpedited": "This and higher priority messages will bypass limits and delays"
+            },
+            "x-enum-varnames": [
+                "PriorityMinimum",
+                "PriorityDefault",
+                "PriorityExpedited",
+                "PriorityMaximum"
+            ]
         },
         "smsgateway.MessageState": {
             "type": "object",
@@ -1360,10 +1389,12 @@
             "type": "object",
             "properties": {
                 "code": {
+                    "description": "One-time code",
                     "type": "string",
                     "example": "123456"
                 },
                 "validUntil": {
+                    "description": "One-time code expiration time",
                     "type": "string",
                     "example": "2020-01-01T00:00:00Z"
                 }
