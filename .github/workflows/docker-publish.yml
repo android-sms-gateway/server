@@ -63,6 +63,7 @@ jobs:
     needs:
       - test
       - e2e
+    if: github.actor != 'dependabot[bot]'
     uses: ./.github/workflows/docker-build.yml
     with:
       app-name: sms-gateway

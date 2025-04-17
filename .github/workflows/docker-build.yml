@@ -47,14 +47,12 @@ jobs:
 
       - name: Log into Docker Hub
         uses: docker/login-action@v3
-        if: github.actor != 'dependabot[bot]'
         with:
           username: ${{ secrets.username }}
           password: ${{ secrets.password }}
 
       - name: Login to Container registry
         uses: docker/login-action@v3
-        if: github.actor != 'dependabot[bot]'
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -81,7 +79,6 @@ jobs:
             APP=${{ inputs.app-name }}
             APP_VERSION=${{ env.APP_VERSION }}
             APP_RELEASE_ID=${{ env.APP_RELEASE }}
-          push: ${{ github.actor != 'dependabot[bot]' }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,"name=${{ env.DOCKERHUB_REPO }},${{ env.GHCR_REPO }}",push-by-digest=true,name-canonical=true,push=true
 
@@ -116,14 +113,12 @@ jobs:
 
       - name: Log into Docker Hub
         uses: docker/login-action@v3
-        if: github.actor != 'dependabot[bot]'
         with:
           username: ${{ secrets.username }}
           password: ${{ secrets.password }}
 
       - name: Login to Container registry
         uses: docker/login-action@v3
-        if: github.actor != 'dependabot[bot]'
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
