@@ -22,6 +22,8 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs:
       - build
 
