@@ -7,6 +7,8 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       # step 1: checkout repository code
       - name: Checkout code into workspace directory
@@ -29,6 +31,8 @@ jobs:
   e2e:
     name: E2E
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       # step 1: checkout repository code
       - name: Checkout code into workspace directory
