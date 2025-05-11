@@ -2,7 +2,6 @@ package fcm
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 
@@ -53,8 +52,8 @@ func (c *Client) Open(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) Send(ctx context.Context, messages map[string]domain.Event) error {
-	errs := make([]error, 0, len(messages))
+func (c *Client) Send(ctx context.Context, messages map[string]domain.Event) (map[string]error, error) {
+	errs := make(map[string]error, len(messages))
 	for address, payload := range messages {
 		_, err := c.client.Send(ctx, &messaging.Message{
 			Data: payload.Map(),
@@ -65,11 +64,11 @@ func (c *Client) Send(ctx context.Context, messages map[string]domain.Event) err
 		})
 
 		if err != nil {
-			errs = append(errs, fmt.Errorf("can't send message to %s: %w", address, err))
+			errs[address] = fmt.Errorf("can't send message to %s: %w", address, err)
 		}
 	}
 
-	return errors.Join(errs...)
+	return errs, nil
 }
 
 func (c *Client) Close(ctx context.Context) error {

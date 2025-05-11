@@ -21,7 +21,7 @@ Authorization: Basic {{credentials}}
         "{{phone}}"
     ],
     "withDeliveryReport": true,
-    "priority": 128,
+    "priority": 127,
     "simNumber": {{$randomInt 1 2}}
 }
 

@@ -11,6 +11,8 @@ import (
 type Mode string
 type Event = domain.Event
 
+var NewEvent = domain.NewEvent
+
 const (
 	ModeFCM      Mode = "fcm"
 	ModeUpstream Mode = "upstream"
@@ -18,8 +20,14 @@ const (
 
 type client interface {
 	Open(ctx context.Context) error
-	Send(ctx context.Context, messages map[string]domain.Event) error
+	Send(ctx context.Context, messages map[string]domain.Event) (map[string]error, error)
 	Close(ctx context.Context) error
+}
+
+type eventWrapper struct {
+	token   string
+	event   *domain.Event
+	retries int
 }
 
 func NewMessageEnqueuedEvent() *domain.Event {

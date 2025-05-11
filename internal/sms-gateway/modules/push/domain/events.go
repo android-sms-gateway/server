@@ -7,22 +7,30 @@ import (
 )
 
 type Event struct {
-	Event smsgateway.PushEventType
-	Data  map[string]string
+	event smsgateway.PushEventType
+	data  map[string]string
+}
+
+func (e *Event) Event() smsgateway.PushEventType {
+	return e.event
+}
+
+func (e *Event) Data() map[string]string {
+	return e.data
 }
 
 func (e *Event) Map() map[string]string {
-	json, _ := json.Marshal(e.Data)
+	json, _ := json.Marshal(e.data)
 
 	return map[string]string{
-		"event": string(e.Event),
+		"event": string(e.event),
 		"data":  string(json),
 	}
 }
 
 func NewEvent(event smsgateway.PushEventType, data map[string]string) *Event {
 	return &Event{
-		Event: event,
-		Data:  data,
+		event: event,
+		data:  data,
 	}
 }
