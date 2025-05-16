@@ -1587,6 +1587,12 @@
                 "url"
             ],
             "properties": {
+                "deviceId": {
+                    "description": "The unique identifier of the device the webhook is associated with.",
+                    "type": "string",
+                    "maxLength": 21,
+                    "example": "PyDmBQZZXYmyxMwED8Fzy"
+                },
                 "event": {
                     "description": "The type of event the webhook is triggered for.",
                     "allOf": [

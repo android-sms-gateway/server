@@ -30,6 +30,22 @@ func (r *repository) Select(filter ...SelectFilter) ([]models.Device, error) {
 	return devices, f.apply(r.db).Find(&devices).Error
 }
 
+// Exists checks if there exists a device with the given filters.
+//
+// If the device does not exist, it returns false and nil error. If there is an
+// error during the query, it returns false and the error. Otherwise, it returns
+// true and nil error.
+func (r *repository) Exists(filters ...SelectFilter) (bool, error) {
+	err := newFilter(filters...).apply(r.db).Take(&models.Device{}).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (r *repository) Get(filter ...SelectFilter) (models.Device, error) {
 	devices, err := r.Select(filter...)
 	if err != nil {

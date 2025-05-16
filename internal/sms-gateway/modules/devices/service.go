@@ -52,6 +52,17 @@ func (s *Service) Select(userID string, filter ...SelectFilter) ([]models.Device
 	return s.devices.Select(filter...)
 }
 
+// Exists checks if there exists a device that matches the provided filters.
+//
+// If the device does not exist, it returns false and nil error. If there is an
+// error during the query, it returns false and the error. Otherwise, it returns
+// true and nil error.
+func (s *Service) Exists(userID string, filter ...SelectFilter) (bool, error) {
+	filter = append(filter, WithUserID(userID))
+
+	return s.devices.Exists(filter...)
+}
+
 // Get returns a single device based on the provided filters for a specific user.
 // It ensures that the filter includes the user's ID. If no device matches the
 // criteria, it returns ErrNotFound. If more than one device matches, it returns

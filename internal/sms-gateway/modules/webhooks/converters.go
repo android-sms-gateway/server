@@ -6,8 +6,9 @@ import (
 
 func webhookToDTO(model *Webhook) smsgateway.Webhook {
 	return smsgateway.Webhook{
-		ID:    model.ExtID,
-		URL:   model.URL,
-		Event: model.Event,
+		ID:       model.ExtID,
+		DeviceID: model.DeviceID,
+		URL:      model.URL,
+		Event:    model.Event,
 	}
 }

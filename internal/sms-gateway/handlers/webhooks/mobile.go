@@ -38,7 +38,7 @@ type MobileController struct {
 //
 // List webhooks
 func (h *MobileController) get(device models.Device, c *fiber.Ctx) error {
-	items, err := h.webhooksSvc.Select(device.UserID)
+	items, err := h.webhooksSvc.Select(device.UserID, webhooks.WithDeviceID(device.ID, false))
 	if err != nil {
 		return fmt.Errorf("can't select webhooks: %w", err)
 	}

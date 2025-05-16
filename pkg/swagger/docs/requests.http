@@ -90,6 +90,7 @@ Content-Type: application/json
 
 {
     "id": "MYofX8bTd5Bov0wWFZLRP",
+    "deviceId": "C0ZGtCNf7-sXTbCtF6JXm",
     "url": "https://webhook.site/280a6655-eb68-40b9-b857-af5be37c5303",
     "event": "sms:received"
 }

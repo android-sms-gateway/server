@@ -472,6 +472,12 @@ definitions:
     type: object
   smsgateway.Webhook:
     properties:
+      deviceId:
+        description: The unique identifier of the device the webhook is associated
+          with.
+        example: PyDmBQZZXYmyxMwED8Fzy
+        maxLength: 21
+        type: string
       event:
         allOf:
         - $ref: '#/definitions/smsgateway.WebhookEvent'

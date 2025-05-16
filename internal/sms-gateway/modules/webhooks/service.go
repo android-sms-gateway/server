@@ -75,18 +75,30 @@ func (s *Service) Replace(userID string, webhook smsgateway.Webhook) error {
 		webhook.ID = s.idgen()
 	}
 
+	// Check device ownership if deviceID is provided
+	if webhook.DeviceID != nil {
+		ok, err := s.devicesSvc.Exists(userID, devices.WithID(*webhook.DeviceID))
+		if err != nil {
+			return fmt.Errorf("failed to select devices: %w", err)
+		}
+		if !ok {
+			return newValidationError("device_id", *webhook.DeviceID, devices.ErrNotFound)
+		}
+	}
+
 	model := Webhook{
-		ExtID:  webhook.ID,
-		UserID: userID,
-		URL:    webhook.URL,
-		Event:  webhook.Event,
+		ExtID:    webhook.ID,
+		UserID:   userID,
+		DeviceID: webhook.DeviceID,
+		URL:      webhook.URL,
+		Event:    webhook.Event,
 	}
 
 	if err := s.webhooks.Replace(&model); err != nil {
 		return fmt.Errorf("can't replace webhook: %w", err)
 	}
 
-	go s.notifyDevices(userID)
+	go s.notifyDevices(userID, webhook.DeviceID)
 
 	return nil
 }
@@ -99,30 +111,48 @@ func (s *Service) Delete(userID string, filters ...SelectFilter) error {
 		return fmt.Errorf("can't delete webhooks: %w", err)
 	}
 
-	go s.notifyDevices(userID)
+	go s.notifyDevices(userID, nil)
 
 	return nil
 }
 
 // notifyDevices sends a push notification to all devices associated with the given user.
-func (s *Service) notifyDevices(userID string) {
-	s.logger.Info("Notifying devices", zap.String("user_id", userID))
+func (s *Service) notifyDevices(userID string, deviceID *string) {
+	logFields := []zap.Field{
+		zap.String("user_id", userID),
+	}
+	if deviceID != nil {
+		logFields = append(logFields, zap.String("device_id", *deviceID))
+	}
 
-	devices, err := s.devicesSvc.Select(userID)
+	s.logger.Info("Notifying devices", logFields...)
+
+	var filters []devices.SelectFilter
+	if deviceID != nil {
+		filters = []devices.SelectFilter{devices.WithID(*deviceID)}
+	}
+
+	devices, err := s.devicesSvc.Select(userID, filters...)
 	if err != nil {
-		s.logger.Error("Failed to select devices", zap.String("user_id", userID), zap.Error(err))
+		s.logger.Error("Failed to select devices", append(logFields, zap.Error(err))...)
+		return
+	}
+
+	if len(devices) == 0 {
+		s.logger.Info("No devices found", logFields...)
 		return
 	}
 
 	for _, device := range devices {
 		if device.PushToken == nil {
+			s.logger.Info("Device has no push token", zap.String("user_id", userID), zap.String("device_id", device.ID))
 			continue
 		}
 
 		if err := s.pushSvc.Enqueue(*device.PushToken, push.NewWebhooksUpdatedEvent()); err != nil {
-			s.logger.Error("Failed to send push notification", zap.String("user_id", userID), zap.Error(err))
+			s.logger.Error("Failed to send push notification", zap.String("user_id", userID), zap.String("device_id", device.ID), zap.Error(err))
 		}
 	}
 
-	s.logger.Info("Notified devices", zap.String("user_id", userID), zap.Int("count", len(devices)))
+	s.logger.Info("Notified devices", append(logFields, zap.Int("count", len(devices)))...)
 }
