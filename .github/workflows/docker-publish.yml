@@ -63,6 +63,7 @@ jobs:
   build:
     name: Build
     permissions:
+      contents: read
       packages: write
     needs:
       - test

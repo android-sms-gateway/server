@@ -101,7 +101,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      actions: read
     needs:
       - build
     outputs:
