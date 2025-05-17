@@ -98,6 +98,10 @@ jobs:
 
   merge:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      actions: read
     needs:
       - build
     outputs:
