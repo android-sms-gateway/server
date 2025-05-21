@@ -47,3 +47,7 @@ func NewMessagesExportRequestedEvent(since, until time.Time) *domain.Event {
 		},
 	)
 }
+
+func NewSettingsUpdatedEvent() *domain.Event {
+	return domain.NewEvent(smsgateway.PushSettingsUpdated, nil)
+}

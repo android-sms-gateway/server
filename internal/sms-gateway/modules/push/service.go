@@ -168,6 +168,7 @@ func (s *Service) Notify(userID string, deviceID *string, event *domain.Event) e
 	}
 
 	errs := make([]error, 0, len(devices))
+	notifiedCount := 0
 	for _, device := range devices {
 		if device.PushToken == nil {
 			s.logger.Info("Device has no push token", zap.String("user_id", userID), zap.String("device_id", device.ID))
@@ -177,10 +178,12 @@ func (s *Service) Notify(userID string, deviceID *string, event *domain.Event) e
 		if err := s.Enqueue(*device.PushToken, event); err != nil {
 			s.logger.Error("Failed to send push notification", zap.String("user_id", userID), zap.String("device_id", device.ID), zap.Error(err))
 			errs = append(errs, err)
+		} else {
+			notifiedCount++
 		}
 	}
 
-	s.logger.Info("Notified devices", append(logFields, zap.Int("count", len(devices)))...)
+	s.logger.Info("Notified devices", append(logFields, zap.Int("count", notifiedCount), zap.Int("total", len(devices)))...)
 
 	return errors.Join(errs...)
 }

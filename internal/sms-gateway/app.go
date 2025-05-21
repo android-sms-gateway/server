@@ -14,6 +14,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/metrics"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/settings"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/webhooks"
 	"github.com/capcom6/go-infra-fx/cli"
 	"github.com/capcom6/go-infra-fx/db"
@@ -40,6 +41,7 @@ var Module = fx.Module(
 	messages.Module,
 	health.Module,
 	webhooks.Module,
+	settings.Module,
 	devices.Module,
 	metrics.Module,
 	cleaner.Module,

@@ -80,3 +80,56 @@ Authorization: Basic {{localCredentials}}
 ###
 GET {{localUrl}}/logs?from=2025-02-05T20:39:46.190%2B07:00 HTTP/1.1
 Authorization: Basic {{localCredentials}}
+
+###
+GET {{localUrl}}/settings HTTP/1.1
+Authorization: Basic {{localCredentials}}
+
+###
+PATCH {{localUrl}}/settings HTTP/1.1
+Authorization: Basic {{localCredentials}}
+Content-Type: application/json
+
+{
+  "encryption": {
+    "passphrase": null
+  },
+  "gateway": {
+    "cloud_url": "https://api.sms-gate.app/mobile/v1",
+    "private_token": null
+  },
+  "messages": {
+    "send_interval_min": null,
+    "send_interval_max": null,
+    "limit_period": "Disabled",
+    "limit_value": null,
+    "sim_selection_mode": "OSDefault",
+    "log_lifetime_days": null
+  },
+  "localserver": {
+    "PORT": 8080
+  },
+  "ping": {
+    "interval_seconds": null
+  },
+  "logs": {
+    "lifetime_days": 30
+  },
+  "webhooks": {
+    "internet_required": true,
+    "retry_count": 1,
+    "signing_key": null
+  }
+}
+
+###
+PATCH {{localUrl}}/settings HTTP/1.1
+Authorization: Basic {{localCredentials}}
+Content-Type: application/json
+
+{
+  "webhooks": {
+    "internet_required": true,
+    "retry_count": 1
+  }
+}

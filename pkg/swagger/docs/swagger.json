@@ -393,6 +393,156 @@
                 }
             }
         },
+        "/3rdparty/v1/settings": {
+            "get": {
+                "security": [
+                    {
+                        "ApiAuth": []
+                    }
+                ],
+                "description": "Returns settings for a specific user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User",
+                    "Settings"
+                ],
+                "summary": "Get settings",
+                "responses": {
+                    "200": {
+                        "description": "Settings",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.DeviceSettings"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiAuth": []
+                    }
+                ],
+                "description": "Updates settings for a specific user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User",
+                    "Settings"
+                ],
+                "summary": "Update settings",
+                "parameters": [
+                    {
+                        "description": "Settings",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.DeviceSettings"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Settings updated",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "ApiAuth": []
+                    }
+                ],
+                "description": "Partially updates settings for a specific user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User",
+                    "Settings"
+                ],
+                "summary": "Partially update settings",
+                "parameters": [
+                    {
+                        "description": "Settings",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.DeviceSettings"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Settings updated",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/3rdparty/v1/webhooks": {
             "get": {
                 "security": [
@@ -767,6 +917,44 @@
                 }
             }
         },
+        "/mobile/v1/settings": {
+            "get": {
+                "security": [
+                    {
+                        "MobileToken": []
+                    }
+                ],
+                "description": "Returns settings for a device",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Device",
+                    "Settings"
+                ],
+                "summary": "Get settings",
+                "responses": {
+                    "200": {
+                        "description": "Settings",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.DeviceSettings"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/mobile/v1/user/code": {
             "get": {
                 "security": [
@@ -985,6 +1173,59 @@
                 }
             }
         },
+        "smsgateway.DeviceSettings": {
+            "type": "object",
+            "properties": {
+                "encryption": {
+                    "description": "Encryption contains settings related to message encryption.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.SettingsEncryption"
+                        }
+                    ]
+                },
+                "gateway": {
+                    "description": "Gateway contains settings related to the Cloud/Private server configuration.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.SettingsGateway"
+                        }
+                    ]
+                },
+                "logs": {
+                    "description": "Logs contains settings related to logging.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.SettingsLogs"
+                        }
+                    ]
+                },
+                "messages": {
+                    "description": "Messages contains settings related to message handling.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.SettingsMessages"
+                        }
+                    ]
+                },
+                "ping": {
+                    "description": "Ping contains settings related to ping functionality.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.SettingsPing"
+                        }
+                    ]
+                },
+                "webhooks": {
+                    "description": "Webhooks contains settings related to webhook functionality.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.SettingsWebhooks"
+                        }
+                    ]
+                }
+            }
+        },
         "smsgateway.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -1073,6 +1314,21 @@
                 "HealthStatusPass",
                 "HealthStatusWarn",
                 "HealthStatusFail"
+            ]
+        },
+        "smsgateway.LimitPeriod": {
+            "type": "string",
+            "enum": [
+                "Disabled",
+                "PerMinute",
+                "PerHour",
+                "PerDay"
+            ],
+            "x-enum-varnames": [
+                "Disabled",
+                "PerMinute",
+                "PerHour",
+                "PerDay"
             ]
         },
         "smsgateway.LogEntry": {
@@ -1507,12 +1763,14 @@
             "enum": [
                 "MessageEnqueued",
                 "WebhooksUpdated",
-                "MessagesExportRequested"
+                "MessagesExportRequested",
+                "SettingsUpdated"
             ],
             "x-enum-varnames": [
                 "PushMessageEnqueued",
                 "PushWebhooksUpdated",
-                "PushMessagesExportRequested"
+                "PushMessagesExportRequested",
+                "PushSettingsUpdated"
             ]
         },
         "smsgateway.PushNotification": {
@@ -1534,7 +1792,8 @@
                     "enum": [
                         "MessageEnqueued",
                         "WebhooksUpdated",
-                        "MessagesExportRequested"
+                        "MessagesExportRequested",
+                        "SettingsUpdated"
                     ],
                     "allOf": [
                         {
@@ -1579,6 +1838,131 @@
                     "example": "Pending"
                 }
             }
+        },
+        "smsgateway.SettingsEncryption": {
+            "type": "object",
+            "properties": {
+                "passphrase": {
+                    "description": "Passphrase is the encryption passphrase. If nil or empty, encryption is disabled.",
+                    "type": "string"
+                }
+            }
+        },
+        "smsgateway.SettingsGateway": {
+            "type": "object",
+            "properties": {
+                "cloud_url": {
+                    "description": "CloudURL is the URL of the server. If nil, the Cloud Public server is used.\nMust be a valid HTTPs URL when provided.",
+                    "type": "string"
+                },
+                "private_token": {
+                    "description": "PrivateToken is the private token for authenticating with the Private Server.",
+                    "type": "string"
+                }
+            }
+        },
+        "smsgateway.SettingsLogs": {
+            "type": "object",
+            "properties": {
+                "lifetime_days": {
+                    "description": "LifetimeDays is the number of days to retain logs.\nMust be at least 1 when provided.",
+                    "type": "integer",
+                    "minimum": 1
+                }
+            }
+        },
+        "smsgateway.SettingsMessages": {
+            "type": "object",
+            "properties": {
+                "limit_period": {
+                    "description": "LimitPeriod defines the period for message sending limits.\nValid values are \"Disabled\", \"PerMinute\", \"PerHour\", or \"PerDay\".",
+                    "enum": [
+                        "Disabled",
+                        "PerMinute",
+                        "PerHour",
+                        "PerDay"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.LimitPeriod"
+                        }
+                    ]
+                },
+                "limit_value": {
+                    "description": "LimitValue is the maximum number of messages allowed per limit period.\nMust be at least 1 when provided.",
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "log_lifetime_days": {
+                    "description": "LogLifetimeDays is the number of days to retain message logs.\nMust be at least 1 when provided.",
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "send_interval_max": {
+                    "description": "SendIntervalMax is the maximum interval between message sends (in seconds).\nMust be at least 1 when provided and greater than or equal to SendIntervalMin.",
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "send_interval_min": {
+                    "description": "SendIntervalMin is the minimum interval between message sends (in seconds).\nMust be at least 1 when provided.",
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "sim_selection_mode": {
+                    "description": "SimSelectionMode defines how SIM cards are selected for sending messages.\nValid values are \"OSDefault\", \"RoundRobin\", or \"Random\".",
+                    "enum": [
+                        "OSDefault",
+                        "RoundRobin",
+                        "Random"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.SimSelectionMode"
+                        }
+                    ]
+                }
+            }
+        },
+        "smsgateway.SettingsPing": {
+            "type": "object",
+            "properties": {
+                "interval_seconds": {
+                    "description": "IntervalSeconds is the interval between ping requests (in seconds).\nMust be at least 1 when provided.",
+                    "type": "integer",
+                    "minimum": 1
+                }
+            }
+        },
+        "smsgateway.SettingsWebhooks": {
+            "type": "object",
+            "properties": {
+                "internet_required": {
+                    "description": "InternetRequired indicates whether internet access is required for webhooks.",
+                    "type": "boolean"
+                },
+                "retry_count": {
+                    "description": "RetryCount is the number of times to retry failed webhook deliveries.\nMust be at least 1 when provided.",
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "signing_key": {
+                    "description": "SigningKey is the secret key used for signing webhook payloads.",
+                    "type": "string"
+                }
+            }
+        },
+        "smsgateway.SimSelectionMode": {
+            "type": "string",
+            "enum": [
+                "OSDefault",
+                "RoundRobin",
+                "Random"
+            ],
+            "x-enum-varnames": [
+                "OSDefault",
+                "RoundRobin",
+                "Random"
+            ]
         },
         "smsgateway.Webhook": {
             "type": "object",
