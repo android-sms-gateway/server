@@ -93,6 +93,20 @@ func (r *repository) removeUnused(ctx context.Context, since time.Time) (int64, 
 	return res.RowsAffected, res.Error
 }
 
+func (r *repository) GetSettings(userID string) (*DeviceSettings, error) {
+	settings := &DeviceSettings{}
+	err := r.db.Where("user_id = ?", userID).First(settings).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return settings, nil
+}
+
+func (r *repository) UpdateSettings(userID string, settings *DeviceSettings) error {
+	return r.db.Save(settings).Error
+}
+
 func newDevicesRepository(db *gorm.DB) *repository {
 	return &repository{
 		db: db,
