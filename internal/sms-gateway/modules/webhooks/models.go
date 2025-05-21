@@ -19,7 +19,7 @@ type Webhook struct {
 	User   models.User    `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 	Device *models.Device `gorm:"foreignKey:DeviceID;constraint:OnDelete:CASCADE"`
 
-	models.TimedModel
+	models.SoftDeletableModel
 }
 
 func Migrate(db *gorm.DB) error {

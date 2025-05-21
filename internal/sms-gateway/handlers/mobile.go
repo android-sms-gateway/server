@@ -10,6 +10,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/converters"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/deviceauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/settings"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/webhooks"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
@@ -33,6 +34,7 @@ type mobileHandler struct {
 	messagesSvc *messages.Service
 
 	webhooksCtrl *webhooks.MobileController
+	settingsCtrl *settings.MobileController
 
 	idGen func() string
 }
@@ -303,6 +305,8 @@ func (h *mobileHandler) Register(router fiber.Router) {
 	router.Patch("/user/password", deviceauth.WithDevice(h.changePassword))
 
 	h.webhooksCtrl.Register(router.Group("/webhooks"))
+
+	h.settingsCtrl.Register(router.Group("/settings"))
 }
 
 type mobileHandlerParams struct {
@@ -316,6 +320,7 @@ type mobileHandlerParams struct {
 	MessagesSvc *messages.Service
 
 	WebhooksCtrl *webhooks.MobileController
+	SettingsCtrl *settings.MobileController
 }
 
 func newMobileHandler(params mobileHandlerParams) *mobileHandler {
@@ -327,6 +332,7 @@ func newMobileHandler(params mobileHandlerParams) *mobileHandler {
 		devicesSvc:   params.DevicesSvc,
 		messagesSvc:  params.MessagesSvc,
 		webhooksCtrl: params.WebhooksCtrl,
+		settingsCtrl: params.SettingsCtrl,
 		idGen:        idGen,
 	}
 }

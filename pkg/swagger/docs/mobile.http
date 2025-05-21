@@ -71,3 +71,7 @@ Content-Type: application/json
   "currentPassword": "wsmgz1akhoo24o",
   "newPassword": "wsmgz1akhoo24o"
 }
+
+###
+GET {{baseUrl}}/settings HTTP/1.1
+Authorization: Bearer {{mobileToken}}

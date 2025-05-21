@@ -6,6 +6,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/logs"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/messages"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/settings"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/webhooks"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/go-playground/validator/v10"
@@ -21,6 +22,7 @@ type ThirdPartyHandlerParams struct {
 	MessagesHandler *messages.ThirdPartyController
 	WebhooksHandler *webhooks.ThirdPartyController
 	DevicesHandler  *devices.ThirdPartyController
+	SettingsHandler *settings.ThirdPartyController
 	LogsHandler     *logs.ThirdPartyController
 
 	AuthSvc *auth.Service
@@ -36,6 +38,7 @@ type thirdPartyHandler struct {
 	messagesHandler *messages.ThirdPartyController
 	webhooksHandler *webhooks.ThirdPartyController
 	devicesHandler  *devices.ThirdPartyController
+	settingsHandler *settings.ThirdPartyController
 	logsHandler     *logs.ThirdPartyController
 
 	authSvc *auth.Service
@@ -57,6 +60,8 @@ func (h *thirdPartyHandler) Register(router fiber.Router) {
 	h.devicesHandler.Register(router.Group("/device")) // TODO: remove after 2025-07-11
 	h.devicesHandler.Register(router.Group("/devices"))
 
+	h.settingsHandler.Register(router.Group("/settings"))
+
 	h.webhooksHandler.Register(router.Group("/webhooks"))
 
 	h.logsHandler.Register(router.Group("/logs"))
@@ -69,6 +74,7 @@ func newThirdPartyHandler(params ThirdPartyHandlerParams) *thirdPartyHandler {
 		messagesHandler: params.MessagesHandler,
 		webhooksHandler: params.WebhooksHandler,
 		devicesHandler:  params.DevicesHandler,
+		settingsHandler: params.SettingsHandler,
 		logsHandler:     params.LogsHandler,
 		authSvc:         params.AuthSvc,
 	}
