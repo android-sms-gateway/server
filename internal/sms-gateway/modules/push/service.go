@@ -55,6 +55,7 @@ type Service struct {
 	logger *zap.Logger
 }
 
+// New creates and initializes a new Service instance with configured caching, metrics, and device management for push notifications.
 func New(params Params) *Service {
 	if params.Config.Timeout == 0 {
 		params.Config.Timeout = time.Second

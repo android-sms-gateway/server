@@ -67,6 +67,7 @@ func (h *thirdPartyHandler) Register(router fiber.Router) {
 	h.logsHandler.Register(router.Group("/logs"))
 }
 
+// newThirdPartyHandler creates and initializes a thirdPartyHandler with the provided controllers, authentication service, logger, and validator.
 func newThirdPartyHandler(params ThirdPartyHandlerParams) *thirdPartyHandler {
 	return &thirdPartyHandler{
 		Handler:         base.Handler{Logger: params.Logger.Named("ThirdPartyHandler"), Validator: params.Validator},

@@ -12,6 +12,7 @@ type DeviceSettings struct {
 	User models.User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 }
 
+// Migrate performs automatic schema migration for the DeviceSettings table using GORM.
 func Migrate(db *gorm.DB) error {
 	return db.AutoMigrate(&DeviceSettings{})
 }

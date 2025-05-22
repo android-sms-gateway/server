@@ -171,6 +171,7 @@ func (s *Service) ReplaceSettings(userID string, settings map[string]any) (map[s
 	return filterMap(updated.Settings, rulesPublic)
 }
 
+// NewService creates a new Service instance with the provided dependencies and initializes the device token cache.
 func NewService(params ServiceParams) *Service {
 	return &Service{
 		config:      params.Config,

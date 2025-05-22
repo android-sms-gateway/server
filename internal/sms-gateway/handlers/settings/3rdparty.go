@@ -108,6 +108,7 @@ func (h *ThirdPartyController) Register(app fiber.Router) {
 	app.Put("", userauth.WithUser(h.put))
 }
 
+// NewThirdPartyController creates a new ThirdPartyController with the provided device service, validator, and logger.
 func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyController {
 	return &ThirdPartyController{
 		Handler: base.Handler{

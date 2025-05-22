@@ -32,6 +32,7 @@ var Module = fx.Module(
 	}),
 )
 
+// init registers the Migrate function with the database migration system during package initialization.
 func init() {
 	db.RegisterMigration(Migrate)
 }

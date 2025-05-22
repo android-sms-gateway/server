@@ -50,6 +50,7 @@ func (h *MobileController) Register(router fiber.Router) {
 	router.Get("", deviceauth.WithDevice(h.get))
 }
 
+// NewMobileController creates a new MobileController with the provided devices service and a logger scoped to "settings".
 func NewMobileController(params mobileControllerParams) *MobileController {
 	return &MobileController{
 		Handler: base.Handler{

@@ -62,6 +62,8 @@ var rulesPublic = map[string]any{
 	},
 }
 
+// filterMap returns a new map containing only the fields from m that are specified in the rules map r, recursively filtering nested maps as defined by r.
+// Returns an error if a field expected to be a nested map is not a map in m.
 func filterMap(m map[string]any, r map[string]any) (map[string]any, error) {
 	var err error
 
@@ -89,6 +91,8 @@ func filterMap(m map[string]any, r map[string]any) (map[string]any, error) {
 	return result, nil
 }
 
+// appendMap recursively merges fields from m2 into m1 according to the structure defined by rules.
+// Only fields present in the rules map are considered, with nested maps merged recursively and scalar values overwritten.
 func appendMap(m1, m2 map[string]any, rules map[string]any) map[string]any {
 
 	for field, rule := range rules {

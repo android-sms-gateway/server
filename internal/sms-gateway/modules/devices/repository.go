@@ -133,6 +133,7 @@ func (r *repository) ReplaceSettings(settings *DeviceSettings) (*DeviceSettings,
 	return settings, r.db.Save(settings).Error
 }
 
+// newDevicesRepository creates a new repository instance for managing devices using the provided GORM database connection.
 func newDevicesRepository(db *gorm.DB) *repository {
 	return &repository{
 		db: db,

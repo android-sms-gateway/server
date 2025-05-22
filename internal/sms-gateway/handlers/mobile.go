@@ -323,6 +323,7 @@ type mobileHandlerParams struct {
 	SettingsCtrl *settings.MobileController
 }
 
+// newMobileHandler creates and initializes a mobileHandler with the provided services, controllers, and dependencies.
 func newMobileHandler(params mobileHandlerParams) *mobileHandler {
 	idGen, _ := nanoid.Standard(21)
 
