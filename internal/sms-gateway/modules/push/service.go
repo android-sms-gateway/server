@@ -2,9 +2,11 @@ package push
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/domain"
 	"github.com/capcom6/go-helpers/cache"
 	"github.com/capcom6/go-helpers/maps"
@@ -31,6 +33,8 @@ type Params struct {
 
 	Client client
 
+	DevicesSvc *devices.Service
+
 	Logger *zap.Logger
 }
 
@@ -38,6 +42,8 @@ type Service struct {
 	config Config
 
 	client client
+
+	devicesSvc *devices.Service
 
 	cache     *cache.Cache[eventWrapper]
 	blacklist *cache.Cache[struct{}]
@@ -81,6 +87,8 @@ func New(params Params) *Service {
 	return &Service{
 		config: params.Config,
 		client: params.Client,
+
+		devicesSvc: params.DevicesSvc,
 
 		cache: cache.New[eventWrapper](cache.Config{}),
 		blacklist: cache.New[struct{}](cache.Config{
@@ -131,6 +139,50 @@ func (s *Service) Enqueue(token string, event *domain.Event) error {
 	s.enqueuedCounter.WithLabelValues(string(event.Event())).Inc()
 
 	return nil
+}
+
+func (s *Service) Notify(userID string, deviceID *string, event *domain.Event) error {
+	logFields := []zap.Field{
+		zap.String("user_id", userID),
+	}
+	if deviceID != nil {
+		logFields = append(logFields, zap.String("device_id", *deviceID))
+	}
+
+	s.logger.Info("Notifying devices", logFields...)
+
+	var filters []devices.SelectFilter
+	if deviceID != nil {
+		filters = []devices.SelectFilter{devices.WithID(*deviceID)}
+	}
+
+	devices, err := s.devicesSvc.Select(userID, filters...)
+	if err != nil {
+		s.logger.Error("Failed to select devices", append(logFields, zap.Error(err))...)
+		return fmt.Errorf("failed to select devices: %w", err)
+	}
+
+	if len(devices) == 0 {
+		s.logger.Info("No devices found", logFields...)
+		return nil
+	}
+
+	errs := make([]error, 0, len(devices))
+	for _, device := range devices {
+		if device.PushToken == nil {
+			s.logger.Info("Device has no push token", zap.String("user_id", userID), zap.String("device_id", device.ID))
+			continue
+		}
+
+		if err := s.Enqueue(*device.PushToken, event); err != nil {
+			s.logger.Error("Failed to send push notification", zap.String("user_id", userID), zap.String("device_id", device.ID), zap.Error(err))
+			errs = append(errs, err)
+		}
+	}
+
+	s.logger.Info("Notified devices", append(logFields, zap.Int("count", len(devices)))...)
+
+	return errors.Join(errs...)
 }
 
 // sendAll sends messages to all targets from the cache after initializing the service.
