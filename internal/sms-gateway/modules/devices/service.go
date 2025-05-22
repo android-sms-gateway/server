@@ -128,6 +128,49 @@ func (s *Service) Clean(ctx context.Context) error {
 	return err
 }
 
+func (s *Service) GetSettings(userID string) (map[string]any, error) {
+	settings, err := s.devices.GetSettings(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return filterMap(settings.Settings, rulesPublic)
+}
+
+func (s *Service) UpdateSettings(userID string, settings map[string]any) (map[string]any, error) {
+	filtered, err := filterMap(settings, rules)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.devices.UpdateSettings(&DeviceSettings{
+		UserID:   userID,
+		Settings: filtered,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return s.GetSettings(userID)
+}
+
+func (s *Service) ReplaceSettings(userID string, settings map[string]any) (map[string]any, error) {
+	filtered, err := filterMap(settings, rules)
+	if err != nil {
+		return nil, err
+	}
+
+	updated, err := s.devices.ReplaceSettings(&DeviceSettings{
+		UserID:   userID,
+		Settings: filtered,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return filterMap(updated.Settings, rulesPublic)
+}
+
 func NewService(params ServiceParams) *Service {
 	return &Service{
 		config:      params.Config,

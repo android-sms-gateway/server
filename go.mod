@@ -6,7 +6,7 @@ toolchain go1.23.2
 
 require (
 	firebase.google.com/go/v4 v4.12.1
-	github.com/android-sms-gateway/client-go v1.5.8
+	github.com/android-sms-gateway/client-go v1.5.9-0.20250522134006-6e8b4dd3057a
 	github.com/ansrivas/fiberprometheus/v2 v2.6.1
 	github.com/capcom6/go-helpers v0.2.0
 	github.com/capcom6/go-infra-fx v0.2.1

@@ -393,6 +393,100 @@
                 }
             }
         },
+        "/3rdparty/v1/settings": {
+            "get": {
+                "security": [
+                    {
+                        "ApiAuth": []
+                    }
+                ],
+                "description": "Returns settings for a specific user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User",
+                    "Settings"
+                ],
+                "summary": "Get settings",
+                "responses": {
+                    "200": {
+                        "description": "Settings",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.DeviceSettings"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiAuth": []
+                    }
+                ],
+                "description": "Updates settings for a specific user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User",
+                    "Settings"
+                ],
+                "summary": "Update settings",
+                "parameters": [
+                    {
+                        "description": "Settings",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.DeviceSettings"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Settings updated",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/3rdparty/v1/webhooks": {
             "get": {
                 "security": [
@@ -767,6 +861,44 @@
                 }
             }
         },
+        "/mobile/v1/settings": {
+            "get": {
+                "security": [
+                    {
+                        "MobileToken": []
+                    }
+                ],
+                "description": "Returns settings for a device",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Device",
+                    "Settings"
+                ],
+                "summary": "Get settings",
+                "responses": {
+                    "200": {
+                        "description": "Settings",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.DeviceSettings"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/mobile/v1/user/code": {
             "get": {
                 "security": [
@@ -982,6 +1114,29 @@
                     "description": "Updated at (read only)",
                     "type": "string",
                     "example": "2020-01-01T00:00:00Z"
+                }
+            }
+        },
+        "smsgateway.DeviceSettings": {
+            "type": "object",
+            "properties": {
+                "encryption": {
+                    "$ref": "#/definitions/smsgateway.SettingsEncryption"
+                },
+                "gateway": {
+                    "$ref": "#/definitions/smsgateway.SettingsGateway"
+                },
+                "logs": {
+                    "$ref": "#/definitions/smsgateway.SettingsLogs"
+                },
+                "messages": {
+                    "$ref": "#/definitions/smsgateway.SettingsMessages"
+                },
+                "ping": {
+                    "$ref": "#/definitions/smsgateway.SettingsPing"
+                },
+                "webhooks": {
+                    "$ref": "#/definitions/smsgateway.SettingsWebhooks"
                 }
             }
         },
@@ -1507,12 +1662,14 @@
             "enum": [
                 "MessageEnqueued",
                 "WebhooksUpdated",
-                "MessagesExportRequested"
+                "MessagesExportRequested",
+                "SettingsUpdated"
             ],
             "x-enum-varnames": [
                 "PushMessageEnqueued",
                 "PushWebhooksUpdated",
-                "PushMessagesExportRequested"
+                "PushMessagesExportRequested",
+                "PushSettingsUpdated"
             ]
         },
         "smsgateway.PushNotification": {
@@ -1534,7 +1691,8 @@
                     "enum": [
                         "MessageEnqueued",
                         "WebhooksUpdated",
-                        "MessagesExportRequested"
+                        "MessagesExportRequested",
+                        "SettingsUpdated"
                     ],
                     "allOf": [
                         {
@@ -1577,6 +1735,96 @@
                         }
                     ],
                     "example": "Pending"
+                }
+            }
+        },
+        "smsgateway.SettingsEncryption": {
+            "type": "object",
+            "properties": {
+                "passphrase": {
+                    "type": "string"
+                }
+            }
+        },
+        "smsgateway.SettingsGateway": {
+            "type": "object",
+            "properties": {
+                "cloud_url": {
+                    "type": "string"
+                },
+                "private_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "smsgateway.SettingsLogs": {
+            "type": "object",
+            "properties": {
+                "lifetime_days": {
+                    "type": "integer",
+                    "minimum": 1
+                }
+            }
+        },
+        "smsgateway.SettingsMessages": {
+            "type": "object",
+            "properties": {
+                "limit_period": {
+                    "type": "string",
+                    "enum": [
+                        "Disabled",
+                        "PerMinute",
+                        "PerHour",
+                        "PerDay"
+                    ]
+                },
+                "limit_value": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "log_lifetime_days": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "send_interval_max": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "send_interval_min": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "sim_selection_mode": {
+                    "type": "string",
+                    "enum": [
+                        "OSDefault",
+                        "RoundRobin",
+                        "Random"
+                    ]
+                }
+            }
+        },
+        "smsgateway.SettingsPing": {
+            "type": "object",
+            "properties": {
+                "interval_seconds": {
+                    "type": "integer",
+                    "minimum": 1
+                }
+            }
+        },
+        "smsgateway.SettingsWebhooks": {
+            "type": "object",
+            "properties": {
+                "internet_required": {
+                    "type": "boolean"
+                },
+                "retry_count": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "signing_key": {
+                    "type": "string"
                 }
             }
         },

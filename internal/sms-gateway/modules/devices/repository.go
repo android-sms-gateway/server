@@ -7,6 +7,7 @@ import (
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var (
@@ -95,7 +96,7 @@ func (r *repository) removeUnused(ctx context.Context, since time.Time) (int64, 
 
 func (r *repository) GetSettings(userID string) (*DeviceSettings, error) {
 	settings := &DeviceSettings{}
-	err := r.db.Where("user_id = ?", userID).First(settings).Error
+	err := r.db.Where("user_id = ?", userID).Limit(1).Find(settings).Error
 	if err != nil {
 		return nil, err
 	}
@@ -103,8 +104,33 @@ func (r *repository) GetSettings(userID string) (*DeviceSettings, error) {
 	return settings, nil
 }
 
-func (r *repository) UpdateSettings(userID string, settings *DeviceSettings) error {
-	return r.db.Save(settings).Error
+func (r *repository) UpdateSettings(settings *DeviceSettings) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		source := &DeviceSettings{UserID: settings.UserID}
+		if err := r.db.Clauses(clause.Locking{Strength: "UPDATE"}).Limit(1).Find(source).Error; err != nil {
+			return err
+		}
+
+		settings.Settings = appendMap(source.Settings, settings.Settings, rules)
+
+		return r.db.Clauses(clause.OnConflict{UpdateAll: true}).Create(settings).Error
+	})
+
+	// return r.db.
+	// 	Clauses(clause.OnConflict{
+	// 		DoUpdates: clause.Assignments(
+	// 			map[string]interface{}{
+	// 				"settings": gorm.Expr("JSON_MERGE_PATCH(settings, VALUES(settings))"),
+	// 			},
+	// 		),
+	// 	}).
+	// 	Create(settings).
+	// 	Error
+
+}
+
+func (r *repository) ReplaceSettings(settings *DeviceSettings) (*DeviceSettings, error) {
+	return settings, r.db.Save(settings).Error
 }
 
 func newDevicesRepository(db *gorm.DB) *repository {

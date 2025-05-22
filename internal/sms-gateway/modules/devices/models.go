@@ -6,8 +6,8 @@ import (
 )
 
 type DeviceSettings struct {
-	UserID   string   `gorm:"primaryKey;not null;type:varchar(32)"`
-	Settings Settings `gorm:"not null;type:json"`
+	UserID   string         `gorm:"primaryKey;not null;type:varchar(32)"`
+	Settings map[string]any `gorm:"not null;type:json;serializer:json"`
 
 	User models.User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 }

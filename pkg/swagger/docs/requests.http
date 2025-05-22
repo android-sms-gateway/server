@@ -104,5 +104,61 @@ GET {{baseUrl}}/api/3rdparty/v1/logs HTTP/1.1
 Authorization: Basic {{credentials}}
 
 ###
+GET {{baseUrl}}/3rdparty/v1/settings HTTP/1.1
+Authorization: Basic {{credentials}}
+
+###
+PATCH {{baseUrl}}/3rdparty/v1/settings HTTP/1.1
+Authorization: Basic {{credentials}}
+Content-Type: application/json
+
+{
+    "localserver": {
+        "PORT": 8080
+    },
+    "messages": {
+       "send_interval_min": null,
+       "send_interval_max": -1
+    }
+}
+
+###
+PUT {{baseUrl}}/3rdparty/v1/settings HTTP/1.1
+Authorization: Basic {{credentials}}
+Content-Type: application/json
+
+{
+    "encryption": {
+        "passphrase": "{{$guid}}"
+    },
+    "gateway": {
+        "cloud_url": "https://api.sms-gate.app/mobile/v1",
+        "private_token": null
+    },
+    "messages": {
+        "send_interval_min": null,
+        "send_interval_max": null,
+        "limit_period": "Disabled",
+        "limit_value": null,
+        "sim_selection_mode": "OSDefault",
+        "log_lifetime_days": null
+    },
+    "localserver": {
+        "PORT": 8080
+    },
+    "ping": {
+        "interval_seconds": null
+    },
+    "logs": {
+        "lifetime_days": 30
+    },
+    "webhooks": {
+        "internet_required": true,
+        "retry_count": 1,
+        "signing_key": "{{$guid}}"
+    }
+}
+
+###
 GET http://localhost:3000/metrics HTTP/1.1
 

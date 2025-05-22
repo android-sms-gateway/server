@@ -26,6 +26,21 @@ definitions:
         example: "2020-01-01T00:00:00Z"
         type: string
     type: object
+  smsgateway.DeviceSettings:
+    properties:
+      encryption:
+        $ref: '#/definitions/smsgateway.SettingsEncryption'
+      gateway:
+        $ref: '#/definitions/smsgateway.SettingsGateway'
+      logs:
+        $ref: '#/definitions/smsgateway.SettingsLogs'
+      messages:
+        $ref: '#/definitions/smsgateway.SettingsMessages'
+      ping:
+        $ref: '#/definitions/smsgateway.SettingsPing'
+      webhooks:
+        $ref: '#/definitions/smsgateway.SettingsWebhooks'
+    type: object
   smsgateway.ErrorResponse:
     properties:
       code:
@@ -420,11 +435,13 @@ definitions:
     - MessageEnqueued
     - WebhooksUpdated
     - MessagesExportRequested
+    - SettingsUpdated
     type: string
     x-enum-varnames:
     - PushMessageEnqueued
     - PushWebhooksUpdated
     - PushMessagesExportRequested
+    - PushSettingsUpdated
   smsgateway.PushNotification:
     properties:
       data:
@@ -441,6 +458,7 @@ definitions:
         - MessageEnqueued
         - WebhooksUpdated
         - MessagesExportRequested
+        - SettingsUpdated
         example: MessageEnqueued
       token:
         description: The token of the device that receives the notification.
@@ -469,6 +487,68 @@ definitions:
     required:
     - phoneNumber
     - state
+    type: object
+  smsgateway.SettingsEncryption:
+    properties:
+      passphrase:
+        type: string
+    type: object
+  smsgateway.SettingsGateway:
+    properties:
+      cloud_url:
+        type: string
+      private_token:
+        type: string
+    type: object
+  smsgateway.SettingsLogs:
+    properties:
+      lifetime_days:
+        minimum: 1
+        type: integer
+    type: object
+  smsgateway.SettingsMessages:
+    properties:
+      limit_period:
+        enum:
+        - Disabled
+        - PerMinute
+        - PerHour
+        - PerDay
+        type: string
+      limit_value:
+        minimum: 1
+        type: integer
+      log_lifetime_days:
+        minimum: 1
+        type: integer
+      send_interval_max:
+        minimum: 1
+        type: integer
+      send_interval_min:
+        minimum: 1
+        type: integer
+      sim_selection_mode:
+        enum:
+        - OSDefault
+        - RoundRobin
+        - Random
+        type: string
+    type: object
+  smsgateway.SettingsPing:
+    properties:
+      interval_seconds:
+        minimum: 1
+        type: integer
+    type: object
+  smsgateway.SettingsWebhooks:
+    properties:
+      internet_required:
+        type: boolean
+      retry_count:
+        minimum: 1
+        type: integer
+      signing_key:
+        type: string
     type: object
   smsgateway.Webhook:
     properties:
@@ -770,6 +850,66 @@ paths:
       tags:
       - User
       - Messages
+  /3rdparty/v1/settings:
+    get:
+      description: Returns settings for a specific user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Settings
+          schema:
+            $ref: '#/definitions/smsgateway.DeviceSettings'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+      security:
+      - ApiAuth: []
+      summary: Get settings
+      tags:
+      - User
+      - Settings
+    put:
+      consumes:
+      - application/json
+      description: Updates settings for a specific user
+      parameters:
+      - description: Settings
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/smsgateway.DeviceSettings'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Settings updated
+          schema:
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+      security:
+      - ApiAuth: []
+      summary: Update settings
+      tags:
+      - User
+      - Settings
   /3rdparty/v1/webhooks:
     get:
       description: Returns list of registered webhooks
@@ -1009,6 +1149,30 @@ paths:
       tags:
       - Device
       - Messages
+  /mobile/v1/settings:
+    get:
+      description: Returns settings for a device
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Settings
+          schema:
+            $ref: '#/definitions/smsgateway.DeviceSettings'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+      security:
+      - MobileToken: []
+      summary: Get settings
+      tags:
+      - Device
+      - Settings
   /mobile/v1/user/code:
     get:
       consumes:
