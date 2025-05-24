@@ -29,15 +29,15 @@ type MobileController struct {
 	settingsSvc *settings.Service
 }
 
-// @Summary		Get settings
-// @Description	Returns settings for a device
-// @Security	MobileToken
-// @Tags		Device, Settings
-// @Produce		json
-// @Success		200	{object}	smsgateway.DeviceSettings	"Settings"
-// @Failure		401	{object}	smsgateway.ErrorResponse	"Unauthorized"
-// @Failure		500	{object}	smsgateway.ErrorResponse	"Internal server error"
-// @Router		/mobile/v1/settings [get]
+//	@Summary		Get settings
+//	@Description	Returns settings for a device
+//	@Security		MobileToken
+//	@Tags			Device, Settings
+//	@Produce		json
+//	@Success		200	{object}	smsgateway.DeviceSettings	"Settings"
+//	@Failure		401	{object}	smsgateway.ErrorResponse	"Unauthorized"
+//	@Failure		500	{object}	smsgateway.ErrorResponse	"Internal server error"
+//	@Router			/mobile/v1/settings [get]
 //
 // Get settings
 func (h *MobileController) get(device models.Device, c *fiber.Ctx) error {

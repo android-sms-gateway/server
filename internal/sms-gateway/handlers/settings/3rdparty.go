@@ -52,8 +52,8 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 	return c.JSON(settings)
 }
 
-//	@Summary		Update settings
-//	@Description	Updates settings for a specific user
+//	@Summary		Replace settings
+//	@Description	Replaces settings
 //	@Security		ApiAuth
 //	@Tags			User, Settings
 //	@Accept			json
