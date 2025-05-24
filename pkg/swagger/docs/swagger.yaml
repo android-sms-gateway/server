@@ -32,11 +32,6 @@ definitions:
         allOf:
         - $ref: '#/definitions/smsgateway.SettingsEncryption'
         description: Encryption contains settings related to message encryption.
-      gateway:
-        allOf:
-        - $ref: '#/definitions/smsgateway.SettingsGateway'
-        description: Gateway contains settings related to the Cloud/Private server
-          configuration.
       logs:
         allOf:
         - $ref: '#/definitions/smsgateway.SettingsLogs'
@@ -520,18 +515,6 @@ definitions:
           is disabled.
         type: string
     type: object
-  smsgateway.SettingsGateway:
-    properties:
-      cloud_url:
-        description: |-
-          CloudURL is the URL of the server. If nil, the Cloud Public server is used.
-          Must be a valid HTTPs URL when provided.
-        type: string
-      private_token:
-        description: PrivateToken is the private token for authenticating with the
-          Private Server.
-        type: string
-    type: object
   smsgateway.SettingsLogs:
     properties:
       lifetime_days:
@@ -987,7 +970,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: Updates settings for a specific user
+      description: Replaces settings
       parameters:
       - description: Settings
         in: body
@@ -1016,7 +999,7 @@ paths:
             $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
       - ApiAuth: []
-      summary: Update settings
+      summary: Replace settings
       tags:
       - User
       - Settings

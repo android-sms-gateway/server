@@ -436,7 +436,7 @@
                         "ApiAuth": []
                     }
                 ],
-                "description": "Updates settings for a specific user",
+                "description": "Replaces settings",
                 "consumes": [
                     "application/json"
                 ],
@@ -447,7 +447,7 @@
                     "User",
                     "Settings"
                 ],
-                "summary": "Update settings",
+                "summary": "Replace settings",
                 "parameters": [
                     {
                         "description": "Settings",
@@ -1184,14 +1184,6 @@
                         }
                     ]
                 },
-                "gateway": {
-                    "description": "Gateway contains settings related to the Cloud/Private server configuration.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/smsgateway.SettingsGateway"
-                        }
-                    ]
-                },
                 "logs": {
                     "description": "Logs contains settings related to logging.",
                     "allOf": [
@@ -1844,19 +1836,6 @@
             "properties": {
                 "passphrase": {
                     "description": "Passphrase is the encryption passphrase. If nil or empty, encryption is disabled.",
-                    "type": "string"
-                }
-            }
-        },
-        "smsgateway.SettingsGateway": {
-            "type": "object",
-            "properties": {
-                "cloud_url": {
-                    "description": "CloudURL is the URL of the server. If nil, the Cloud Public server is used.\nMust be a valid HTTPs URL when provided.",
-                    "type": "string"
-                },
-                "private_token": {
-                    "description": "PrivateToken is the private token for authenticating with the Private Server.",
                     "type": "string"
                 }
             }
