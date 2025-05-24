@@ -15,8 +15,12 @@ const (
 )
 
 type TimedModel struct {
-	CreatedAt time.Time  `gorm:"->;not null;autocreatetime:false;default:CURRENT_TIMESTAMP(3)"`
-	UpdatedAt time.Time  `gorm:"->;not null;autoupdatetime:false;default:CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)"`
+	CreatedAt time.Time `gorm:"->;not null;autocreatetime:false;default:CURRENT_TIMESTAMP(3)"`
+	UpdatedAt time.Time `gorm:"->;not null;autoupdatetime:false;default:CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)"`
+}
+
+type SoftDeletableModel struct {
+	TimedModel
 	DeletedAt *time.Time `gorm:"<-:update"`
 }
 
@@ -25,7 +29,7 @@ type User struct {
 	PasswordHash string   `gorm:"not null;type:varchar(72)"`
 	Devices      []Device `gorm:"-,foreignKey:UserID;constraint:OnDelete:CASCADE"`
 
-	TimedModel
+	SoftDeletableModel
 }
 
 type Device struct {
@@ -38,7 +42,7 @@ type Device struct {
 
 	UserID string `gorm:"not null;type:varchar(32)"`
 
-	TimedModel
+	SoftDeletableModel
 }
 
 func (d *Device) IsEmpty() bool {
@@ -67,7 +71,7 @@ type Message struct {
 	Recipients []MessageRecipient `gorm:"foreignKey:MessageID;constraint:OnDelete:CASCADE"`
 	States     []MessageState     `gorm:"foreignKey:MessageID;constraint:OnDelete:CASCADE"`
 
-	TimedModel
+	SoftDeletableModel
 }
 
 type MessageRecipient struct {

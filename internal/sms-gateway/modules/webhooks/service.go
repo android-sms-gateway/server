@@ -98,7 +98,7 @@ func (s *Service) Replace(userID string, webhook smsgateway.Webhook) error {
 		return fmt.Errorf("can't replace webhook: %w", err)
 	}
 
-	go s.notifyDevices(userID, webhook.DeviceID)
+	s.notifyDevices(userID, webhook.DeviceID)
 
 	return nil
 }
@@ -111,48 +111,16 @@ func (s *Service) Delete(userID string, filters ...SelectFilter) error {
 		return fmt.Errorf("can't delete webhooks: %w", err)
 	}
 
-	go s.notifyDevices(userID, nil)
+	s.notifyDevices(userID, nil)
 
 	return nil
 }
 
-// notifyDevices sends a push notification to all devices associated with the given user.
+// notifyDevices asynchronously notifies all the user's devices.
 func (s *Service) notifyDevices(userID string, deviceID *string) {
-	logFields := []zap.Field{
-		zap.String("user_id", userID),
-	}
-	if deviceID != nil {
-		logFields = append(logFields, zap.String("device_id", *deviceID))
-	}
-
-	s.logger.Info("Notifying devices", logFields...)
-
-	var filters []devices.SelectFilter
-	if deviceID != nil {
-		filters = []devices.SelectFilter{devices.WithID(*deviceID)}
-	}
-
-	devices, err := s.devicesSvc.Select(userID, filters...)
-	if err != nil {
-		s.logger.Error("Failed to select devices", append(logFields, zap.Error(err))...)
-		return
-	}
-
-	if len(devices) == 0 {
-		s.logger.Info("No devices found", logFields...)
-		return
-	}
-
-	for _, device := range devices {
-		if device.PushToken == nil {
-			s.logger.Info("Device has no push token", zap.String("user_id", userID), zap.String("device_id", device.ID))
-			continue
+	go func(userID string, deviceID *string) {
+		if err := s.pushSvc.Notify(userID, deviceID, push.NewWebhooksUpdatedEvent()); err != nil {
+			s.logger.Error("can't notify devices", zap.Error(err))
 		}
-
-		if err := s.pushSvc.Enqueue(*device.PushToken, push.NewWebhooksUpdatedEvent()); err != nil {
-			s.logger.Error("Failed to send push notification", zap.String("user_id", userID), zap.String("device_id", device.ID), zap.Error(err))
-		}
-	}
-
-	s.logger.Info("Notified devices", append(logFields, zap.Int("count", len(devices)))...)
+	}(userID, deviceID)
 }

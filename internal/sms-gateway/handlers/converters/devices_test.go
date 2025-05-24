@@ -32,9 +32,11 @@ func TestDeviceToDTO(t *testing.T) {
 				ID:       "test-id",
 				Name:     anys.AsPointer("test-name"),
 				LastSeen: lastSeenAt,
-				TimedModel: models.TimedModel{
-					CreatedAt: createdAt,
-					UpdatedAt: updatedAt,
+				SoftDeletableModel: models.SoftDeletableModel{
+					TimedModel: models.TimedModel{
+						CreatedAt: createdAt,
+						UpdatedAt: updatedAt,
+					},
 				},
 			},
 			expected: smsgateway.Device{
