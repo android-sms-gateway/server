@@ -7,6 +7,9 @@ on:
     types:
       - created
 
+permissions:
+  contents: read
+
 # jobs
 jobs:
   build:
@@ -22,8 +25,6 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     needs:
       - build
 
