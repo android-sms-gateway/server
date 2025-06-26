@@ -11,7 +11,9 @@ type repository struct {
 
 // GetSettings retrieves the device settings for a user by their userID.
 func (r *repository) GetSettings(userID string) (*DeviceSettings, error) {
-	settings := &DeviceSettings{}
+	settings := &DeviceSettings{
+		Settings: map[string]any{},
+	}
 	err := r.db.Where("user_id = ?", userID).Limit(1).Find(settings).Error
 	if err != nil {
 		return nil, err
