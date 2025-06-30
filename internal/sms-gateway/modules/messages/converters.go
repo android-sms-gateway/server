@@ -5,11 +5,10 @@ import (
 	"time"
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/capcom6/go-helpers/slices"
 )
 
-func messageToDomain(input models.Message) MessageOut {
+func messageToDomain(input Message) MessageOut {
 	var ttl *uint64 = nil
 	if input.ValidUntil != nil {
 		secondsUntil := uint64(math.Max(0, time.Until(*input.ValidUntil).Seconds()))
@@ -32,6 +31,6 @@ func messageToDomain(input models.Message) MessageOut {
 	}
 }
 
-func recipientToDomain(input models.MessageRecipient) string {
+func recipientToDomain(input MessageRecipient) string {
 	return input.PhoneNumber
 }

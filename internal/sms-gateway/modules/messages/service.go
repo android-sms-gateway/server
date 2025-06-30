@@ -114,11 +114,11 @@ func (s *Service) UpdateState(deviceID string, message smsgateway.MessageState) 
 		message.State = smsgateway.ProcessingStateProcessed
 	}
 
-	existing.State = models.ProcessingState(message.State)
-	existing.States = slices.Map(maps.Keys(message.States), func(key string) models.MessageState {
-		return models.MessageState{
+	existing.State = ProcessingState(message.State)
+	existing.States = slices.Map(maps.Keys(message.States), func(key string) MessageState {
+		return MessageState{
 			MessageID: existing.ID,
-			State:     models.ProcessingState(key),
+			State:     ProcessingState(key),
 			UpdatedAt: message.States[key],
 		}
 	})
@@ -183,7 +183,7 @@ func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueO
 		validUntil = anys.AsPointer(time.Now().Add(time.Duration(*message.TTL) * time.Second))
 	}
 
-	msg := models.Message{
+	msg := Message{
 		ExtID:       message.ID,
 		Message:     message.Message,
 		Recipients:  s.recipientsToModel(message.PhoneNumbers),
@@ -241,11 +241,11 @@ func (s *Service) Clean(ctx context.Context) error {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-func (s *Service) recipientsToModel(input []string) []models.MessageRecipient {
-	output := make([]models.MessageRecipient, len(input))
+func (s *Service) recipientsToModel(input []string) []MessageRecipient {
+	output := make([]MessageRecipient, len(input))
 
 	for i, v := range input {
-		output[i] = models.MessageRecipient{
+		output[i] = MessageRecipient{
 			PhoneNumber: v,
 		}
 	}
@@ -253,8 +253,8 @@ func (s *Service) recipientsToModel(input []string) []models.MessageRecipient {
 	return output
 }
 
-func (s *Service) recipientsStateToModel(input []smsgateway.RecipientState, hash bool) []models.MessageRecipient {
-	output := make([]models.MessageRecipient, len(input))
+func (s *Service) recipientsStateToModel(input []smsgateway.RecipientState, hash bool) []MessageRecipient {
+	output := make([]MessageRecipient, len(input))
 
 	for i, v := range input {
 		phoneNumber := v.PhoneNumber
@@ -271,9 +271,9 @@ func (s *Service) recipientsStateToModel(input []smsgateway.RecipientState, hash
 			phoneNumber = fmt.Sprintf("%x", sha256.Sum256([]byte(phoneNumber)))[:16]
 		}
 
-		output[i] = models.MessageRecipient{
+		output[i] = MessageRecipient{
 			PhoneNumber: phoneNumber,
-			State:       models.ProcessingState(v.State),
+			State:       ProcessingState(v.State),
 			Error:       v.Error,
 		}
 	}
@@ -281,7 +281,7 @@ func (s *Service) recipientsStateToModel(input []smsgateway.RecipientState, hash
 	return output
 }
 
-func modelToMessageState(input models.Message) smsgateway.MessageState {
+func modelToMessageState(input Message) smsgateway.MessageState {
 	return smsgateway.MessageState{
 		ID:          input.ExtID,
 		State:       smsgateway.ProcessingState(input.State),
@@ -290,13 +290,13 @@ func modelToMessageState(input models.Message) smsgateway.MessageState {
 		Recipients:  slices.Map(input.Recipients, modelToRecipientState),
 		States: slices.Associate(
 			input.States,
-			func(state models.MessageState) string { return string(state.State) },
-			func(state models.MessageState) time.Time { return state.UpdatedAt },
+			func(state MessageState) string { return string(state.State) },
+			func(state MessageState) time.Time { return state.UpdatedAt },
 		),
 	}
 }
 
-func modelToRecipientState(input models.MessageRecipient) smsgateway.RecipientState {
+func modelToRecipientState(input MessageRecipient) smsgateway.RecipientState {
 	return smsgateway.RecipientState{
 		PhoneNumber: input.PhoneNumber,
 		State:       smsgateway.ProcessingState(input.State),
