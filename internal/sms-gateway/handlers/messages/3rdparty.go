@@ -78,9 +78,27 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 		return fmt.Errorf("can't get random device: %w", err)
 	}
 
+	var textContent *messages.TextMessageContent
+	var dataContent *messages.DataMessageContent
+	if text := req.GetTextMessage(); text != nil {
+		textContent = &messages.TextMessageContent{
+			Text: text.Text,
+		}
+	} else if data := req.GetDataMessage(); data != nil {
+		dataContent = &messages.DataMessageContent{
+			Data: data.Data,
+			Port: data.Port,
+		}
+	} else {
+		return fiber.NewError(fiber.StatusBadRequest, "No message content provided")
+	}
+
 	msg := messages.MessageIn{
-		ID:           req.ID,
-		Message:      req.Message,
+		ID: req.ID,
+
+		TextContent: textContent,
+		DataContent: dataContent,
+
 		PhoneNumbers: req.PhoneNumbers,
 		IsEncrypted:  req.IsEncrypted,
 

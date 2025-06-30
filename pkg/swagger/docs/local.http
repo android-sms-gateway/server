@@ -30,6 +30,35 @@ Content-Type: application/json
 Authorization: Basic {{localCredentials}}
 
 {
+    "textMessage": {
+      "text": "{{$localDatetime iso8601}}"
+    },
+    "phoneNumbers": [
+        "{{phone}}"
+    ]
+}
+
+###
+POST {{localUrl}}/message HTTP/1.1
+Content-Type: application/json
+Authorization: Basic {{localCredentials}}
+
+{
+    "dataMessage": {
+      "data": "SGVsbG8gV29ybGQh",
+      "port": 12345
+    },
+    "phoneNumbers": [
+        "{{phone}}"
+    ]
+}
+
+###
+POST {{localUrl}}/message HTTP/1.1
+Content-Type: application/json
+Authorization: Basic {{localCredentials}}
+
+{
     "message": "{{$localDatetime iso8601}}",
     "ttl": 86400,
     "phoneNumbers": [

@@ -48,9 +48,10 @@ func (s *Service) HealthCheck(ctx context.Context) (Check, error) {
 		for name, detail := range healthChecks {
 			check.Checks[p.Name()+":"+name] = detail
 
-			if detail.Status == StatusFail {
+			switch detail.Status {
+			case StatusFail:
 				level = max(level, levelFail)
-			} else if detail.Status == StatusWarn {
+			case StatusWarn:
 				level = max(level, levelWarn)
 			}
 		}
