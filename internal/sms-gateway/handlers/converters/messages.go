@@ -6,10 +6,29 @@ import (
 )
 
 func MessageToDTO(m messages.MessageOut) smsgateway.MobileMessage {
+	var message string
+	var textMessage *smsgateway.TextMessage
+	var dataMessage *smsgateway.DataMessage
+
+	if m.TextContent != nil {
+		textMessage = &smsgateway.TextMessage{
+			Text: m.TextContent.Text,
+		}
+	} else if m.DataContent != nil {
+		dataMessage = &smsgateway.DataMessage{
+			Data: m.DataContent.Data,
+			Port: m.DataContent.Port,
+		}
+	}
+
 	return smsgateway.MobileMessage{
 		Message: smsgateway.Message{
-			ID:                 m.ID,
-			Message:            m.Message,
+			ID: m.ID,
+
+			Message:     message,
+			TextMessage: textMessage,
+			DataMessage: dataMessage,
+
 			SimNumber:          m.SimNumber,
 			WithDeliveryReport: m.WithDeliveryReport,
 			IsEncrypted:        m.IsEncrypted,

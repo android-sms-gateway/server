@@ -1138,6 +1138,30 @@
         }
     },
     "definitions": {
+        "smsgateway.DataMessage": {
+            "type": "object",
+            "required": [
+                "data",
+                "port"
+            ],
+            "properties": {
+                "data": {
+                    "description": "Base64-encoded payload",
+                    "type": "string",
+                    "format": "byte",
+                    "maxLength": 65535,
+                    "minLength": 4,
+                    "example": "SGVsbG8gV29ybGQh"
+                },
+                "port": {
+                    "description": "Destination port",
+                    "type": "integer",
+                    "maximum": 65535,
+                    "minimum": 1,
+                    "example": 53739
+                }
+            }
+        },
         "smsgateway.Device": {
             "type": "object",
             "properties": {
@@ -1942,6 +1966,21 @@
                 "RoundRobin",
                 "Random"
             ]
+        },
+        "smsgateway.TextMessage": {
+            "type": "object",
+            "required": [
+                "text"
+            ],
+            "properties": {
+                "text": {
+                    "description": "Message text",
+                    "type": "string",
+                    "maxLength": 65535,
+                    "minLength": 1,
+                    "example": "Hello World!"
+                }
+            }
         },
         "smsgateway.Webhook": {
             "type": "object",

@@ -23,7 +23,11 @@ func testHealth(shutdowner fx.Shutdowner, logger *zap.Logger, config http.Config
 		}
 		return
 	}
-	defer res.Body.Close()
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			logger.Error("Failed to close body", zap.Error(err))
+		}
+	}()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {

@@ -7,8 +7,11 @@ import (
 )
 
 type MessageIn struct {
-	ID           string
-	Message      string
+	ID string
+
+	TextContent *TextMessageContent
+	DataContent *DataMessageContent
+
 	PhoneNumbers []string
 	IsEncrypted  bool
 

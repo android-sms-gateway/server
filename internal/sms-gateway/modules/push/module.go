@@ -17,11 +17,12 @@ var Module = fx.Module(
 	}),
 	fx.Provide(
 		func(cfg Config, lc fx.Lifecycle) (c client, err error) {
-			if cfg.Mode == ModeFCM {
+			switch cfg.Mode {
+			case ModeFCM:
 				c, err = fcm.New(cfg.ClientOptions)
-			} else if cfg.Mode == ModeUpstream {
+			case ModeUpstream:
 				c, err = upstream.New(cfg.ClientOptions)
-			} else {
+			default:
 				return nil, errors.New("invalid push mode")
 			}
 

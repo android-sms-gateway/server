@@ -31,6 +31,35 @@ Content-Type: application/json
 Authorization: Basic {{credentials}}
 
 {
+    "textMessage": {
+        "text": "{{$localDatetime iso8601}}"
+    },
+    "phoneNumbers": [
+        "{{phone}}"
+    ]
+}
+
+###
+POST {{baseUrl}}/3rdparty/v1/messages HTTP/1.1
+Content-Type: application/json
+Authorization: Basic {{credentials}}
+
+{
+    "dataMessage": {
+        "data": "SGVsbG8gRGF0YSBXb3JsZCE=",
+        "port": 53739
+    },
+    "phoneNumbers": [
+        "{{phone}}"
+    ]
+}
+
+###
+POST {{baseUrl}}/3rdparty/v1/messages HTTP/1.1
+Content-Type: application/json
+Authorization: Basic {{credentials}}
+
+{
     "message": "$aes-256-cbc/pbkdf2-sha1$i=75000$pb+tpPcF0nabV46wDeDMig==$ucdVkMrRYLQ0LAeoXQsWhrD36I9nnop8rRIh3dNmBhvg7Wc4Cwu3h9Petvp1dN3x",
     "ttl": 600,
     "phoneNumbers": [

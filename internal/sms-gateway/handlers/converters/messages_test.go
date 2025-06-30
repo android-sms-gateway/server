@@ -26,7 +26,7 @@ func TestMessageToDTO(t *testing.T) {
 			input: messages.MessageOut{
 				MessageIn: messages.MessageIn{
 					ID:                 "msg-123",
-					Message:            "Test message content",
+					TextContent:        &messages.TextMessageContent{Text: "Test message content"},
 					PhoneNumbers:       []string{"+1234567890", "+9876543210"},
 					IsEncrypted:        true,
 					SimNumber:          anys.AsPointer(uint8(2)),
@@ -57,7 +57,7 @@ func TestMessageToDTO(t *testing.T) {
 			input: messages.MessageOut{
 				MessageIn: messages.MessageIn{
 					ID:           "msg-456",
-					Message:      "Another test message",
+					TextContent:  &messages.TextMessageContent{Text: "Another test message"},
 					PhoneNumbers: []string{"+1122334455"},
 				},
 				CreatedAt: now,
