@@ -22,12 +22,13 @@ This server acts as the backend component of the [SMS Gateway for Android](https
 
 ## Features
 
-- **SMS Messaging**: Dispatch SMS messages through a RESTful API.
+- **SMS Messaging**: Dispatch SMS and data messages through a RESTful API.
 - **Message Status**: Retrieve status for sent messages.
 - **Device Management**: View information about connected Android devices.
 - **Webhooks**: Configure webhooks for event-driven notifications.
 - **Health Monitoring**: Access health check endpoints to ensure system integrity.
 - **Access Control**: Operate in either public mode for open access or private mode for restricted access.
+- **Data SMS Support**: Send/receive binary payloads via SMS with Base64 encoding and port-based routing.
 
 ## Prerequisites
 
