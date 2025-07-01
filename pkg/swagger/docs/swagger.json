@@ -1401,10 +1401,17 @@
         "smsgateway.Message": {
             "type": "object",
             "required": [
-                "message",
                 "phoneNumbers"
             ],
             "properties": {
+                "dataMessage": {
+                    "description": "Data message",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.DataMessage"
+                        }
+                    ]
+                },
                 "id": {
                     "description": "ID (if not set - will be generated)",
                     "type": "string",
@@ -1417,7 +1424,7 @@
                     "example": true
                 },
                 "message": {
-                    "description": "Content",
+                    "description": "Message content\nDeprecated: use TextMessage instead",
                     "type": "string",
                     "maxLength": 65535,
                     "example": "Hello World!"
@@ -1451,6 +1458,14 @@
                     "type": "integer",
                     "maximum": 3,
                     "example": 1
+                },
+                "textMessage": {
+                    "description": "Text message",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.TextMessage"
+                        }
+                    ]
                 },
                 "ttl": {
                     "description": "Time to live in seconds (conflicts with `validUntil`)",
@@ -1603,7 +1618,6 @@
         "smsgateway.MobileMessage": {
             "type": "object",
             "required": [
-                "message",
                 "phoneNumbers"
             ],
             "properties": {
@@ -1611,6 +1625,14 @@
                     "description": "Message creation time",
                     "type": "string",
                     "example": "2020-01-01T00:00:00Z"
+                },
+                "dataMessage": {
+                    "description": "Data message",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.DataMessage"
+                        }
+                    ]
                 },
                 "id": {
                     "description": "ID (if not set - will be generated)",
@@ -1624,7 +1646,7 @@
                     "example": true
                 },
                 "message": {
-                    "description": "Content",
+                    "description": "Message content\nDeprecated: use TextMessage instead",
                     "type": "string",
                     "maxLength": 65535,
                     "example": "Hello World!"
@@ -1658,6 +1680,14 @@
                     "type": "integer",
                     "maximum": 3,
                     "example": 1
+                },
+                "textMessage": {
+                    "description": "Text message",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.TextMessage"
+                        }
+                    ]
                 },
                 "ttl": {
                     "description": "Time to live in seconds (conflicts with `validUntil`)",
@@ -2021,6 +2051,7 @@
             "type": "string",
             "enum": [
                 "sms:received",
+                "sms:data-received",
                 "sms:sent",
                 "sms:delivered",
                 "sms:failed",
@@ -2028,6 +2059,7 @@
             ],
             "x-enum-varnames": [
                 "WebhookEventSmsReceived",
+                "WebhookEventSmsDataReceived",
                 "WebhookEventSmsSent",
                 "WebhookEventSmsDelivered",
                 "WebhookEventSmsFailed",
