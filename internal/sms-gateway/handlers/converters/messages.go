@@ -11,6 +11,7 @@ func MessageToDTO(m messages.MessageOut) smsgateway.MobileMessage {
 	var dataMessage *smsgateway.DataMessage
 
 	if m.TextContent != nil {
+		message = m.TextContent.Text
 		textMessage = &smsgateway.TextMessage{
 			Text: m.TextContent.Text,
 		}
