@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 )
 
 func TestService_recipientsStateToModel(t *testing.T) {
@@ -17,7 +16,7 @@ func TestService_recipientsStateToModel(t *testing.T) {
 		name string
 		s    *Service
 		args args
-		want []models.MessageRecipient
+		want []MessageRecipient
 	}{
 		{
 			name: "Without +",
@@ -30,7 +29,7 @@ func TestService_recipientsStateToModel(t *testing.T) {
 					},
 				},
 			},
-			want: []models.MessageRecipient{
+			want: []MessageRecipient{
 				{
 					MessageID:   0,
 					PhoneNumber: "+79990001234",
@@ -49,7 +48,7 @@ func TestService_recipientsStateToModel(t *testing.T) {
 					},
 				},
 			},
-			want: []models.MessageRecipient{
+			want: []MessageRecipient{
 				{
 					MessageID:   0,
 					PhoneNumber: "+79990001234",
@@ -69,7 +68,7 @@ func TestService_recipientsStateToModel(t *testing.T) {
 				},
 				hash: true,
 			},
-			want: []models.MessageRecipient{
+			want: []MessageRecipient{
 				{
 					MessageID:   0,
 					PhoneNumber: "62d17792b45c5307",
@@ -88,7 +87,7 @@ func TestService_recipientsStateToModel(t *testing.T) {
 					},
 				},
 			},
-			want: []models.MessageRecipient{
+			want: []MessageRecipient{
 				{
 					MessageID:   0,
 					PhoneNumber: "",
