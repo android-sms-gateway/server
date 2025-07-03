@@ -154,7 +154,7 @@ func (s *Service) GetState(user models.User, ID string) (smsgateway.MessageState
 
 func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueOptions) (smsgateway.MessageState, error) {
 	state := smsgateway.MessageState{
-		ID:         "",
+		DeviceID:   device.ID,
 		State:      smsgateway.ProcessingStatePending,
 		Recipients: make([]smsgateway.RecipientState, len(message.PhoneNumbers)),
 	}
@@ -296,6 +296,7 @@ func (s *Service) recipientsStateToModel(input []smsgateway.RecipientState, hash
 func modelToMessageState(input Message) smsgateway.MessageState {
 	return smsgateway.MessageState{
 		ID:          input.ExtID,
+		DeviceID:    input.DeviceID,
 		State:       smsgateway.ProcessingState(input.State),
 		IsHashed:    input.IsHashed,
 		IsEncrypted: input.IsEncrypted,

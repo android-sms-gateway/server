@@ -7,6 +7,7 @@ import (
 )
 
 type mobileRegisterResponse struct {
+	ID       string `json:"id"`
 	Token    string `json:"token"`
 	Login    string `json:"login"`
 	Password string `json:"password"`

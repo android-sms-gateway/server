@@ -15,8 +15,8 @@ definitions:
         minimum: 1
         type: integer
     required:
-      - data
-      - port
+    - data
+    - port
     type: object
   smsgateway.Device:
     properties:
@@ -49,23 +49,23 @@ definitions:
     properties:
       encryption:
         allOf:
-          - $ref: "#/definitions/smsgateway.SettingsEncryption"
+        - $ref: '#/definitions/smsgateway.SettingsEncryption'
         description: Encryption contains settings related to message encryption.
       logs:
         allOf:
-          - $ref: "#/definitions/smsgateway.SettingsLogs"
+        - $ref: '#/definitions/smsgateway.SettingsLogs'
         description: Logs contains settings related to logging.
       messages:
         allOf:
-          - $ref: "#/definitions/smsgateway.SettingsMessages"
+        - $ref: '#/definitions/smsgateway.SettingsMessages'
         description: Messages contains settings related to message handling.
       ping:
         allOf:
-          - $ref: "#/definitions/smsgateway.SettingsPing"
+        - $ref: '#/definitions/smsgateway.SettingsPing'
         description: Ping contains settings related to ping functionality.
       webhooks:
         allOf:
-          - $ref: "#/definitions/smsgateway.SettingsWebhooks"
+        - $ref: '#/definitions/smsgateway.SettingsWebhooks'
         description: Webhooks contains settings related to webhook functionality.
     type: object
   smsgateway.ErrorResponse:
@@ -93,20 +93,20 @@ definitions:
         type: integer
       status:
         allOf:
-          - $ref: "#/definitions/smsgateway.HealthStatus"
+        - $ref: '#/definitions/smsgateway.HealthStatus'
         description: |-
           Status of the check.
           It can be one of the following values: "pass", "warn", or "fail".
     type: object
   smsgateway.HealthChecks:
     additionalProperties:
-      $ref: "#/definitions/smsgateway.HealthCheck"
+      $ref: '#/definitions/smsgateway.HealthCheck'
     type: object
   smsgateway.HealthResponse:
     properties:
       checks:
         allOf:
-          - $ref: "#/definitions/smsgateway.HealthChecks"
+        - $ref: '#/definitions/smsgateway.HealthChecks'
         description: A map of check names to their respective details.
       releaseId:
         description: |-
@@ -115,7 +115,7 @@ definitions:
         type: integer
       status:
         allOf:
-          - $ref: "#/definitions/smsgateway.HealthStatus"
+        - $ref: '#/definitions/smsgateway.HealthStatus'
         description: |-
           Overall status of the application.
           It can be one of the following values: "pass", "warn", or "fail".
@@ -125,33 +125,32 @@ definitions:
     type: object
   smsgateway.HealthStatus:
     enum:
-      - pass
-      - warn
-      - fail
+    - pass
+    - warn
+    - fail
     type: string
     x-enum-varnames:
-      - HealthStatusPass
-      - HealthStatusWarn
-      - HealthStatusFail
+    - HealthStatusPass
+    - HealthStatusWarn
+    - HealthStatusFail
   smsgateway.LimitPeriod:
     enum:
-      - Disabled
-      - PerMinute
-      - PerHour
-      - PerDay
+    - Disabled
+    - PerMinute
+    - PerHour
+    - PerDay
     type: string
     x-enum-varnames:
-      - Disabled
-      - PerMinute
-      - PerHour
-      - PerDay
+    - Disabled
+    - PerMinute
+    - PerHour
+    - PerDay
   smsgateway.LogEntry:
     properties:
       context:
         additionalProperties:
           type: string
-        description:
-          Additional context information related to the log entry, typically
+        description: Additional context information related to the log entry, typically
           including data relevant to the log event.
         type: object
       createdAt:
@@ -164,33 +163,37 @@ definitions:
         description: A message describing the log event.
         type: string
       module:
-        description:
-          The module or component of the system that generated the log
+        description: The module or component of the system that generated the log
           entry.
         type: string
       priority:
         allOf:
-          - $ref: "#/definitions/smsgateway.LogEntryPriority"
+        - $ref: '#/definitions/smsgateway.LogEntryPriority'
         description: The priority level of the log entry.
     type: object
   smsgateway.LogEntryPriority:
     enum:
-      - DEBUG
-      - INFO
-      - WARN
-      - ERROR
+    - DEBUG
+    - INFO
+    - WARN
+    - ERROR
     type: string
     x-enum-varnames:
-      - LogEntryPriorityDebug
-      - LogEntryPriorityInfo
-      - LogEntryPriorityWarn
-      - LogEntryPriorityError
+    - LogEntryPriorityDebug
+    - LogEntryPriorityInfo
+    - LogEntryPriorityWarn
+    - LogEntryPriorityError
   smsgateway.Message:
     properties:
       dataMessage:
         allOf:
-          - $ref: "#/definitions/smsgateway.DataMessage"
+        - $ref: '#/definitions/smsgateway.DataMessage'
         description: Data message
+      deviceId:
+        description: Optional device ID for explicit selection
+        example: PyDmBQZZXYmyxMwED8Fzy
+        maxLength: 21
+        type: string
       id:
         description: ID (if not set - will be generated)
         example: PyDmBQZZXYmyxMwED8Fzy
@@ -210,7 +213,7 @@ definitions:
       phoneNumbers:
         description: Recipients (phone numbers)
         example:
-          - "79990001234"
+        - "79990001234"
         items:
           type: string
         maxItems: 100
@@ -218,10 +221,9 @@ definitions:
         type: array
       priority:
         allOf:
-          - $ref: "#/definitions/smsgateway.MessagePriority"
+        - $ref: '#/definitions/smsgateway.MessagePriority'
         default: 0
-        description:
-          Priority, messages with values greater than `99` will bypass
+        description: Priority, messages with values greater than `99` will bypass
           limits and delays
         example: 0
         maximum: 127
@@ -233,7 +235,7 @@ definitions:
         type: integer
       textMessage:
         allOf:
-          - $ref: "#/definitions/smsgateway.TextMessage"
+        - $ref: '#/definitions/smsgateway.TextMessage'
         description: Text message
       ttl:
         description: Time to live in seconds (conflicts with `validUntil`)
@@ -249,24 +251,29 @@ definitions:
         example: true
         type: boolean
     required:
-      - phoneNumbers
+    - phoneNumbers
     type: object
   smsgateway.MessagePriority:
     enum:
-      - -128
-      - 0
-      - 100
-      - 127
+    - -128
+    - 0
+    - 100
+    - 127
     type: integer
     x-enum-comments:
       PriorityBypassThreshold: Threshold at which messages bypass limits and delays
     x-enum-varnames:
-      - PriorityMinimum
-      - PriorityDefault
-      - PriorityBypassThreshold
-      - PriorityMaximum
+    - PriorityMinimum
+    - PriorityDefault
+    - PriorityBypassThreshold
+    - PriorityMaximum
   smsgateway.MessageState:
     properties:
+      deviceId:
+        description: Device ID
+        example: PyDmBQZZXYmyxMwED8Fzy
+        maxLength: 21
+        type: string
       id:
         description: Message ID
         example: PyDmBQZZXYmyxMwED8Fzy
@@ -283,12 +290,12 @@ definitions:
       recipients:
         description: Recipients states
         items:
-          $ref: "#/definitions/smsgateway.RecipientState"
+          $ref: '#/definitions/smsgateway.RecipientState'
         minItems: 1
         type: array
       state:
         allOf:
-          - $ref: "#/definitions/smsgateway.ProcessingState"
+        - $ref: '#/definitions/smsgateway.ProcessingState'
         description: State
         example: Pending
       states:
@@ -297,8 +304,9 @@ definitions:
         description: History of states
         type: object
     required:
-      - recipients
-      - state
+    - deviceId
+    - recipients
+    - state
     type: object
   smsgateway.MessagesExportRequest:
     properties:
@@ -316,9 +324,9 @@ definitions:
         example: "2024-01-01T23:59:59Z"
         type: string
     required:
-      - deviceId
-      - since
-      - until
+    - deviceId
+    - since
+    - until
     type: object
   smsgateway.MobileChangePasswordRequest:
     properties:
@@ -332,16 +340,15 @@ definitions:
         minLength: 14
         type: string
     required:
-      - currentPassword
-      - newPassword
+    - currentPassword
+    - newPassword
     type: object
   smsgateway.MobileDeviceResponse:
     properties:
       device:
         allOf:
-          - $ref: "#/definitions/smsgateway.Device"
-        description:
-          Device information, empty if device is not registered on the
+        - $ref: '#/definitions/smsgateway.Device'
+        description: Device information, empty if device is not registered on the
           server
       externalIp:
         description: External IP
@@ -355,8 +362,13 @@ definitions:
         type: string
       dataMessage:
         allOf:
-          - $ref: "#/definitions/smsgateway.DataMessage"
+        - $ref: '#/definitions/smsgateway.DataMessage'
         description: Data message
+      deviceId:
+        description: Optional device ID for explicit selection
+        example: PyDmBQZZXYmyxMwED8Fzy
+        maxLength: 21
+        type: string
       id:
         description: ID (if not set - will be generated)
         example: PyDmBQZZXYmyxMwED8Fzy
@@ -376,7 +388,7 @@ definitions:
       phoneNumbers:
         description: Recipients (phone numbers)
         example:
-          - "79990001234"
+        - "79990001234"
         items:
           type: string
         maxItems: 100
@@ -384,10 +396,9 @@ definitions:
         type: array
       priority:
         allOf:
-          - $ref: "#/definitions/smsgateway.MessagePriority"
+        - $ref: '#/definitions/smsgateway.MessagePriority'
         default: 0
-        description:
-          Priority, messages with values greater than `99` will bypass
+        description: Priority, messages with values greater than `99` will bypass
           limits and delays
         example: 0
         maximum: 127
@@ -399,7 +410,7 @@ definitions:
         type: integer
       textMessage:
         allOf:
-          - $ref: "#/definitions/smsgateway.TextMessage"
+        - $ref: '#/definitions/smsgateway.TextMessage'
         description: Text message
       ttl:
         description: Time to live in seconds (conflicts with `validUntil`)
@@ -415,7 +426,7 @@ definitions:
         example: true
         type: boolean
     required:
-      - phoneNumbers
+    - phoneNumbers
     type: object
   smsgateway.MobileRegisterRequest:
     properties:
@@ -474,11 +485,11 @@ definitions:
     type: object
   smsgateway.ProcessingState:
     enum:
-      - Pending
-      - Processed
-      - Sent
-      - Delivered
-      - Failed
+    - Pending
+    - Processed
+    - Sent
+    - Delivered
+    - Failed
     type: string
     x-enum-comments:
       ProcessingStateDelivered: Delivered
@@ -487,23 +498,23 @@ definitions:
       ProcessingStateProcessed: Processed (received by device)
       ProcessingStateSent: Sent
     x-enum-varnames:
-      - ProcessingStatePending
-      - ProcessingStateProcessed
-      - ProcessingStateSent
-      - ProcessingStateDelivered
-      - ProcessingStateFailed
+    - ProcessingStatePending
+    - ProcessingStateProcessed
+    - ProcessingStateSent
+    - ProcessingStateDelivered
+    - ProcessingStateFailed
   smsgateway.PushEventType:
     enum:
-      - MessageEnqueued
-      - WebhooksUpdated
-      - MessagesExportRequested
-      - SettingsUpdated
+    - MessageEnqueued
+    - WebhooksUpdated
+    - MessagesExportRequested
+    - SettingsUpdated
     type: string
     x-enum-varnames:
-      - PushMessageEnqueued
-      - PushWebhooksUpdated
-      - PushMessagesExportRequested
-      - PushSettingsUpdated
+    - PushMessageEnqueued
+    - PushWebhooksUpdated
+    - PushMessagesExportRequested
+    - PushSettingsUpdated
   smsgateway.PushNotification:
     properties:
       data:
@@ -513,21 +524,21 @@ definitions:
         type: object
       event:
         allOf:
-          - $ref: "#/definitions/smsgateway.PushEventType"
+        - $ref: '#/definitions/smsgateway.PushEventType'
         default: MessageEnqueued
         description: The type of event.
         enum:
-          - MessageEnqueued
-          - WebhooksUpdated
-          - MessagesExportRequested
-          - SettingsUpdated
+        - MessageEnqueued
+        - WebhooksUpdated
+        - MessagesExportRequested
+        - SettingsUpdated
         example: MessageEnqueued
       token:
         description: The token of the device that receives the notification.
         example: PyDmBQZZXYmyxMwED8Fzy
         type: string
     required:
-      - token
+    - token
     type: object
   smsgateway.RecipientState:
     properties:
@@ -543,18 +554,17 @@ definitions:
         type: string
       state:
         allOf:
-          - $ref: "#/definitions/smsgateway.ProcessingState"
+        - $ref: '#/definitions/smsgateway.ProcessingState'
         description: State
         example: Pending
     required:
-      - phoneNumber
-      - state
+    - phoneNumber
+    - state
     type: object
   smsgateway.SettingsEncryption:
     properties:
       passphrase:
-        description:
-          Passphrase is the encryption passphrase. If nil or empty, encryption
+        description: Passphrase is the encryption passphrase. If nil or empty, encryption
           is disabled.
         type: string
     type: object
@@ -571,15 +581,15 @@ definitions:
     properties:
       limit_period:
         allOf:
-          - $ref: "#/definitions/smsgateway.LimitPeriod"
+        - $ref: '#/definitions/smsgateway.LimitPeriod'
         description: |-
           LimitPeriod defines the period for message sending limits.
           Valid values are "Disabled", "PerMinute", "PerHour", or "PerDay".
         enum:
-          - Disabled
-          - PerMinute
-          - PerHour
-          - PerDay
+        - Disabled
+        - PerMinute
+        - PerHour
+        - PerDay
       limit_value:
         description: |-
           LimitValue is the maximum number of messages allowed per limit period.
@@ -606,14 +616,14 @@ definitions:
         type: integer
       sim_selection_mode:
         allOf:
-          - $ref: "#/definitions/smsgateway.SimSelectionMode"
+        - $ref: '#/definitions/smsgateway.SimSelectionMode'
         description: |-
           SimSelectionMode defines how SIM cards are selected for sending messages.
           Valid values are "OSDefault", "RoundRobin", or "Random".
         enum:
-          - OSDefault
-          - RoundRobin
-          - Random
+        - OSDefault
+        - RoundRobin
+        - Random
     type: object
   smsgateway.SettingsPing:
     properties:
@@ -627,8 +637,7 @@ definitions:
   smsgateway.SettingsWebhooks:
     properties:
       internet_required:
-        description:
-          InternetRequired indicates whether internet access is required
+        description: InternetRequired indicates whether internet access is required
           for webhooks.
         type: boolean
       retry_count:
@@ -643,14 +652,14 @@ definitions:
     type: object
   smsgateway.SimSelectionMode:
     enum:
-      - OSDefault
-      - RoundRobin
-      - Random
+    - OSDefault
+    - RoundRobin
+    - Random
     type: string
     x-enum-varnames:
-      - OSDefault
-      - RoundRobin
-      - Random
+    - OSDefault
+    - RoundRobin
+    - Random
   smsgateway.TextMessage:
     properties:
       text:
@@ -660,20 +669,19 @@ definitions:
         minLength: 1
         type: string
     required:
-      - text
+    - text
     type: object
   smsgateway.Webhook:
     properties:
       deviceId:
-        description:
-          The unique identifier of the device the webhook is associated
+        description: The unique identifier of the device the webhook is associated
           with.
         example: PyDmBQZZXYmyxMwED8Fzy
         maxLength: 21
         type: string
       event:
         allOf:
-          - $ref: "#/definitions/smsgateway.WebhookEvent"
+        - $ref: '#/definitions/smsgateway.WebhookEvent'
         description: The type of event the webhook is triggered for.
         example: sms:received
       id:
@@ -686,137 +694,135 @@ definitions:
         example: https://example.com/webhook
         type: string
     required:
-      - event
-      - url
+    - event
+    - url
     type: object
   smsgateway.WebhookEvent:
     enum:
-      - sms:received
-      - sms:data-received
-      - sms:sent
-      - sms:delivered
-      - sms:failed
-      - system:ping
+    - sms:received
+    - sms:data-received
+    - sms:sent
+    - sms:delivered
+    - sms:failed
+    - system:ping
     type: string
     x-enum-varnames:
-      - WebhookEventSmsReceived
-      - WebhookEventSmsDataReceived
-      - WebhookEventSmsSent
-      - WebhookEventSmsDelivered
-      - WebhookEventSmsFailed
-      - WebhookEventSystemPing
+    - WebhookEventSmsReceived
+    - WebhookEventSmsDataReceived
+    - WebhookEventSmsSent
+    - WebhookEventSmsDelivered
+    - WebhookEventSmsFailed
+    - WebhookEventSystemPing
 host: api.sms-gate.app
 info:
   contact:
     email: support@sms-gate.app
     name: SMSGate Support
-  description:
-    This API provides programmatic access to sending SMS messages on Android
+  description: This API provides programmatic access to sending SMS messages on Android
     devices. Features include sending SMS, checking message status, device management,
     webhook configuration, and system health checks.
   title: SMS Gateway for Android™ API
-  version: "{APP_VERSION}"
+  version: '{APP_VERSION}'
 paths:
   /3rdparty/v1/devices:
     get:
       description: Returns list of registered devices
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Device list
           schema:
             items:
-              $ref: "#/definitions/smsgateway.Device"
+              $ref: '#/definitions/smsgateway.Device'
             type: array
         "400":
           description: Invalid request
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - ApiAuth: []
+      - ApiAuth: []
       summary: List devices
       tags:
-        - User
-        - Devices
+      - User
+      - Devices
   /3rdparty/v1/devices/{id}:
     delete:
       description: Removes device
       parameters:
-        - description: Device ID
-          in: path
-          name: id
-          required: true
-          type: string
+      - description: Device ID
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "204":
           description: Successfully removed
         "400":
           description: Invalid request
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "404":
           description: Device not found
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - ApiAuth: []
+      - ApiAuth: []
       summary: Remove device
       tags:
-        - User
-        - Devices
+      - User
+      - Devices
   /3rdparty/v1/health:
     get:
       description: Checks if service is healthy
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Health check result
           schema:
-            $ref: "#/definitions/smsgateway.HealthResponse"
+            $ref: '#/definitions/smsgateway.HealthResponse'
         "500":
           description: Service is unhealthy
           schema:
-            $ref: "#/definitions/smsgateway.HealthResponse"
+            $ref: '#/definitions/smsgateway.HealthResponse'
       summary: Health check
       tags:
-        - System
+      - System
   /3rdparty/v1/inbox/export:
     post:
       consumes:
-        - application/json
-      description:
-        Initiates process of inbox messages export via webhooks. For each
+      - application/json
+      description: Initiates process of inbox messages export via webhooks. For each
         message the `sms:received` webhook will be triggered. The webhooks will be
         triggered without specific order.
       parameters:
-        - description: Export inbox request
-          in: body
-          name: request
-          required: true
-          schema:
-            $ref: "#/definitions/smsgateway.MessagesExportRequest"
+      - description: Export inbox request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/smsgateway.MessagesExportRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "202":
           description: Inbox export request accepted
@@ -825,86 +831,83 @@ paths:
         "400":
           description: Invalid request
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - ApiAuth: []
+      - ApiAuth: []
       summary: Request inbox messages export
       tags:
-        - User
-        - Messages
+      - User
+      - Messages
   /3rdparty/v1/logs:
     get:
       description: Retrieve a list of log entries within a specified time range.
       parameters:
-        - description:
-            The start of the time range for the logs to retrieve. Logs created
-            after this timestamp will be included.
-          format: date-time
-          in: query
-          name: from
-          type: string
-        - description:
-            The end of the time range for the logs to retrieve. Logs created
-            before this timestamp will be included.
-          format: date-time
-          in: query
-          name: to
-          type: string
+      - description: The start of the time range for the logs to retrieve. Logs created
+          after this timestamp will be included.
+        format: date-time
+        in: query
+        name: from
+        type: string
+      - description: The end of the time range for the logs to retrieve. Logs created
+          before this timestamp will be included.
+        format: date-time
+        in: query
+        name: to
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Log entries
           schema:
             items:
-              $ref: "#/definitions/smsgateway.LogEntry"
+              $ref: '#/definitions/smsgateway.LogEntry'
             type: array
         "401":
           description: Unauthorized
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "501":
           description: Not implemented
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - ApiAuth: []
+      - ApiAuth: []
       summary: Get logs
       tags:
-        - System
-        - Logs
+      - System
+      - Logs
   /3rdparty/v1/messages:
     post:
       consumes:
-        - application/json
-      description:
-        Enqueues message for sending. If multiple devices are registered,
+      - application/json
+      description: Enqueues message for sending. If multiple devices are registered,
         it will be sent via a random one
       parameters:
-        - description: Skip phone validation
-          in: query
-          name: skipPhoneValidation
-          type: boolean
-        - description: Send message request
-          in: body
-          name: request
-          required: true
-          schema:
-            $ref: "#/definitions/smsgateway.Message"
+      - description: Skip phone validation
+        in: query
+        name: skipPhoneValidation
+        type: boolean
+      - description: Send message request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/smsgateway.Message'
       produces:
-        - application/json
+      - application/json
       responses:
         "202":
           description: Message enqueued
@@ -913,100 +916,100 @@ paths:
               description: Get message state URL
               type: string
           schema:
-            $ref: "#/definitions/smsgateway.MessageState"
+            $ref: '#/definitions/smsgateway.MessageState'
         "400":
           description: Invalid request
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "409":
           description: Message with such ID already exists
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - ApiAuth: []
+      - ApiAuth: []
       summary: Enqueue message
       tags:
-        - User
-        - Messages
+      - User
+      - Messages
   /3rdparty/v1/messages/{id}:
     get:
       description: Returns message state by ID
       parameters:
-        - description: Message ID
-          in: path
-          name: id
-          required: true
-          type: string
+      - description: Message ID
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Message state
           schema:
-            $ref: "#/definitions/smsgateway.MessageState"
+            $ref: '#/definitions/smsgateway.MessageState'
         "400":
           description: Invalid request
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - ApiAuth: []
+      - ApiAuth: []
       summary: Get message state
       tags:
-        - User
-        - Messages
+      - User
+      - Messages
   /3rdparty/v1/settings:
     get:
       description: Returns settings for a specific user
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Settings
           schema:
-            $ref: "#/definitions/smsgateway.DeviceSettings"
+            $ref: '#/definitions/smsgateway.DeviceSettings'
         "401":
           description: Unauthorized
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - ApiAuth: []
+      - ApiAuth: []
       summary: Get settings
       tags:
-        - User
-        - Settings
+      - User
+      - Settings
     patch:
       consumes:
-        - application/json
+      - application/json
       description: Partially updates settings for a specific user
       parameters:
-        - description: Settings
-          in: body
-          name: request
-          required: true
-          schema:
-            $ref: "#/definitions/smsgateway.DeviceSettings"
+      - description: Settings
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/smsgateway.DeviceSettings'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Settings updated
@@ -1015,34 +1018,34 @@ paths:
         "400":
           description: Invalid request
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - ApiAuth: []
+      - ApiAuth: []
       summary: Partially update settings
       tags:
-        - User
-        - Settings
+      - User
+      - Settings
     put:
       consumes:
-        - application/json
+      - application/json
       description: Replaces settings
       parameters:
-        - description: Settings
-          in: body
-          name: request
-          required: true
-          schema:
-            $ref: "#/definitions/smsgateway.DeviceSettings"
+      - description: Settings
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/smsgateway.DeviceSettings'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Settings updated
@@ -1051,96 +1054,95 @@ paths:
         "400":
           description: Invalid request
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - ApiAuth: []
+      - ApiAuth: []
       summary: Replace settings
       tags:
-        - User
-        - Settings
+      - User
+      - Settings
   /3rdparty/v1/webhooks:
     get:
       description: Returns list of registered webhooks
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Webhook list
           schema:
             items:
-              $ref: "#/definitions/smsgateway.Webhook"
+              $ref: '#/definitions/smsgateway.Webhook'
             type: array
         "401":
           description: Unauthorized
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - ApiAuth: []
+      - ApiAuth: []
       summary: List webhooks
       tags:
-        - User
-        - Webhooks
+      - User
+      - Webhooks
     post:
       consumes:
-        - application/json
-      description:
-        Registers webhook. If webhook with same ID already exists, it will
+      - application/json
+      description: Registers webhook. If webhook with same ID already exists, it will
         be replaced
       parameters:
-        - description: Webhook
-          in: body
-          name: request
-          required: true
-          schema:
-            $ref: "#/definitions/smsgateway.Webhook"
+      - description: Webhook
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/smsgateway.Webhook'
       produces:
-        - application/json
+      - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: "#/definitions/smsgateway.Webhook"
+            $ref: '#/definitions/smsgateway.Webhook'
         "400":
           description: Invalid request
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - ApiAuth: []
+      - ApiAuth: []
       summary: Register webhook
       tags:
-        - User
-        - Webhooks
+      - User
+      - Webhooks
   /3rdparty/v1/webhooks/{id}:
     delete:
       description: Deletes webhook
       parameters:
-        - description: Webhook ID
-          in: path
-          name: id
-          required: true
-          type: string
+      - description: Webhook ID
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "204":
           description: Webhook deleted
@@ -1149,305 +1151,304 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - ApiAuth: []
+      - ApiAuth: []
       summary: Delete webhook
       tags:
-        - User
-        - Webhooks
+      - User
+      - Webhooks
   /mobile/v1/device:
     get:
       description: Returns device information
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Device information
           schema:
-            $ref: "#/definitions/smsgateway.MobileDeviceResponse"
+            $ref: '#/definitions/smsgateway.MobileDeviceResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       summary: Get device information
       tags:
-        - Device
+      - Device
     patch:
       consumes:
-        - application/json
+      - application/json
       description: Updates push token for device
       parameters:
-        - description: Device update request
-          in: body
-          name: request
-          required: true
-          schema:
-            $ref: "#/definitions/smsgateway.MobileUpdateRequest"
+      - description: Device update request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/smsgateway.MobileUpdateRequest'
       responses:
         "204":
           description: Successfully updated
         "400":
           description: Invalid request
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "403":
           description: Forbidden (wrong device ID)
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - MobileToken: []
+      - MobileToken: []
       summary: Update device
       tags:
-        - Device
+      - Device
     post:
       consumes:
-        - application/json
-      description:
-        Registers new device for new or existing user. Returns user credentials
+      - application/json
+      description: Registers new device for new or existing user. Returns user credentials
         only for new users
       parameters:
-        - description: Device registration request
-          in: body
-          name: request
-          required: true
-          schema:
-            $ref: "#/definitions/smsgateway.MobileRegisterRequest"
+      - description: Device registration request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/smsgateway.MobileRegisterRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "201":
           description: Device registered
           schema:
-            $ref: "#/definitions/smsgateway.MobileRegisterResponse"
+            $ref: '#/definitions/smsgateway.MobileRegisterResponse'
         "400":
           description: Invalid request
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "401":
           description: Unauthorized (private mode only)
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "429":
           description: Too many requests
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - ApiAuth: []
-        - UserCode: []
-        - ServerKey: []
+      - ApiAuth: []
+      - UserCode: []
+      - ServerKey: []
       summary: Register device
       tags:
-        - Device
+      - Device
   /mobile/v1/message:
     get:
       consumes:
-        - application/json
+      - application/json
       description: Returns list of pending messages
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: List of pending messages
           schema:
             items:
-              $ref: "#/definitions/smsgateway.MobileMessage"
+              $ref: '#/definitions/smsgateway.MobileMessage'
             type: array
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - MobileToken: []
+      - MobileToken: []
       summary: Get messages for sending
       tags:
-        - Device
-        - Messages
+      - Device
+      - Messages
     patch:
       consumes:
-        - application/json
+      - application/json
       description: Updates message state
       parameters:
-        - description: New message state
-          in: body
-          name: request
-          required: true
-          schema:
-            items:
-              $ref: "#/definitions/smsgateway.MessageState"
-            type: array
+      - description: New message state
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/smsgateway.MessageState'
+          type: array
       produces:
-        - application/json
+      - application/json
       responses:
         "204":
           description: Successfully updated
         "400":
           description: Invalid request
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - MobileToken: []
+      - MobileToken: []
       summary: Update message state
       tags:
-        - Device
-        - Messages
+      - Device
+      - Messages
   /mobile/v1/settings:
     get:
       description: Returns settings for a device
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Settings
           schema:
-            $ref: "#/definitions/smsgateway.DeviceSettings"
+            $ref: '#/definitions/smsgateway.DeviceSettings'
         "401":
           description: Unauthorized
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - MobileToken: []
+      - MobileToken: []
       summary: Get settings
       tags:
-        - Device
-        - Settings
+      - Device
+      - Settings
   /mobile/v1/user/code:
     get:
       consumes:
-        - application/json
+      - application/json
       description: Returns one-time code for device registration
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: User code
           schema:
-            $ref: "#/definitions/smsgateway.MobileUserCodeResponse"
+            $ref: '#/definitions/smsgateway.MobileUserCodeResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - ApiAuth: []
+      - ApiAuth: []
       summary: Get one-time code for device registration
       tags:
-        - Device
+      - Device
   /mobile/v1/user/password:
     patch:
       consumes:
-        - application/json
+      - application/json
       description: Changes the user's password
       parameters:
-        - description: Password change request
-          in: body
-          name: request
-          required: true
-          schema:
-            $ref: "#/definitions/smsgateway.MobileChangePasswordRequest"
+      - description: Password change request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/smsgateway.MobileChangePasswordRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "204":
           description: Password changed successfully
         "400":
           description: Invalid request
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - MobileToken: []
+      - MobileToken: []
       summary: Change password
       tags:
-        - Device
+      - Device
   /mobile/v1/webhooks:
     get:
       description: Returns list of registered webhooks for device
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Webhook list
           schema:
             items:
-              $ref: "#/definitions/smsgateway.Webhook"
+              $ref: '#/definitions/smsgateway.Webhook'
             type: array
         "401":
           description: Unauthorized
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       security:
-        - MobileToken: []
+      - MobileToken: []
       summary: List webhooks
       tags:
-        - Device
-        - Webhooks
+      - Device
+      - Webhooks
   /upstream/v1/push:
     post:
       consumes:
-        - application/json
+      - application/json
       description: Enqueues notifications for sending to devices
       parameters:
-        - description: Push request
-          in: body
-          name: request
-          required: true
-          schema:
-            items:
-              $ref: "#/definitions/smsgateway.PushNotification"
-            type: array
+      - description: Push request
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/smsgateway.PushNotification'
+          type: array
       produces:
-        - application/json
+      - application/json
       responses:
         "202":
           description: Notification enqueued
         "400":
           description: Invalid request
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "429":
           description: Too many requests
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: "#/definitions/smsgateway.ErrorResponse"
+            $ref: '#/definitions/smsgateway.ErrorResponse'
       summary: Send push notifications
       tags:
-        - Upstream
+      - Upstream
 schemes:
-  - https
+- https
 securityDefinitions:
   ApiAuth:
     type: basic

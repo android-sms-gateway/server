@@ -63,19 +63,36 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 
 	skipPhoneValidation := c.QueryBool("skipPhoneValidation", false)
 
-	devices, err := h.devicesSvc.Select(user.ID)
-	if err != nil {
-		h.Logger.Error("Failed to select devices", zap.Error(err), zap.String("user_id", user.ID))
-		return fiber.NewError(fiber.StatusInternalServerError, "Can't select devices. Please contact support")
-	}
+	var device models.Device
+	var err error
 
-	if len(devices) < 1 {
-		return fiber.NewError(fiber.StatusBadRequest, "No devices registered")
-	}
+	// Check if device_id is provided
+	if req.DeviceID != "" {
+		// Validate device ownership
+		device, err = h.devicesSvc.Get(user.ID, devices.WithID(req.DeviceID))
+		if err != nil {
+			if errors.Is(err, devices.ErrNotFound) {
+				return fiber.NewError(fiber.StatusBadRequest, "Invalid device ID")
+			}
+			h.Logger.Error("Failed to get device", zap.Error(err), zap.String("user_id", user.ID), zap.String("device_id", req.DeviceID))
+			return fiber.NewError(fiber.StatusInternalServerError, "Can't select device. Please contact support")
+		}
+	} else {
+		// Fallback to random selection
+		devices, err := h.devicesSvc.Select(user.ID)
+		if err != nil {
+			h.Logger.Error("Failed to select devices", zap.Error(err), zap.String("user_id", user.ID))
+			return fiber.NewError(fiber.StatusInternalServerError, "Can't select devices. Please contact support")
+		}
 
-	device, err := slices.Random(devices)
-	if err != nil {
-		return fmt.Errorf("can't get random device: %w", err)
+		if len(devices) < 1 {
+			return fiber.NewError(fiber.StatusBadRequest, "No devices registered")
+		}
+
+		device, err = slices.Random(devices)
+		if err != nil {
+			return fmt.Errorf("can't get random device: %w", err)
+		}
 	}
 
 	var textContent *messages.TextMessageContent
