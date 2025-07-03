@@ -1412,6 +1412,12 @@
                         }
                     ]
                 },
+                "deviceId": {
+                    "description": "Optional device ID for explicit selection",
+                    "type": "string",
+                    "maxLength": 21,
+                    "example": "PyDmBQZZXYmyxMwED8Fzy"
+                },
                 "id": {
                     "description": "ID (if not set - will be generated)",
                     "type": "string",
@@ -1506,10 +1512,17 @@
         "smsgateway.MessageState": {
             "type": "object",
             "required": [
+                "deviceId",
                 "recipients",
                 "state"
             ],
             "properties": {
+                "deviceId": {
+                    "description": "Device ID",
+                    "type": "string",
+                    "maxLength": 21,
+                    "example": "PyDmBQZZXYmyxMwED8Fzy"
+                },
                 "id": {
                     "description": "Message ID",
                     "type": "string",
@@ -1633,6 +1646,12 @@
                             "$ref": "#/definitions/smsgateway.DataMessage"
                         }
                     ]
+                },
+                "deviceId": {
+                    "description": "Optional device ID for explicit selection",
+                    "type": "string",
+                    "maxLength": 21,
+                    "example": "PyDmBQZZXYmyxMwED8Fzy"
                 },
                 "id": {
                     "description": "ID (if not set - will be generated)",
