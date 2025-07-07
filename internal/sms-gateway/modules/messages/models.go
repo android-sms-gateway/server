@@ -2,6 +2,7 @@ package messages
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
@@ -74,7 +75,7 @@ func (m *Message) GetTextContent() (*TextMessageContent, error) {
 
 	err := json.Unmarshal([]byte(m.Content), &content)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal text content: %w", err)
 	}
 
 	return &content, nil
@@ -101,7 +102,7 @@ func (m *Message) GetDataContent() (*DataMessageContent, error) {
 
 	err := json.Unmarshal([]byte(m.Content), &content)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal data content: %w", err)
 	}
 
 	return &content, nil
