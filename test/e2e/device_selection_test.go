@@ -42,7 +42,9 @@ func TestDeviceSelection(t *testing.T) {
 	}
 
 	req := map[string]any{
-		"message": "test",
+		"textMessage": map[string]any{
+			"text": "test",
+		},
 		"phoneNumbers": []string{
 			"+79999999999",
 		},
