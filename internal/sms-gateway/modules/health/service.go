@@ -49,10 +49,19 @@ func (s *Service) HealthCheck(ctx context.Context) (Check, error) {
 			check.Checks[p.Name()+":"+name] = detail
 
 			switch detail.Status {
+			case StatusPass:
 			case StatusFail:
 				level = max(level, levelFail)
 			case StatusWarn:
 				level = max(level, levelWarn)
+			default:
+				// Unknown status – log it and fail-safe by escalating to `levelFail`.
+				s.logger.Warn("health check returned unknown status",
+					zap.String("provider", p.Name()),
+					zap.String("check", name),
+					zap.String("status", string(detail.Status)),
+				)
+				level = max(level, levelFail)
 			}
 		}
 	}
