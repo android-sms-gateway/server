@@ -900,6 +900,11 @@ paths:
         in: query
         name: skipPhoneValidation
         type: boolean
+      - default: 0
+        description: Filter devices active within the specified number of hours
+        in: query
+        name: deviceActiveWithin
+        type: integer
       - description: Send message request
         in: body
         name: request

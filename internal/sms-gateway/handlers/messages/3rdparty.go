@@ -3,6 +3,7 @@ package messages
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
@@ -44,49 +45,58 @@ type ThirdPartyController struct {
 //	@Tags			User, Messages
 //	@Accept			json
 //	@Produce		json
-//	@Param			skipPhoneValidation	query		bool						false	"Skip phone validation"
-//	@Param			request				body		smsgateway.Message			true	"Send message request"
-//	@Success		202					{object}	smsgateway.MessageState		"Message enqueued"
-//	@Failure		400					{object}	smsgateway.ErrorResponse	"Invalid request"
-//	@Failure		401					{object}	smsgateway.ErrorResponse	"Unauthorized"
-//	@Failure		409					{object}	smsgateway.ErrorResponse	"Message with such ID already exists"
-//	@Failure		500					{object}	smsgateway.ErrorResponse	"Internal server error"
-//	@Header			202					{string}	Location					"Get message state URL"
-//	@Router			/3rdparty/v1/messages [post]
+//	@Param			skipPhoneValidation		query		bool						false	"Skip phone validation"
+//	@Param			deviceActiveWithin		query		int							false	"Filter devices active within the specified number of hours"	default(0)
+//	@Param			request					body		smsgateway.Message			true	"Send message request"
+//	@Success		202						{object}	smsgateway.MessageState		"Message enqueued"
+//	@Failure		400						{object}	smsgateway.ErrorResponse	"Invalid request"
+//	@Failure		401						{object}	smsgateway.ErrorResponse	"Unauthorized"
+//	@Failure		409						{object}	smsgateway.ErrorResponse	"Message with such ID already exists"
+//	@Failure		500						{object}	smsgateway.ErrorResponse	"Internal server error"
+//	@Header			202						{string}	Location					"Get message state URL"
+//	@Router			/3rdparty/v1/messages 																				[post]
 //
 // Enqueue message
 func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
-	req := smsgateway.Message{}
+	var params postQueryParams
+	if err := h.QueryParserValidator(c, &params); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	var req smsgateway.Message
 	if err := h.BodyParserValidator(c, &req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	skipPhoneValidation := c.QueryBool("skipPhoneValidation", false)
-
 	var device models.Device
 	var err error
+	var filters []devices.SelectFilter
+
+	if params.DeviceActiveWithin > 0 {
+		filters = append(filters, devices.ActiveWithin(time.Duration(params.DeviceActiveWithin)*time.Hour))
+	}
 
 	// Check if device_id is provided
 	if req.DeviceID != "" {
-		// Validate device ownership
-		device, err = h.devicesSvc.Get(user.ID, devices.WithID(req.DeviceID))
+
+		device, err = h.devicesSvc.Get(user.ID, append(filters, devices.WithID(req.DeviceID))...)
 		if err != nil {
 			if errors.Is(err, devices.ErrNotFound) {
-				return fiber.NewError(fiber.StatusBadRequest, "Invalid device ID")
+				return fiber.NewError(fiber.StatusBadRequest, "No active device with such ID found")
 			}
 			h.Logger.Error("Failed to get device", zap.Error(err), zap.String("user_id", user.ID), zap.String("device_id", req.DeviceID))
 			return fiber.NewError(fiber.StatusInternalServerError, "Can't select device. Please contact support")
 		}
 	} else {
 		// Fallback to random selection
-		devices, err := h.devicesSvc.Select(user.ID)
+		devices, err := h.devicesSvc.Select(user.ID, filters...)
 		if err != nil {
 			h.Logger.Error("Failed to select devices", zap.Error(err), zap.String("user_id", user.ID))
 			return fiber.NewError(fiber.StatusInternalServerError, "Can't select devices. Please contact support")
 		}
 
 		if len(devices) < 1 {
-			return fiber.NewError(fiber.StatusBadRequest, "No devices registered")
+			return fiber.NewError(fiber.StatusBadRequest, "No active devices found")
 		}
 
 		device, err = slices.Random(devices)
@@ -125,7 +135,7 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 		ValidUntil:         req.ValidUntil,
 		Priority:           req.Priority,
 	}
-	state, err := h.messagesSvc.Enqueue(device, msg, messages.EnqueueOptions{SkipPhoneValidation: skipPhoneValidation})
+	state, err := h.messagesSvc.Enqueue(device, msg, messages.EnqueueOptions{SkipPhoneValidation: params.SkipPhoneValidation})
 	if err != nil {
 		var errValidation messages.ErrValidation
 		if isBadRequest := errors.As(err, &errValidation); isBadRequest {
@@ -155,12 +165,12 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 //	@Security		ApiAuth
 //	@Tags			User, Messages
 //	@Produce		json
-//	@Param			id	path		string						true	"Message ID"
-//	@Success		200	{object}	smsgateway.MessageState		"Message state"
-//	@Failure		400	{object}	smsgateway.ErrorResponse	"Invalid request"
-//	@Failure		401	{object}	smsgateway.ErrorResponse	"Unauthorized"
-//	@Failure		500	{object}	smsgateway.ErrorResponse	"Internal server error"
-//	@Router			/3rdparty/v1/messages/{id} [get]
+//	@Param			id							path		string						true	"Message ID"
+//	@Success		200							{object}	smsgateway.MessageState		"Message state"
+//	@Failure		400							{object}	smsgateway.ErrorResponse	"Invalid request"
+//	@Failure		401							{object}	smsgateway.ErrorResponse	"Unauthorized"
+//	@Failure		500							{object}	smsgateway.ErrorResponse	"Internal server error"
+//	@Router			/3rdparty/v1/messages/{id} 																			[get]
 //
 // Get message state
 func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
@@ -184,12 +194,12 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 //	@Tags			User, Messages
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		smsgateway.MessagesExportRequest	true	"Export inbox request"
-//	@Success		202		{object}	object								"Inbox export request accepted"
-//	@Failure		400		{object}	smsgateway.ErrorResponse			"Invalid request"
-//	@Failure		401		{object}	smsgateway.ErrorResponse			"Unauthorized"
-//	@Failure		500		{object}	smsgateway.ErrorResponse			"Internal server error"
-//	@Router			/3rdparty/v1/inbox/export [post]
+//	@Param			request						body		smsgateway.MessagesExportRequest	true	"Export inbox request"
+//	@Success		202							{object}	object								"Inbox export request accepted"
+//	@Failure		400							{object}	smsgateway.ErrorResponse			"Invalid request"
+//	@Failure		401							{object}	smsgateway.ErrorResponse			"Unauthorized"
+//	@Failure		500							{object}	smsgateway.ErrorResponse			"Internal server error"
+//	@Router			/3rdparty/v1/inbox/export 																								[post]
 //
 // Export inbox
 func (h *ThirdPartyController) postInboxExport(user models.User, c *fiber.Ctx) error {

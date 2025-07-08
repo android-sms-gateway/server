@@ -1,6 +1,10 @@
 package devices
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type SelectFilter func(*selectFilter)
 
@@ -22,10 +26,17 @@ func WithUserID(userID string) SelectFilter {
 	}
 }
 
+func ActiveWithin(duration time.Duration) SelectFilter {
+	return func(f *selectFilter) {
+		f.activeWithin = duration
+	}
+}
+
 type selectFilter struct {
-	id     *string
-	userID *string
-	token  *string
+	id           *string
+	userID       *string
+	token        *string
+	activeWithin time.Duration
 }
 
 func newFilter(filters ...SelectFilter) *selectFilter {
@@ -49,6 +60,9 @@ func (f *selectFilter) apply(query *gorm.DB) *gorm.DB {
 	}
 	if f.userID != nil {
 		query = query.Where("user_id = ?", *f.userID)
+	}
+	if f.activeWithin != 0 {
+		query = query.Where("last_seen > ?", time.Now().Add(-f.activeWithin))
 	}
 	return query
 }
