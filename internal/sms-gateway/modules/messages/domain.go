@@ -27,3 +27,25 @@ type MessageOut struct {
 
 	CreatedAt time.Time
 }
+
+type MessageStateIn struct {
+	// Message ID
+	ID string
+	// State
+	State ProcessingState
+	// Recipients states
+	Recipients []smsgateway.RecipientState
+	// History of states
+	States map[string]time.Time
+}
+
+type MessageStateOut struct {
+	// Device ID
+	DeviceID string
+	// Hashed
+	IsHashed bool
+	// Encrypted
+	IsEncrypted bool
+
+	MessageStateIn
+}

@@ -80,6 +80,47 @@ definitions:
         example: An error occurred
         type: string
     type: object
+  smsgateway.GetMessageResponse:
+    properties:
+      deviceId:
+        description: Device ID
+        example: PyDmBQZZXYmyxMwED8Fzy
+        maxLength: 21
+        type: string
+      id:
+        description: Message ID
+        example: PyDmBQZZXYmyxMwED8Fzy
+        maxLength: 36
+        type: string
+      isEncrypted:
+        description: Encrypted
+        example: false
+        type: boolean
+      isHashed:
+        description: Hashed
+        example: false
+        type: boolean
+      recipients:
+        description: Recipients states
+        items:
+          $ref: '#/definitions/smsgateway.RecipientState'
+        minItems: 1
+        type: array
+      state:
+        allOf:
+        - $ref: '#/definitions/smsgateway.ProcessingState'
+        description: State
+        example: Pending
+      states:
+        additionalProperties:
+          type: string
+        description: History of states
+        type: object
+    required:
+    - deviceId
+    - recipients
+    - state
+    type: object
   smsgateway.HealthCheck:
     properties:
       description:
@@ -267,47 +308,6 @@ definitions:
     - PriorityDefault
     - PriorityBypassThreshold
     - PriorityMaximum
-  smsgateway.MessageState:
-    properties:
-      deviceId:
-        description: Device ID
-        example: PyDmBQZZXYmyxMwED8Fzy
-        maxLength: 21
-        type: string
-      id:
-        description: Message ID
-        example: PyDmBQZZXYmyxMwED8Fzy
-        maxLength: 36
-        type: string
-      isEncrypted:
-        description: Encrypted
-        example: false
-        type: boolean
-      isHashed:
-        description: Hashed
-        example: false
-        type: boolean
-      recipients:
-        description: Recipients states
-        items:
-          $ref: '#/definitions/smsgateway.RecipientState'
-        minItems: 1
-        type: array
-      state:
-        allOf:
-        - $ref: '#/definitions/smsgateway.ProcessingState'
-        description: State
-        example: Pending
-      states:
-        additionalProperties:
-          type: string
-        description: History of states
-        type: object
-    required:
-    - deviceId
-    - recipients
-    - state
-    type: object
   smsgateway.MessagesExportRequest:
     properties:
       deviceId:
@@ -921,7 +921,7 @@ paths:
               description: Get message state URL
               type: string
           schema:
-            $ref: '#/definitions/smsgateway.MessageState'
+            $ref: '#/definitions/smsgateway.GetMessageResponse'
         "400":
           description: Invalid request
           schema:
@@ -959,7 +959,7 @@ paths:
         "200":
           description: Message state
           schema:
-            $ref: '#/definitions/smsgateway.MessageState'
+            $ref: '#/definitions/smsgateway.GetMessageResponse'
         "400":
           description: Invalid request
           schema:
@@ -1292,7 +1292,32 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/definitions/smsgateway.MessageState'
+            properties:
+              id:
+                description: Message ID
+                example: PyDmBQZZXYmyxMwED8Fzy
+                maxLength: 36
+                type: string
+              recipients:
+                description: Recipients states
+                items:
+                  $ref: '#/definitions/smsgateway.RecipientState'
+                minItems: 1
+                type: array
+              state:
+                allOf:
+                - $ref: '#/definitions/smsgateway.ProcessingState'
+                description: State
+                example: Pending
+              states:
+                additionalProperties:
+                  type: string
+                description: History of states
+                type: object
+            required:
+            - recipients
+            - state
+            type: object
           type: array
       produces:
       - application/json

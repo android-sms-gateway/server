@@ -182,25 +182,27 @@ func (h *mobileHandler) getMessage(device models.Device, c *fiber.Ctx) error {
 //	@Tags			Device, Messages
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		[]smsgateway.MessageState	true	"New message state"
-//	@Success		204		{object}	nil							"Successfully updated"
-//	@Failure		400		{object}	smsgateway.ErrorResponse	"Invalid request"
-//	@Failure		500		{object}	smsgateway.ErrorResponse	"Internal server error"
+//	@Param			request	body		smsgateway.MobilePatchMessageRequest	true	"New message state"
+//	@Success		204		{object}	nil										"Successfully updated"
+//	@Failure		400		{object}	smsgateway.ErrorResponse				"Invalid request"
+//	@Failure		500		{object}	smsgateway.ErrorResponse				"Internal server error"
 //	@Router			/mobile/v1/message [patch]
 //
 // Update message state
 func (h *mobileHandler) patchMessage(device models.Device, c *fiber.Ctx) error {
-	req := []smsgateway.MessageState{}
+	var req smsgateway.MobilePatchMessageRequest
 	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
+	var messageState messages.MessageStateIn
 	for _, v := range req {
-		if err := h.ValidateStruct(v); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
-		}
+		messageState.ID = v.ID
+		messageState.State = messages.ProcessingState(v.State)
+		messageState.Recipients = v.Recipients
+		messageState.States = v.States
 
-		err := h.messagesSvc.UpdateState(device.ID, v)
+		err := h.messagesSvc.UpdateState(device.ID, messageState)
 		if err != nil && !errors.Is(err, messages.ErrMessageNotFound) {
 			h.Logger.Error("Can't update message status", zap.Error(err))
 		}

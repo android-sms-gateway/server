@@ -311,7 +311,7 @@
                     "202": {
                         "description": "Message enqueued",
                         "schema": {
-                            "$ref": "#/definitions/smsgateway.MessageState"
+                            "$ref": "#/definitions/smsgateway.GetMessageResponse"
                         },
                         "headers": {
                             "Location": {
@@ -376,7 +376,7 @@
                     "200": {
                         "description": "Message state",
                         "schema": {
-                            "$ref": "#/definitions/smsgateway.MessageState"
+                            "$ref": "#/definitions/smsgateway.GetMessageResponse"
                         }
                     },
                     "400": {
@@ -900,7 +900,43 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/smsgateway.MessageState"
+                                "type": "object",
+                                "required": [
+                                    "recipients",
+                                    "state"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "description": "Message ID",
+                                        "type": "string",
+                                        "maxLength": 36,
+                                        "example": "PyDmBQZZXYmyxMwED8Fzy"
+                                    },
+                                    "recipients": {
+                                        "description": "Recipients states",
+                                        "type": "array",
+                                        "minItems": 1,
+                                        "items": {
+                                            "$ref": "#/definitions/smsgateway.RecipientState"
+                                        }
+                                    },
+                                    "state": {
+                                        "description": "State",
+                                        "allOf": [
+                                            {
+                                                "$ref": "#/definitions/smsgateway.ProcessingState"
+                                            }
+                                        ],
+                                        "example": "Pending"
+                                    },
+                                    "states": {
+                                        "description": "History of states",
+                                        "type": "object",
+                                        "additionalProperties": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -1266,6 +1302,62 @@
                 }
             }
         },
+        "smsgateway.GetMessageResponse": {
+            "type": "object",
+            "required": [
+                "deviceId",
+                "recipients",
+                "state"
+            ],
+            "properties": {
+                "deviceId": {
+                    "description": "Device ID",
+                    "type": "string",
+                    "maxLength": 21,
+                    "example": "PyDmBQZZXYmyxMwED8Fzy"
+                },
+                "id": {
+                    "description": "Message ID",
+                    "type": "string",
+                    "maxLength": 36,
+                    "example": "PyDmBQZZXYmyxMwED8Fzy"
+                },
+                "isEncrypted": {
+                    "description": "Encrypted",
+                    "type": "boolean",
+                    "example": false
+                },
+                "isHashed": {
+                    "description": "Hashed",
+                    "type": "boolean",
+                    "example": false
+                },
+                "recipients": {
+                    "description": "Recipients states",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/smsgateway.RecipientState"
+                    }
+                },
+                "state": {
+                    "description": "State",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.ProcessingState"
+                        }
+                    ],
+                    "example": "Pending"
+                },
+                "states": {
+                    "description": "History of states",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "smsgateway.HealthCheck": {
             "type": "object",
             "properties": {
@@ -1515,62 +1607,6 @@
                 "PriorityBypassThreshold",
                 "PriorityMaximum"
             ]
-        },
-        "smsgateway.MessageState": {
-            "type": "object",
-            "required": [
-                "deviceId",
-                "recipients",
-                "state"
-            ],
-            "properties": {
-                "deviceId": {
-                    "description": "Device ID",
-                    "type": "string",
-                    "maxLength": 21,
-                    "example": "PyDmBQZZXYmyxMwED8Fzy"
-                },
-                "id": {
-                    "description": "Message ID",
-                    "type": "string",
-                    "maxLength": 36,
-                    "example": "PyDmBQZZXYmyxMwED8Fzy"
-                },
-                "isEncrypted": {
-                    "description": "Encrypted",
-                    "type": "boolean",
-                    "example": false
-                },
-                "isHashed": {
-                    "description": "Hashed",
-                    "type": "boolean",
-                    "example": false
-                },
-                "recipients": {
-                    "description": "Recipients states",
-                    "type": "array",
-                    "minItems": 1,
-                    "items": {
-                        "$ref": "#/definitions/smsgateway.RecipientState"
-                    }
-                },
-                "state": {
-                    "description": "State",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/smsgateway.ProcessingState"
-                        }
-                    ],
-                    "example": "Pending"
-                },
-                "states": {
-                    "description": "History of states",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                }
-            }
         },
         "smsgateway.MessagesExportRequest": {
             "type": "object",

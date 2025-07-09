@@ -104,17 +104,17 @@ func (s *Service) SelectPending(deviceID string) ([]MessageOut, error) {
 	return slices.MapOrError(messages, messageToDomain)
 }
 
-func (s *Service) UpdateState(deviceID string, message smsgateway.MessageState) error {
+func (s *Service) UpdateState(deviceID string, message MessageStateIn) error {
 	existing, err := s.messages.Get(message.ID, MessagesSelectFilter{DeviceID: deviceID})
 	if err != nil {
 		return err
 	}
 
-	if message.State == smsgateway.ProcessingStatePending {
-		message.State = smsgateway.ProcessingStateProcessed
+	if message.State == ProcessingStatePending {
+		message.State = ProcessingStateProcessed
 	}
 
-	existing.State = ProcessingState(message.State)
+	existing.State = message.State
 	existing.States = slices.Map(maps.Keys(message.States), func(key string) MessageState {
 		return MessageState{
 			MessageID: existing.ID,
@@ -135,28 +135,30 @@ func (s *Service) UpdateState(deviceID string, message smsgateway.MessageState) 
 	return nil
 }
 
-func (s *Service) GetState(user models.User, ID string) (smsgateway.MessageState, error) {
+func (s *Service) GetState(user models.User, ID string) (MessageStateOut, error) {
 	message, err := s.messages.Get(
 		ID,
 		MessagesSelectFilter{},
 		MessagesSelectOptions{WithRecipients: true, WithDevice: true, WithStates: true},
 	)
 	if err != nil {
-		return smsgateway.MessageState{}, ErrMessageNotFound
+		return MessageStateOut{}, ErrMessageNotFound
 	}
 
 	if message.Device.UserID != user.ID {
-		return smsgateway.MessageState{}, ErrMessageNotFound
+		return MessageStateOut{}, ErrMessageNotFound
 	}
 
 	return modelToMessageState(message), nil
 }
 
-func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueOptions) (smsgateway.MessageState, error) {
-	state := smsgateway.MessageState{
-		DeviceID:   device.ID,
-		State:      smsgateway.ProcessingStatePending,
-		Recipients: make([]smsgateway.RecipientState, len(message.PhoneNumbers)),
+func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueOptions) (MessageStateOut, error) {
+	state := MessageStateOut{
+		DeviceID: device.ID,
+		MessageStateIn: MessageStateIn{
+			State:      ProcessingStatePending,
+			Recipients: make([]smsgateway.RecipientState, len(message.PhoneNumbers)),
+		},
 	}
 
 	var phone string
@@ -293,19 +295,22 @@ func (s *Service) recipientsStateToModel(input []smsgateway.RecipientState, hash
 	return output
 }
 
-func modelToMessageState(input Message) smsgateway.MessageState {
-	return smsgateway.MessageState{
-		ID:          input.ExtID,
+func modelToMessageState(input Message) MessageStateOut {
+	return MessageStateOut{
 		DeviceID:    input.DeviceID,
-		State:       smsgateway.ProcessingState(input.State),
 		IsHashed:    input.IsHashed,
 		IsEncrypted: input.IsEncrypted,
-		Recipients:  slices.Map(input.Recipients, modelToRecipientState),
-		States: slices.Associate(
-			input.States,
-			func(state MessageState) string { return string(state.State) },
-			func(state MessageState) time.Time { return state.UpdatedAt },
-		),
+
+		MessageStateIn: MessageStateIn{
+			ID:         input.ExtID,
+			State:      input.State,
+			Recipients: slices.Map(input.Recipients, modelToRecipientState),
+			States: slices.Associate(
+				input.States,
+				func(state MessageState) string { return string(state.State) },
+				func(state MessageState) time.Time { return state.UpdatedAt },
+			),
+		},
 	}
 }
 
