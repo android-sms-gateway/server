@@ -195,12 +195,13 @@ func (h *mobileHandler) patchMessage(device models.Device, c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	var messageState messages.MessageStateIn
 	for _, v := range req {
-		messageState.ID = v.ID
-		messageState.State = messages.ProcessingState(v.State)
-		messageState.Recipients = v.Recipients
-		messageState.States = v.States
+		messageState := messages.MessageStateIn{
+			ID:         v.ID,
+			State:      messages.ProcessingState(v.State),
+			Recipients: v.Recipients,
+			States:     v.States,
+		}
 
 		err := h.messagesSvc.UpdateState(device.ID, messageState)
 		if err != nil && !errors.Is(err, messages.ErrMessageNotFound) {

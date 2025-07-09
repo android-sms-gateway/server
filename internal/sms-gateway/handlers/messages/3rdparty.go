@@ -40,13 +40,13 @@ type ThirdPartyController struct {
 }
 
 //	@Summary		Enqueue message
-//	@Description	Enqueues message for sending. If multiple devices are registered, it will be sent via a random one
+//	@Description	Enqueues a message for sending. If `deviceId` is set, the specified device is used; otherwise a random registered device is chosen.
 //	@Security		ApiAuth
 //	@Tags			User, Messages
 //	@Accept			json
 //	@Produce		json
 //	@Param			skipPhoneValidation		query		bool							false	"Skip phone validation"
-//	@Param			deviceActiveWithin		query		int								false	"Filter devices active within the specified number of hours"	default(0)
+//	@Param			deviceActiveWithin		query		int								false	"Filter devices active within the specified number of hours"	default(0)	minimum(0)
 //	@Param			request					body		smsgateway.Message				true	"Send message request"
 //	@Success		202						{object}	smsgateway.GetMessageResponse	"Message enqueued"
 //	@Failure		400						{object}	smsgateway.ErrorResponse		"Invalid request"
@@ -54,7 +54,7 @@ type ThirdPartyController struct {
 //	@Failure		409						{object}	smsgateway.ErrorResponse		"Message with such ID already exists"
 //	@Failure		500						{object}	smsgateway.ErrorResponse		"Internal server error"
 //	@Header			202						{string}	Location						"Get message state URL"
-//	@Router			/3rdparty/v1/messages 																													[post]
+//	@Router			/3rdparty/v1/messages 																																																																	[post]
 //
 // Enqueue message
 func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
@@ -179,7 +179,7 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 //	@Failure		400							{object}	smsgateway.ErrorResponse		"Invalid request"
 //	@Failure		401							{object}	smsgateway.ErrorResponse		"Unauthorized"
 //	@Failure		500							{object}	smsgateway.ErrorResponse		"Internal server error"
-//	@Router			/3rdparty/v1/messages/{id} 																												[get]
+//	@Router			/3rdparty/v1/messages/{id} 																																																																[get]
 //
 // Get message state
 func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
@@ -216,7 +216,7 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 //	@Failure		400							{object}	smsgateway.ErrorResponse			"Invalid request"
 //	@Failure		401							{object}	smsgateway.ErrorResponse			"Unauthorized"
 //	@Failure		500							{object}	smsgateway.ErrorResponse			"Internal server error"
-//	@Router			/3rdparty/v1/inbox/export 																																		[post]
+//	@Router			/3rdparty/v1/inbox/export 																																																																										[post]
 //
 // Export inbox
 func (h *ThirdPartyController) postInboxExport(user models.User, c *fiber.Ctx) error {

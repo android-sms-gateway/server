@@ -271,7 +271,7 @@
                         "ApiAuth": []
                     }
                 ],
-                "description": "Enqueues message for sending. If multiple devices are registered, it will be sent via a random one",
+                "description": "Enqueues a message for sending. If `deviceId` is set, the specified device is used; otherwise a random registered device is chosen.",
                 "consumes": [
                     "application/json"
                 ],
@@ -291,6 +291,7 @@
                         "in": "query"
                     },
                     {
+                        "minimum": 0,
                         "type": "integer",
                         "default": 0,
                         "description": "Filter devices active within the specified number of hours",

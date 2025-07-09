@@ -893,8 +893,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Enqueues message for sending. If multiple devices are registered,
-        it will be sent via a random one
+      description: Enqueues a message for sending. If `deviceId` is set, the specified
+        device is used; otherwise a random registered device is chosen.
       parameters:
       - description: Skip phone validation
         in: query
@@ -903,6 +903,7 @@ paths:
       - default: 0
         description: Filter devices active within the specified number of hours
         in: query
+        minimum: 0
         name: deviceActiveWithin
         type: integer
       - description: Send message request
