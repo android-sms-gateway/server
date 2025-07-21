@@ -94,15 +94,25 @@ func (s *Service) Close() error {
 }
 
 func (s *Service) Handler(deviceId string, c *fiber.Ctx) error {
-	s.registerConnection(deviceId)
-	defer s.removeConnection(deviceId)
-
 	c.Set("Content-Type", "text/event-stream")
 	c.Set("Cache-Control", "no-cache")
 	c.Set("Connection", "keep-alive")
-	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+	c.Set("Transfer-Encoding", "chunked")
+
+	c.Status(fiber.StatusOK).Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+		s.registerConnection(deviceId)
+		defer s.removeConnection(deviceId)
+
 		conn := s.getConnection(deviceId)
 		if conn == nil {
+			s.logger.Warn("Client not connected", zap.String("client_id", deviceId))
+			return
+		}
+
+		if err := s.writeToStream(w, ":keepalive"); err != nil {
+			s.logger.Warn("Failed to write keepalive",
+				zap.String("client_id", deviceId),
+				zap.Error(err))
 			return
 		}
 
@@ -112,40 +122,33 @@ func (s *Service) Handler(deviceId string, c *fiber.Ctx) error {
 		for {
 			select {
 			case data := <-conn.channel:
-				if _, err := fmt.Fprintf(w, "data: %s\n\n", utils.UnsafeString(data)); err != nil {
+				if err := s.writeToStream(w, fmt.Sprintf("data: %s", utils.UnsafeString(data))); err != nil {
 					s.logger.Warn("Failed to write event data",
 						zap.String("client_id", deviceId),
 						zap.Error(err))
 					return
 				}
-				if err := w.Flush(); err != nil {
-					s.logger.Warn("Failed to flush event data",
-						zap.String("client_id", deviceId),
-						zap.Error(err))
-					return
-				}
 			case <-ticker.C:
-				if _, err := fmt.Fprint(w, ":keepalive\n\n"); err != nil {
-					s.logger.Debug("Failed to write keepalive",
-						zap.String("client_id", deviceId),
-						zap.Error(err))
-					return
-				}
-				if err := w.Flush(); err != nil {
-					s.logger.Debug("Failed to flush keepalive",
+				if err := s.writeToStream(w, ":keepalive"); err != nil {
+					s.logger.Warn("Failed to write keepalive",
 						zap.String("client_id", deviceId),
 						zap.Error(err))
 					return
 				}
 			case <-conn.closeSignal:
 				return
-			case <-c.Context().Done():
-				return
 			}
 		}
 	})
 
 	return nil
+}
+
+func (s *Service) writeToStream(w *bufio.Writer, data string) error {
+	if _, err := fmt.Fprintf(w, "%s\n\n", data); err != nil {
+		return err
+	}
+	return w.Flush()
 }
 
 func (s *Service) registerConnection(id string) {
