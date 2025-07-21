@@ -41,6 +41,10 @@ github.com/capcom6/go-helpers v0.3.0 h1:ae18fLfluoPubiB2V+j4cIpfZaTuK4acS2entama
 github.com/capcom6/go-helpers v0.3.0/go.mod h1:WDqc7HZNqHxUTisArkYIBZtqUfJBVyPWeQI+FMwEzAw=
 github.com/capcom6/go-infra-fx v0.2.1 h1:8rqr2ZV+YC2R07amHMdlE1XKLUhMe5yO+ffCJ/xXlNY=
 github.com/capcom6/go-infra-fx v0.2.1/go.mod h1:klScvB8QAKgJ19FfJOnUKK5tI0o9b79Aj2RmCJHfbN0=
+github.com/capcom6/go-infra-fx v0.2.2 h1:vTxlAqHUKpYTOY5Lp9OeTwwzxM34N8wH1vekEShg7eA=
+github.com/capcom6/go-infra-fx v0.2.2/go.mod h1:KHApbB6bwF7WQNIXW6ZdC4YG+d+ciwxvsnRpbOJa/Ys=
+github.com/capcom6/go-infra-fx v0.2.3 h1:ZSlBfz8qRaNVMtTBtJ4fLN89472CNimpJwy3kfBgGf8=
+github.com/capcom6/go-infra-fx v0.2.3/go.mod h1:KHApbB6bwF7WQNIXW6ZdC4YG+d+ciwxvsnRpbOJa/Ys=
 github.com/cenkalti/backoff/v4 v4.2.1 h1:y4OZtCnogmCPw98Zjyt5a6+QwPLGkiQsYW5oUqylYbM=
 github.com/cenkalti/backoff/v4 v4.2.1/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
