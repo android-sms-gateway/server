@@ -75,3 +75,7 @@ Content-Type: application/json
 ###
 GET {{baseUrl}}/settings HTTP/1.1
 Authorization: Bearer {{mobileToken}}
+
+###
+GET {{baseUrl}}/events HTTP/1.1
+Authorization: Bearer {{mobileToken}}
