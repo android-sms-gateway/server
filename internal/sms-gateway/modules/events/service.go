@@ -134,17 +134,18 @@ func (s *Service) processEvent(wrapper eventWrapper) {
 			} else {
 				s.sentCounter.WithLabelValues(string(wrapper.Event.eventType), DeliveryTypePush).Inc()
 			}
+			return
+		}
+
+		// No push token, use SSE service
+		if err := s.sseSvc.Send(device.ID, sse.Event{
+			Type: wrapper.Event.eventType,
+			Data: wrapper.Event.data,
+		}); err != nil {
+			s.logger.Error("Failed to send SSE notification", zap.String("user_id", wrapper.UserID), zap.String("device_id", device.ID), zap.Error(err))
+			s.failedCounter.WithLabelValues(string(wrapper.Event.eventType), DeliveryTypeSSE, FailureReasonProviderFailed).Inc()
 		} else {
-			// No push token, use SSE service
-			if err := s.sseSvc.Send(device.ID, sse.Event{
-				Type: wrapper.Event.eventType,
-				Data: wrapper.Event.data,
-			}); err != nil {
-				s.logger.Error("Failed to send SSE notification", zap.String("user_id", wrapper.UserID), zap.String("device_id", device.ID), zap.Error(err))
-				s.failedCounter.WithLabelValues(string(wrapper.Event.eventType), DeliveryTypeSSE, FailureReasonProviderFailed).Inc()
-			} else {
-				s.sentCounter.WithLabelValues(string(wrapper.Event.eventType), DeliveryTypeSSE).Inc()
-			}
+			s.sentCounter.WithLabelValues(string(wrapper.Event.eventType), DeliveryTypeSSE).Inc()
 		}
 	}
 }

@@ -1,6 +1,8 @@
 package sse
 
-import "github.com/android-sms-gateway/client-go/smsgateway"
+import (
+	"github.com/android-sms-gateway/client-go/smsgateway"
+)
 
 type Event struct {
 	Type smsgateway.PushEventType `json:"event"`
