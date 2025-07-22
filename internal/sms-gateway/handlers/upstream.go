@@ -68,10 +68,10 @@ func (h *upstreamHandler) postPush(c *fiber.Ctx) error {
 			return err
 		}
 
-		event := push.NewEvent(
-			anys.ZeroDefault(v.Event, smsgateway.PushMessageEnqueued),
-			v.Data,
-		)
+		event := push.Event{
+			Type: anys.ZeroDefault(v.Event, smsgateway.PushMessageEnqueued),
+			Data: v.Data,
+		}
 
 		if err := h.pushSvc.Enqueue(v.Token, event); err != nil {
 			h.Logger.Error("Can't push message", zap.Error(err))
