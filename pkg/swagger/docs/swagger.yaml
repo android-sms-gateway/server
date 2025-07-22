@@ -118,6 +118,7 @@ definitions:
         type: object
     required:
     - deviceId
+    - id
     - recipients
     - state
     type: object
@@ -427,6 +428,34 @@ definitions:
         type: boolean
     required:
     - phoneNumbers
+    type: object
+  smsgateway.MobilePatchMessageItem:
+    properties:
+      id:
+        description: Message ID
+        example: PyDmBQZZXYmyxMwED8Fzy
+        maxLength: 36
+        type: string
+      recipients:
+        description: Recipients states
+        items:
+          $ref: '#/definitions/smsgateway.RecipientState'
+        minItems: 1
+        type: array
+      state:
+        allOf:
+        - $ref: '#/definitions/smsgateway.ProcessingState'
+        description: State
+        example: Pending
+      states:
+        additionalProperties:
+          type: string
+        description: History of states
+        type: object
+    required:
+    - id
+    - recipients
+    - state
     type: object
   smsgateway.MobileRegisterRequest:
     properties:
@@ -1258,6 +1287,31 @@ paths:
       summary: Register device
       tags:
       - Device
+  /mobile/v1/events:
+    get:
+      description: Returns events stream for a device
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: Event
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
+      security:
+      - MobileToken: []
+      summary: Get events
+      tags:
+      - Device
+      - Events
+      x-sse: true
   /mobile/v1/message:
     get:
       consumes:
@@ -1287,38 +1341,13 @@ paths:
       - application/json
       description: Updates message state
       parameters:
-      - description: New message state
+      - description: List of message state updates
         in: body
         name: request
         required: true
         schema:
           items:
-            properties:
-              id:
-                description: Message ID
-                example: PyDmBQZZXYmyxMwED8Fzy
-                maxLength: 36
-                type: string
-              recipients:
-                description: Recipients states
-                items:
-                  $ref: '#/definitions/smsgateway.RecipientState'
-                minItems: 1
-                type: array
-              state:
-                allOf:
-                - $ref: '#/definitions/smsgateway.ProcessingState'
-                description: State
-                example: Pending
-              states:
-                additionalProperties:
-                  type: string
-                description: History of states
-                type: object
-            required:
-            - recipients
-            - state
-            type: object
+            $ref: '#/definitions/smsgateway.MobilePatchMessageItem'
           type: array
       produces:
       - application/json
