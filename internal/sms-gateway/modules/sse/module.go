@@ -15,8 +15,8 @@ var Module = fx.Module(
 	fx.Provide(NewService),
 	fx.Invoke(func(lc fx.Lifecycle, svc *Service) {
 		lc.Append(fx.Hook{
-			OnStop: func(_ context.Context) error {
-				return svc.Close()
+			OnStop: func(ctx context.Context) error {
+				return svc.Close(ctx)
 			},
 		})
 	}),

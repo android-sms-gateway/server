@@ -29,8 +29,6 @@ type sseConnection struct {
 }
 
 func NewService(config Config, logger *zap.Logger) *Service {
-	config.SetDefaults()
-
 	return &Service{
 		config: config,
 
@@ -82,7 +80,7 @@ func (s *Service) Send(ctx context.Context, messages map[string]domain.Event) (m
 	return errs, nil
 }
 
-func (s *Service) Close() error {
+func (s *Service) Close(_ context.Context) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -116,7 +114,7 @@ func (s *Service) Handler(deviceId string, c *fiber.Ctx) error {
 			return
 		}
 
-		ticker := time.NewTicker(s.config.KeepAlivePeriod)
+		ticker := time.NewTicker(s.config.keepAlivePeriod)
 		defer ticker.Stop()
 
 		for {
@@ -154,6 +152,12 @@ func (s *Service) writeToStream(w *bufio.Writer, data string) error {
 func (s *Service) registerConnection(id string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if existingConn, ok := s.connections[id]; ok {
+		s.logger.Info("Closing existing SSE connection", zap.String("client_id", id))
+		close(existingConn.closeSignal)
+		delete(s.connections, id)
+	}
 
 	s.connections[id] = &sseConnection{
 		channel:     make(chan []byte, 8),

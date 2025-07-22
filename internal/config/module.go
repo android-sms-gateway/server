@@ -90,6 +90,6 @@ var Module = fx.Module(
 		}
 	}),
 	fx.Provide(func(cfg Config) sse.Config {
-		return sse.Config{}
+		return sse.NewConfig()
 	}),
 )
