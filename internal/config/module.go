@@ -26,11 +26,14 @@ var Module = fx.Module(
 
 			return defaultConfig
 		},
+		fx.Private,
 	),
 	fx.Provide(func(cfg Config) http.Config {
 		return http.Config{
 			Listen:  cfg.HTTP.Listen,
 			Proxies: cfg.HTTP.Proxies,
+
+			WriteTimeout: 30 * time.Minute, // SSE requires longer timeout
 		}
 	}),
 	fx.Provide(func(cfg Config) db.Config {
