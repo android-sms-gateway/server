@@ -10,7 +10,7 @@ import (
 	"sync"
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/domain"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/types"
 	"github.com/capcom6/go-helpers/maps"
 )
 
@@ -42,14 +42,14 @@ func (c *Client) Open(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) Send(ctx context.Context, messages map[string]domain.Event) (map[string]error, error) {
+func (c *Client) Send(ctx context.Context, messages map[string]types.Event) (map[string]error, error) {
 	payload := make(smsgateway.UpstreamPushRequest, 0, len(messages))
 
 	for address, data := range messages {
 		payload = append(payload, smsgateway.PushNotification{
 			Token: address,
-			Event: data.Event(),
-			Data:  data.Data(),
+			Event: data.Type,
+			Data:  data.Data,
 		})
 	}
 
@@ -84,8 +84,8 @@ func (c *Client) Send(ctx context.Context, messages map[string]domain.Event) (ma
 	return nil, nil
 }
 
-func (c *Client) mapErrors(messages map[string]domain.Event, err error) map[string]error {
-	return maps.MapValues(messages, func(e domain.Event) error {
+func (c *Client) mapErrors(messages map[string]types.Event, err error) map[string]error {
+	return maps.MapValues(messages, func(e types.Event) error {
 		return err
 	})
 }

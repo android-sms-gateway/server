@@ -6,7 +6,7 @@ import (
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/db"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/events"
 	"github.com/capcom6/go-helpers/slices"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -20,7 +20,7 @@ type ServiceParams struct {
 	Webhooks *Repository
 
 	DevicesSvc *devices.Service
-	PushSvc    *push.Service
+	EventsSvc  *events.Service
 
 	Logger *zap.Logger
 }
@@ -31,18 +31,21 @@ type Service struct {
 	webhooks *Repository
 
 	devicesSvc *devices.Service
-	pushSvc    *push.Service
+	eventsSvc  *events.Service
 
 	logger *zap.Logger
 }
 
 func NewService(params ServiceParams) *Service {
 	return &Service{
-		idgen:      params.IDGen,
-		webhooks:   params.Webhooks,
+		idgen: params.IDGen,
+
+		webhooks: params.Webhooks,
+
 		devicesSvc: params.DevicesSvc,
-		pushSvc:    params.PushSvc,
-		logger:     params.Logger,
+		eventsSvc:  params.EventsSvc,
+
+		logger: params.Logger,
 	}
 }
 
@@ -119,7 +122,7 @@ func (s *Service) Delete(userID string, filters ...SelectFilter) error {
 // notifyDevices asynchronously notifies all the user's devices.
 func (s *Service) notifyDevices(userID string, deviceID *string) {
 	go func(userID string, deviceID *string) {
-		if err := s.pushSvc.Notify(userID, deviceID, push.NewWebhooksUpdatedEvent()); err != nil {
+		if err := s.eventsSvc.Notify(userID, deviceID, events.NewWebhooksUpdatedEvent()); err != nil {
 			s.logger.Error("can't notify devices", zap.Error(err))
 		}
 	}(userID, deviceID)

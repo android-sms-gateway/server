@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/domain"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
 	"go.uber.org/zap"
@@ -38,46 +37,30 @@ func NewService(config Config, logger *zap.Logger) *Service {
 	}
 }
 
-func (s *Service) Send(ctx context.Context, messages map[string]domain.Event) (map[string]error, error) {
-	errs := make(map[string]error)
+func (s *Service) Send(deviceID string, event Event) error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	for deviceId, event := range messages {
-		conn, exists := s.connections[deviceId]
-		if !exists {
-			errs[deviceId] = fmt.Errorf("client not connected")
-			s.logger.Debug("Client not connected", zap.String("client_id", deviceId))
-			continue
-		}
-
-		data, err := json.Marshal(event.Map())
-		if err != nil {
-			errs[deviceId] = fmt.Errorf("can't marshal payload: %w", err)
-			s.logger.Error("Failed to marshal event for client",
-				zap.String("client_id", deviceId),
-				zap.Any("event", event),
-				zap.Error(err))
-			continue
-		}
-
-		select {
-		case conn.channel <- data:
-			// Message sent successfully
-		case <-ctx.Done():
-			errs[deviceId] = ctx.Err()
-			s.logger.Warn("Failed to send event to client",
-				zap.String("client_id", deviceId),
-				zap.Error(ctx.Err()))
-		case <-conn.closeSignal:
-			errs[deviceId] = fmt.Errorf("connection closed")
-			s.logger.Warn("Failed to send event to client",
-				zap.String("client_id", deviceId),
-				zap.Error(fmt.Errorf("connection closed")))
-		}
+	conn, exists := s.connections[deviceID]
+	if !exists {
+		return fmt.Errorf("no connection for device %s", deviceID)
 	}
 
-	return errs, nil
+	data, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("can't marshal event: %w", err)
+	}
+
+	select {
+	case conn.channel <- data:
+		// Message sent successfully
+	case <-conn.closeSignal:
+		return fmt.Errorf("connection closed")
+	default:
+		return fmt.Errorf("connection buffer full")
+	}
+
+	return nil
 }
 
 func (s *Service) Close(_ context.Context) error {

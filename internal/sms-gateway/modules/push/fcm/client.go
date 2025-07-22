@@ -7,7 +7,7 @@ import (
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/messaging"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/domain"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/types"
 	"google.golang.org/api/option"
 )
 
@@ -52,11 +52,17 @@ func (c *Client) Open(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) Send(ctx context.Context, messages map[string]domain.Event) (map[string]error, error) {
+func (c *Client) Send(ctx context.Context, messages map[string]types.Event) (map[string]error, error) {
 	errs := make(map[string]error, len(messages))
 	for address, payload := range messages {
-		_, err := c.client.Send(ctx, &messaging.Message{
-			Data: payload.Map(),
+		eventMap, err := eventToMap(payload)
+		if err != nil {
+			errs[address] = fmt.Errorf("can't marshal event: %w", err)
+			continue
+		}
+
+		_, err = c.client.Send(ctx, &messaging.Message{
+			Data: eventMap,
 			Android: &messaging.AndroidConfig{
 				Priority: "high",
 			},

@@ -10,6 +10,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/cleaner"
 	appdb "github.com/android-sms-gateway/server/internal/sms-gateway/modules/db"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/events"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/health"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/metrics"
@@ -39,6 +40,7 @@ var Module = fx.Module(
 	auth.Module,
 	push.Module,
 	db.Module,
+	events.Module,
 	messages.Module,
 	health.Module,
 	webhooks.Module,

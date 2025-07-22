@@ -1,0 +1,11 @@
+groups:
+  - name: events-alerts
+    rules:
+      - alert: LowEventDeliverySuccessRate
+        expr: 100 * (sum(rate(sms_events_sent_total[5m])) / (sum(rate(sms_events_sent_total[5m])) + sum(rate(sms_events_failed_total[5m]))) < 90
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Event delivery success rate below 90%"
+          description: "Event delivery success rate is at {{ $value }}%"
