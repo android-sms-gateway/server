@@ -158,7 +158,6 @@ func (s *Service) Notify(userID string, deviceID *string, event *domain.Event) e
 
 	devices, err := s.devicesSvc.Select(userID, filters...)
 	if err != nil {
-		s.logger.Error("Failed to select devices", append(logFields, zap.Error(err))...)
 		return fmt.Errorf("failed to select devices: %w", err)
 	}
 

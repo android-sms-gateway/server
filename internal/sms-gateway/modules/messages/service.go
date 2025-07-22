@@ -220,17 +220,13 @@ func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueO
 		return state, err
 	}
 
-	if device.PushToken == nil {
-		return state, nil
-	}
-
-	go func(token string) {
-		if err := s.pushSvc.Enqueue(token, push.NewMessageEnqueuedEvent()); err != nil {
-			s.logger.Error("Can't enqueue message", zap.String("token", token), zap.Error(err))
-		}
-	}(*device.PushToken)
-
 	s.messagesCounter.WithLabelValues(string(state.State)).Inc()
+
+	go func(userID, deviceID string) {
+		if err := s.pushSvc.Notify(userID, &deviceID, push.NewMessageEnqueuedEvent()); err != nil {
+			s.logger.Error("can't notify device", zap.Error(err), zap.String("user_id", userID), zap.String("device_id", deviceID))
+		}
+	}(device.UserID, device.ID)
 
 	return state, nil
 }
@@ -242,7 +238,7 @@ func (s *Service) ExportInbox(device models.Device, since, until time.Time) erro
 
 	event := push.NewMessagesExportRequestedEvent(since, until)
 
-	return s.pushSvc.Enqueue(*device.PushToken, event)
+	return s.pushSvc.Notify(device.UserID, &device.ID, event)
 }
 
 func (s *Service) Clean(ctx context.Context) error {
