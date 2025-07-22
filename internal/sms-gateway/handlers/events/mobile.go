@@ -26,6 +26,22 @@ func NewMobileController(sseService *sse.Service, validator *validator.Validate,
 	}
 }
 
+//	@Summary		Get events
+//	@Description	Returns events stream for a device
+//	@Security		MobileToken
+//	@Tags			Device, Events
+//	@x-sse			true
+//	@Produce		text/event-stream
+//	@Header			200	{string}	Content-Type				"text/event-stream"
+//	@Header			200	{string}	Transfer-Encoding			"chunked"
+//	@Header			200	{string}	Connection					"keep-alive"
+//	@Header			200	{string}	Cache-Control				"no-cache"
+//	@Success		200	{string}	string						"Event"
+//	@Failure		401	{object}	smsgateway.ErrorResponse	"Unauthorized"
+//	@Failure		500	{object}	smsgateway.ErrorResponse	"Internal server error"
+//	@Router			/mobile/v1/events [get]
+//
+// Get events
 func (h *MobileController) get(device models.Device, c *fiber.Ctx) error {
 	return h.sseSvc.Handler(device.ID, c)
 }

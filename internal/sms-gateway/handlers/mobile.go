@@ -184,7 +184,7 @@ func (h *mobileHandler) getMessage(device models.Device, c *fiber.Ctx) error {
 //	@Tags			Device, Messages
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		smsgateway.MobilePatchMessageRequest	true	"New message state"
+//	@Param			request	body		smsgateway.MobilePatchMessageRequest	true	"List of message state updates"
 //	@Success		204		{object}	nil										"Successfully updated"
 //	@Failure		400		{object}	smsgateway.ErrorResponse				"Invalid request"
 //	@Failure		500		{object}	smsgateway.ErrorResponse				"Internal server error"
