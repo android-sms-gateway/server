@@ -229,10 +229,6 @@ func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueO
 }
 
 func (s *Service) ExportInbox(device models.Device, since, until time.Time) error {
-	if device.PushToken == nil {
-		return errors.New("no push token")
-	}
-
 	event := events.NewMessagesExportRequestedEvent(since, until)
 
 	return s.eventsSvc.Notify(device.UserID, &device.ID, event)
