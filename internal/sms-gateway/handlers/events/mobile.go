@@ -5,7 +5,9 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/deviceauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/sse"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
 )
 
 type MobileController struct {
@@ -14,8 +16,12 @@ type MobileController struct {
 	sseSvc *sse.Service
 }
 
-func NewMobileController(sseService *sse.Service) *MobileController {
+func NewMobileController(sseService *sse.Service, validator *validator.Validate, logger *zap.Logger) *MobileController {
 	return &MobileController{
+		Handler: base.Handler{
+			Logger:    logger,
+			Validator: validator,
+		},
 		sseSvc: sseService,
 	}
 }
