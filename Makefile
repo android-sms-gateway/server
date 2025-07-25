@@ -48,10 +48,10 @@ docker-build:
 	docker build -f build/package/Dockerfile -t $(image_name) --build-arg APP=$(project_name) .
 
 docker:
-	docker-compose -f deployments/docker-compose/docker-compose.yml up --build
+	docker compose -f deployments/docker-compose/docker-compose.yml up --build
 
 docker-dev:
-	docker-compose -f deployments/docker-compose/docker-compose.dev.yml up --build
+	docker compose -f deployments/docker-compose/docker-compose.dev.yml up --build
 
 api-docs:
 	swag fmt -g ./cmd/$(project_name)/main.go \
@@ -61,6 +61,6 @@ view-docs:
 	php -S 127.0.0.1:8080 -t ./api
 
 clean:
-	docker-compose -f deployments/docker-compose/docker-compose.yml down --volumes
+	docker compose -f deployments/docker-compose/docker-compose.yml down --volumes
 
 .PHONY: init init-dev air db-upgrade db-upgrade-raw run test build install docker docker-dev api-docs view-docs clean
