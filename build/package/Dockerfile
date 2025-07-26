@@ -44,6 +44,10 @@ COPY --from=build /go/src/app /app
 EXPOSE 3000
 
 USER guest
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 CMD curl -fs http://localhost:3000/health
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD curl -fs http://localhost:3000/health
+
+CMD [ "/app/app" ]

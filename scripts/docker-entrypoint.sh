@@ -4,7 +4,10 @@
 # Immediately exit if any command has a non-zero exit status.
 set -e
 
-# Execute any pre-startup scripts or tasks.
-/app/app db:migrate up
+# Execute DB migrations only when the main application is about to run
+if [ "${1:-}" = "/app/app" ]; then
+  /app/app db:migrate up
+fi
 
-exec /app/app "$@"
+# Execute the main application
+exec "$@"
