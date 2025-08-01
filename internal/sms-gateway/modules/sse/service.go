@@ -101,16 +101,12 @@ func (s *Service) Handler(deviceID string, c *fiber.Ctx) error {
 		conn := s.registerConnection(deviceID)
 		defer s.removeConnection(deviceID, conn.id)
 
-		if err := s.writeToStream(w, ":keepalive"); err != nil {
-			s.logger.Warn("Failed to write keepalive",
-				zap.String("device_id", deviceID),
-				zap.String("connection_id", conn.id),
-				zap.Error(err))
-			return
+		// Conditionally create ticker
+		var ticker *time.Ticker
+		if s.config.keepAlivePeriod > 0 {
+			ticker = time.NewTicker(s.config.keepAlivePeriod)
+			defer ticker.Stop()
 		}
-
-		ticker := time.NewTicker(s.config.keepAlivePeriod)
-		defer ticker.Stop()
 
 		for {
 			select {
@@ -122,7 +118,14 @@ func (s *Service) Handler(deviceID string, c *fiber.Ctx) error {
 						zap.Error(err))
 					return
 				}
-			case <-ticker.C:
+			// Conditionally handle ticker events
+			case <-func() <-chan time.Time {
+				if ticker != nil {
+					return ticker.C
+				}
+				// Return nil channel that never fires when disabled
+				return make(chan time.Time)
+			}():
 				if err := s.writeToStream(w, ":keepalive"); err != nil {
 					s.logger.Warn("Failed to write keepalive",
 						zap.String("device_id", deviceID),
