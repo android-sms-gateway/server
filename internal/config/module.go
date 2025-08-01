@@ -93,6 +93,8 @@ var Module = fx.Module(
 		}
 	}),
 	fx.Provide(func(cfg Config) sse.Config {
-		return sse.NewConfig()
+		return sse.NewConfig(
+			sse.WithKeepAlivePeriod(time.Duration(cfg.SSE.KeepAlivePeriodSeconds) * time.Second),
+		)
 	}),
 )
