@@ -1,0 +1,48 @@
+groups:
+  - name: sse-alerts
+    rules:
+      - alert: HighSSEErrorRate
+        expr: |
+          (sum(rate(sms_sse_connection_errors_total[5m])) / sum(rate(sms_sse_events_sent_total[5m]))) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High SSE error rate ({{ $value | humanize }}%)"
+          description: "SSE error rate has exceeded 5% for 5 minutes. This may indicate client connectivity issues or server-side processing problems."
+          dashboard: "https://grafana.example.com/d/sse-dashboard"
+          runbook: "https://internal.dev-docs/server/sse-troubleshooting#high-error-rate"
+
+      - alert: SSEConnectionLoss
+        expr: sms_sse_active_connections == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "All SSE connections lost"
+          description: "No active SSE connections detected for 5 minutes. This indicates complete service disruption for real-time updates."
+          dashboard: "https://grafana.example.com/d/sse-dashboard"
+          runbook: "https://internal.dev-docs/server/sse-troubleshooting#connection-loss"
+
+      - alert: HighSSELatency
+        expr: |
+          histogram_quantile(0.95, rate(sms_sse_event_delivery_latency_seconds_bucket[5m])) > 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High SSE event latency (95th percentile > 10s)"
+          description: "95th percentile of event delivery latency has exceeded 10 seconds for 5 minutes. Clients may experience significant delays in receiving real-time updates."
+          dashboard: "https://grafana.example.com/d/sse-dashboard"
+          runbook: "https://internal.dev-docs/server/sse-troubleshooting#high-latency"
+
+      - alert: HighConnectionChurn
+        expr: rate(sms_sse_connections_opened_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High SSE connection churn ({{ $value | humanize }} connections/sec)"
+          description: "SSE connection churn rate has exceeded 10 connections per second for 5 minutes. This may indicate unstable client connections or aggressive reconnection logic."
+          dashboard: "https://grafana.example.com/d/sse-dashboard"
+          runbook: "https://internal.dev-docs/server/sse-troubleshooting#connection-churn"

@@ -318,7 +318,7 @@
             "targets": [
                 {
                     "editorMode": "code",
-                    "expr": "100 * (sum(sms_events_sent_total) / (sum(sms_events_sent_total) + sum(sms_events_failed_total)))",
+                    "expr": "100 * (sum(rate(sms_events_sent_total[5m])) / (sum(rate(sms_events_sent_total[5m])) + sum(rate(sms_events_failed_total[5m]))))",
                     "format": "table",
                     "instant": true,
                     "refId": "A"
