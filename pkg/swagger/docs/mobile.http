@@ -14,7 +14,7 @@ Authorization: Bearer {{mobileToken}}
 ###
 POST {{baseUrl}}/device HTTP/1.1
 # Authorization: Bearer 123456789
-# Authorization: Basic {{credentials}}
+Authorization: Basic {{credentials}}
 # Authorization: Code 065379
 Content-Type: application/json
 
@@ -74,4 +74,8 @@ Content-Type: application/json
 
 ###
 GET {{baseUrl}}/settings HTTP/1.1
+Authorization: Bearer {{mobileToken}}
+
+###
+GET {{baseUrl}}/events HTTP/1.1
 Authorization: Bearer {{mobileToken}}

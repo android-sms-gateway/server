@@ -837,6 +837,45 @@
                 }
             }
         },
+        "/mobile/v1/events": {
+            "get": {
+                "security": [
+                    {
+                        "MobileToken": []
+                    }
+                ],
+                "description": "Returns events stream for a device",
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "Device",
+                    "Events"
+                ],
+                "summary": "Get events",
+                "responses": {
+                    "200": {
+                        "description": "Event",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                },
+                "x-sse": true
+            }
+        },
         "/mobile/v1/message": {
             "get": {
                 "security": [
@@ -894,50 +933,14 @@
                 "summary": "Update message state",
                 "parameters": [
                     {
-                        "description": "New message state",
+                        "description": "List of message state updates",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "object",
-                                "required": [
-                                    "recipients",
-                                    "state"
-                                ],
-                                "properties": {
-                                    "id": {
-                                        "description": "Message ID",
-                                        "type": "string",
-                                        "maxLength": 36,
-                                        "example": "PyDmBQZZXYmyxMwED8Fzy"
-                                    },
-                                    "recipients": {
-                                        "description": "Recipients states",
-                                        "type": "array",
-                                        "minItems": 1,
-                                        "items": {
-                                            "$ref": "#/definitions/smsgateway.RecipientState"
-                                        }
-                                    },
-                                    "state": {
-                                        "description": "State",
-                                        "allOf": [
-                                            {
-                                                "$ref": "#/definitions/smsgateway.ProcessingState"
-                                            }
-                                        ],
-                                        "example": "Pending"
-                                    },
-                                    "states": {
-                                        "description": "History of states",
-                                        "type": "object",
-                                        "additionalProperties": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
+                                "$ref": "#/definitions/smsgateway.MobilePatchMessageItem"
                             }
                         }
                     }
@@ -1307,6 +1310,7 @@
             "type": "object",
             "required": [
                 "deviceId",
+                "id",
                 "recipients",
                 "state"
             ],
@@ -1767,6 +1771,46 @@
                     "description": "With delivery report",
                     "type": "boolean",
                     "example": true
+                }
+            }
+        },
+        "smsgateway.MobilePatchMessageItem": {
+            "type": "object",
+            "required": [
+                "id",
+                "recipients",
+                "state"
+            ],
+            "properties": {
+                "id": {
+                    "description": "Message ID",
+                    "type": "string",
+                    "maxLength": 36,
+                    "example": "PyDmBQZZXYmyxMwED8Fzy"
+                },
+                "recipients": {
+                    "description": "Recipients states",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/smsgateway.RecipientState"
+                    }
+                },
+                "state": {
+                    "description": "State",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.ProcessingState"
+                        }
+                    ],
+                    "example": "Pending"
+                },
+                "states": {
+                    "description": "History of states",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 }
             }
         },

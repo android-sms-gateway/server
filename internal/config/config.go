@@ -13,6 +13,7 @@ type Config struct {
 	Database Database  `yaml:"database"` // database config
 	FCM      FCMConfig `yaml:"fcm"`      // firebase cloud messaging config
 	Tasks    Tasks     `yaml:"tasks"`    // tasks config
+	SSE      SSE       `yaml:"sse"`      // server-sent events config
 }
 
 type Gateway struct {
@@ -53,6 +54,10 @@ type HashingTask struct {
 	IntervalSeconds uint16 `yaml:"interval_seconds" envconfig:"TASKS__HASHING__INTERVAL_SECONDS"` // hashing interval in seconds
 }
 
+type SSE struct {
+	KeepAlivePeriodSeconds uint16 `yaml:"keep_alive_period_seconds" envconfig:"SSE__KEEP_ALIVE_PERIOD_SECONDS"` // keep alive period in seconds, 0 for no keep alive
+}
+
 var defaultConfig = Config{
 	Gateway: Gateway{Mode: GatewayModePublic},
 	HTTP: HTTP{
@@ -74,5 +79,8 @@ var defaultConfig = Config{
 		Hashing: HashingTask{
 			IntervalSeconds: uint16(15 * 60),
 		},
+	},
+	SSE: SSE{
+		KeepAlivePeriodSeconds: 15,
 	},
 }

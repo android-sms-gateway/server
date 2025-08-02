@@ -8,6 +8,7 @@ import (
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/converters"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/events"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/deviceauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/settings"
@@ -35,6 +36,7 @@ type mobileHandler struct {
 
 	webhooksCtrl *webhooks.MobileController
 	settingsCtrl *settings.MobileController
+	eventsCtrl   *events.MobileController
 
 	idGen func() string
 }
@@ -182,7 +184,7 @@ func (h *mobileHandler) getMessage(device models.Device, c *fiber.Ctx) error {
 //	@Tags			Device, Messages
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		smsgateway.MobilePatchMessageRequest	true	"New message state"
+//	@Param			request	body		smsgateway.MobilePatchMessageRequest	true	"List of message state updates"
 //	@Success		204		{object}	nil										"Successfully updated"
 //	@Failure		400		{object}	smsgateway.ErrorResponse				"Invalid request"
 //	@Failure		500		{object}	smsgateway.ErrorResponse				"Internal server error"
@@ -308,8 +310,8 @@ func (h *mobileHandler) Register(router fiber.Router) {
 	router.Patch("/user/password", deviceauth.WithDevice(h.changePassword))
 
 	h.webhooksCtrl.Register(router.Group("/webhooks"))
-
 	h.settingsCtrl.Register(router.Group("/settings"))
+	h.eventsCtrl.Register(router.Group("/events"))
 }
 
 type mobileHandlerParams struct {
@@ -324,6 +326,7 @@ type mobileHandlerParams struct {
 
 	WebhooksCtrl *webhooks.MobileController
 	SettingsCtrl *settings.MobileController
+	EventsCtrl   *events.MobileController
 }
 
 func newMobileHandler(params mobileHandlerParams) *mobileHandler {
@@ -336,6 +339,7 @@ func newMobileHandler(params mobileHandlerParams) *mobileHandler {
 		messagesSvc:  params.MessagesSvc,
 		webhooksCtrl: params.WebhooksCtrl,
 		settingsCtrl: params.SettingsCtrl,
+		eventsCtrl:   params.EventsCtrl,
 		idGen:        idGen,
 	}
 }

@@ -1,7 +1,7 @@
 package settings
 
 import (
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/events"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -11,17 +11,27 @@ type ServiceParams struct {
 
 	Repository *repository
 
-	Logger *zap.Logger
+	EventsSvc *events.Service
 
-	PushSvc *push.Service
+	Logger *zap.Logger
 }
 
 type Service struct {
 	settings *repository
 
-	logger *zap.Logger
+	eventsSvc *events.Service
 
-	pushSvc *push.Service
+	logger *zap.Logger
+}
+
+func NewService(params ServiceParams) *Service {
+	return &Service{
+		settings: params.Repository,
+
+		eventsSvc: params.EventsSvc,
+
+		logger: params.Logger.Named("service"),
+	}
 }
 
 func (s *Service) GetSettings(userID string, public bool) (map[string]any, error) {
@@ -78,16 +88,8 @@ func (s *Service) ReplaceSettings(userID string, settings map[string]any) (map[s
 // notifyDevices asynchronously notifies all the user's devices.
 func (s *Service) notifyDevices(userID string) {
 	go func(userID string) {
-		if err := s.pushSvc.Notify(userID, nil, push.NewSettingsUpdatedEvent()); err != nil {
+		if err := s.eventsSvc.Notify(userID, nil, events.NewSettingsUpdatedEvent()); err != nil {
 			s.logger.Error("can't notify devices", zap.Error(err))
 		}
 	}(userID)
-}
-
-func NewService(params ServiceParams) *Service {
-	return &Service{
-		settings: params.Repository,
-		logger:   params.Logger.Named("service"),
-		pushSvc:  params.PushSvc,
-	}
 }

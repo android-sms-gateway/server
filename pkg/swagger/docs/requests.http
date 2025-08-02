@@ -75,14 +75,14 @@ GET {{baseUrl}}/3rdparty/v1/messages/K56aIsVsQ2rECdv_ajzTd HTTP/1.1
 Authorization: Basic {{credentials}}
 
 ###
-POST {{baseUrl}}/api/3rdparty/v1/messages/inbox/export HTTP/1.1
+POST {{baseUrl}}/3rdparty/v1/messages/inbox/export HTTP/1.1
 Authorization: Basic {{credentials}}
 Content-Type: application/json
 
 {
     "since": "2024-12-01T00:00:00.000Z",
     "until": "2024-12-31T23:59:59.999Z",
-    "deviceId": "MxKw03Q2ZVoomrLeDLlMO"
+    "deviceId": "_Py53j9Cj-JAWMqDXQcQF"
 }
 
 ###

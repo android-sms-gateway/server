@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/devices"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/events"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/logs"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/messages"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/settings"
@@ -31,6 +32,7 @@ var Module = fx.Module(
 		settings.NewThirdPartyController,
 		settings.NewMobileController,
 		logs.NewThirdPartyController,
+		events.NewMobileController,
 		fx.Private,
 	),
 )

@@ -11,7 +11,7 @@ import (
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/db"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/events"
 	"github.com/capcom6/go-helpers/anys"
 	"github.com/capcom6/go-helpers/slices"
 	"github.com/nyaruka/phonenumbers"
@@ -25,12 +25,6 @@ import (
 const (
 	ErrorTTLExpired = "TTL expired"
 )
-
-type ErrValidation string
-
-func (e ErrValidation) Error() string {
-	return string(e)
-}
 
 type EnqueueOptions struct {
 	SkipPhoneValidation bool
@@ -46,8 +40,9 @@ type ServiceParams struct {
 	Messages    *repository
 	HashingTask *HashingTask
 
-	PushSvc *push.Service
-	Logger  *zap.Logger
+	EventsSvc *events.Service
+
+	Logger *zap.Logger
 }
 
 type Service struct {
@@ -56,8 +51,9 @@ type Service struct {
 	messages    *repository
 	hashingTask *HashingTask
 
-	pushSvc *push.Service
-	logger  *zap.Logger
+	eventsSvc *events.Service
+
+	logger *zap.Logger
 
 	messagesCounter *prometheus.CounterVec
 
@@ -78,8 +74,9 @@ func NewService(params ServiceParams) *Service {
 		messages:    params.Messages,
 		hashingTask: params.HashingTask,
 
-		pushSvc: params.PushSvc,
-		logger:  params.Logger.Named("Service"),
+		eventsSvc: params.EventsSvc,
+
+		logger: params.Logger.Named("Service"),
 
 		messagesCounter: messagesCounter,
 
@@ -220,29 +217,21 @@ func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueO
 		return state, err
 	}
 
-	if device.PushToken == nil {
-		return state, nil
-	}
-
-	go func(token string) {
-		if err := s.pushSvc.Enqueue(token, push.NewMessageEnqueuedEvent()); err != nil {
-			s.logger.Error("Can't enqueue message", zap.String("token", token), zap.Error(err))
-		}
-	}(*device.PushToken)
-
 	s.messagesCounter.WithLabelValues(string(state.State)).Inc()
+
+	go func(userID, deviceID string) {
+		if err := s.eventsSvc.Notify(userID, &deviceID, events.NewMessageEnqueuedEvent()); err != nil {
+			s.logger.Error("can't notify device", zap.Error(err), zap.String("user_id", userID), zap.String("device_id", deviceID))
+		}
+	}(device.UserID, device.ID)
 
 	return state, nil
 }
 
 func (s *Service) ExportInbox(device models.Device, since, until time.Time) error {
-	if device.PushToken == nil {
-		return errors.New("no push token")
-	}
+	event := events.NewMessagesExportRequestedEvent(since, until)
 
-	event := push.NewMessagesExportRequestedEvent(since, until)
-
-	return s.pushSvc.Enqueue(*device.PushToken, event)
+	return s.eventsSvc.Notify(device.UserID, &device.ID, event)
 }
 
 func (s *Service) Clean(ctx context.Context) error {
