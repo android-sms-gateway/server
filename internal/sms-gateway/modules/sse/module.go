@@ -12,7 +12,13 @@ var Module = fx.Module(
 	fx.Decorate(func(log *zap.Logger) *zap.Logger {
 		return log.Named("sse")
 	}),
-	fx.Provide(NewService),
+	fx.Provide(
+		newMetrics,
+		fx.Private,
+	),
+	fx.Provide(
+		NewService,
+	),
 	fx.Invoke(func(lc fx.Lifecycle, svc *Service) {
 		lc.Append(fx.Hook{
 			OnStop: func(ctx context.Context) error {

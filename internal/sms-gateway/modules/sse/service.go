@@ -20,7 +20,8 @@ type Service struct {
 	mu          sync.RWMutex
 	connections map[string][]*sseConnection
 
-	logger *zap.Logger
+	logger  *zap.Logger
+	metrics *metrics
 }
 
 type sseConnection struct {
@@ -34,13 +35,14 @@ type eventWrapper struct {
 	data []byte
 }
 
-func NewService(config Config, logger *zap.Logger) *Service {
+func NewService(config Config, logger *zap.Logger, metrics *metrics) *Service {
 	return &Service{
 		config: config,
 
 		connections: make(map[string][]*sseConnection),
 
-		logger: logger,
+		logger:  logger,
+		metrics: metrics,
 	}
 }
 
@@ -50,11 +52,15 @@ func (s *Service) Send(deviceID string, event Event) error {
 
 	connections, exists := s.connections[deviceID]
 	if !exists {
+		// Increment connection errors metric for no connection
+		s.metrics.IncrementConnectionErrors(ErrorTypeNoConnection)
 		return fmt.Errorf("no connection for device %s", deviceID)
 	}
 
 	data, err := json.Marshal(event.Data)
 	if err != nil {
+		// Increment connection errors metric for marshaling error
+		s.metrics.IncrementConnectionErrors(ErrorTypeMarshalError)
 		return fmt.Errorf("can't marshal event: %w", err)
 	}
 
@@ -68,12 +74,19 @@ func (s *Service) Send(deviceID string, event Event) error {
 			s.logger.Warn("Connection closed while sending event", zap.String("device_id", deviceID), zap.String("connection_id", conn.id))
 		default:
 			s.logger.Warn("Connection buffer full while sending event", zap.String("device_id", deviceID), zap.String("connection_id", conn.id))
+			// Increment connection errors metric for buffer full
+			s.metrics.IncrementConnectionErrors(ErrorTypeBufferFull)
 		}
 	}
 
 	if sent == 0 {
+		// Increment connection errors metric for no active connection
+		s.metrics.IncrementConnectionErrors(ErrorTypeNoConnection)
 		return fmt.Errorf("no active connection for device %s", deviceID)
 	}
+
+	// Count events sent
+	s.metrics.IncrementEventsSent(string(event.Type))
 
 	return nil
 }
@@ -111,13 +124,15 @@ func (s *Service) Handler(deviceID string, c *fiber.Ctx) error {
 		for {
 			select {
 			case event := <-conn.channel:
-				if err := s.writeToStream(w, fmt.Sprintf("event: %s\ndata: %s", event.name, utils.UnsafeString(event.data))); err != nil {
-					s.logger.Warn("Failed to write event data",
-						zap.String("device_id", deviceID),
-						zap.String("connection_id", conn.id),
-						zap.Error(err))
-					return
-				}
+				s.metrics.ObserveEventDeliveryLatency(func() {
+					if err := s.writeToStream(w, fmt.Sprintf("event: %s\ndata: %s", event.name, utils.UnsafeString(event.data))); err != nil {
+						s.logger.Warn("Failed to write event data",
+							zap.String("device_id", deviceID),
+							zap.String("connection_id", conn.id),
+							zap.Error(err))
+						return
+					}
+				})
 			// Conditionally handle ticker events
 			case <-func() <-chan time.Time {
 				if ticker != nil {
@@ -133,6 +148,8 @@ func (s *Service) Handler(deviceID string, c *fiber.Ctx) error {
 						zap.Error(err))
 					return
 				}
+				// Count keepalives sent
+				s.metrics.IncrementKeepalivesSent()
 			case <-conn.closeSignal:
 				return
 			}
@@ -144,6 +161,7 @@ func (s *Service) Handler(deviceID string, c *fiber.Ctx) error {
 
 func (s *Service) writeToStream(w *bufio.Writer, data string) error {
 	if _, err := fmt.Fprintf(w, "%s\n\n", data); err != nil {
+		s.metrics.IncrementConnectionErrors(ErrorTypeWriteFailure)
 		return err
 	}
 	return w.Flush()
@@ -167,6 +185,9 @@ func (s *Service) registerConnection(deviceID string) *sseConnection {
 
 	s.connections[deviceID] = append(s.connections[deviceID], conn)
 
+	// Increment active connections metric
+	s.metrics.IncrementActiveConnections()
+
 	s.logger.Info("Registering SSE connection", zap.String("device_id", deviceID), zap.String("connection_id", connID))
 
 	return conn
@@ -185,6 +206,9 @@ func (s *Service) removeConnection(deviceID, connID string) {
 				break
 			}
 		}
+
+		// Decrement active connections metric
+		s.metrics.DecrementActiveConnections()
 
 		if len(s.connections[deviceID]) == 0 {
 			delete(s.connections, deviceID)
