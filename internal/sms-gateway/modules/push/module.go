@@ -15,6 +15,7 @@ var Module = fx.Module(
 	fx.Decorate(func(log *zap.Logger) *zap.Logger {
 		return log.Named("push")
 	}),
+	fx.Provide(newMetrics, fx.Private),
 	fx.Provide(
 		func(cfg Config, lc fx.Lifecycle) (c client, err error) {
 			switch cfg.Mode {
@@ -41,6 +42,7 @@ var Module = fx.Module(
 
 			return c, nil
 		},
+		fx.Private,
 	),
 	fx.Provide(
 		New,
