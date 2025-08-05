@@ -79,7 +79,7 @@ func TestMessageToDTO(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// Call the function under test
-			result := converters.MessageToDTO(tc.input)
+			result := converters.MessageToMobileDTO(tc.input)
 
 			// Assert the results
 			assert.Equal(t, tc.expected, result)

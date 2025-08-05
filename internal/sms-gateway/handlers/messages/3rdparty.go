@@ -3,10 +3,12 @@ package messages
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/converters"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
@@ -169,6 +171,42 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 		})
 }
 
+//	@Summary		Get messages
+//	@Description	Retrieves a list of messages with filtering and pagination
+//	@Security		ApiAuth
+//	@Tags			User, Messages
+//	@Produce		json
+//	@Param			from		query		string							false	"Start date in RFC3339 format"			Format(date-time)
+//	@Param			to			query		string							false	"End date in RFC3339 format"			Format(date-time)
+//	@Param			state		query		string							false	"Filter messages by processing state"	Enum(Pending, Processed, Sent, Delivered, Failed)
+//	@Param			deviceId	query		string							false	"Filter by device ID"					min(21)		max(21)
+//	@Param			limit		query		int								false	"Pagination limit"						default(50)	min(1)	max(100)
+//	@Param			offset		query		int								false	"Pagination offset"						default(0)
+//	@Success		200			{object}	smsgateway.GetMessagesResponse	"A list of messages"
+//	@Failure		400			{object}	smsgateway.ErrorResponse		"Invalid request"
+//	@Failure		401			{object}	smsgateway.ErrorResponse		"Unauthorized"
+//	@Failure		500			{object}	smsgateway.ErrorResponse		"Internal server error"
+//	@Router			/3rdparty/v1/messages [get]
+//
+// Get message history
+func (h *ThirdPartyController) list(user models.User, c *fiber.Ctx) error {
+	params := getQueryParams{}
+	if err := h.QueryParserValidator(c, &params); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	messages, total, err := h.messagesSvc.SelectStates(user, params.ToFilter(), params.ToOptions())
+	if err != nil {
+		h.Logger.Error("Failed to get message history", zap.Error(err), zap.String("user_id", user.ID))
+		return fiber.NewError(fiber.StatusInternalServerError, "Failed to retrieve message history")
+	}
+
+	c.Set("X-Total-Count", strconv.Itoa(int(total)))
+	return c.JSON(
+		slices.Map(messages, converters.MessageStateToDTO),
+	)
+}
+
 //	@Summary		Get message state
 //	@Description	Returns message state by ID
 //	@Security		ApiAuth
@@ -194,15 +232,7 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.JSON(smsgateway.GetMessageResponse{
-		ID:          state.ID,
-		DeviceID:    state.DeviceID,
-		State:       smsgateway.ProcessingState(state.State),
-		IsHashed:    state.IsHashed,
-		IsEncrypted: state.IsEncrypted,
-		Recipients:  state.Recipients,
-		States:      state.States,
-	})
+	return c.JSON(converters.MessageStateToDTO(state))
 }
 
 //	@Summary		Request inbox messages export
@@ -242,8 +272,9 @@ func (h *ThirdPartyController) postInboxExport(user models.User, c *fiber.Ctx) e
 }
 
 func (h *ThirdPartyController) Register(router fiber.Router) {
+	router.Get("", userauth.WithUser(h.list))
 	router.Post("", userauth.WithUser(h.post))
-	router.Get(":id", userauth.WithUser(h.get))
+	router.Get(":id", userauth.WithUser(h.get)).Name(route3rdPartyGetMessage)
 
 	router.Post("inbox/export", userauth.WithUser(h.postInboxExport))
 }

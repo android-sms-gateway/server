@@ -5,7 +5,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 )
 
-func MessageToDTO(m messages.MessageOut) smsgateway.MobileMessage {
+func MessageToMobileDTO(m messages.MessageOut) smsgateway.MobileMessage {
 	var message string
 	var textMessage *smsgateway.TextMessage
 	var dataMessage *smsgateway.DataMessage
@@ -39,5 +39,17 @@ func MessageToDTO(m messages.MessageOut) smsgateway.MobileMessage {
 			Priority:           m.Priority,
 		},
 		CreatedAt: m.CreatedAt,
+	}
+}
+
+func MessageStateToDTO(state messages.MessageStateOut) smsgateway.MessageState {
+	return smsgateway.MessageState{
+		ID:          state.ID,
+		DeviceID:    state.DeviceID,
+		State:       smsgateway.ProcessingState(state.State),
+		IsHashed:    state.IsHashed,
+		IsEncrypted: state.IsEncrypted,
+		Recipients:  state.Recipients,
+		States:      state.States,
 	}
 }

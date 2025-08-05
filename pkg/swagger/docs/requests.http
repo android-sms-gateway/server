@@ -75,6 +75,14 @@ GET {{baseUrl}}/3rdparty/v1/messages/K56aIsVsQ2rECdv_ajzTd HTTP/1.1
 Authorization: Basic {{credentials}}
 
 ###
+GET {{baseUrl}}/3rdparty/v1/messages HTTP/1.1
+Authorization: Basic {{credentials}}
+
+###
+GET {{baseUrl}}/3rdparty/v1/messages?from=2025-01-01T00:00:00.000Z&to=2025-12-31T23:59:59Z&state=Pending&deviceId=fL2m4IirEvh9BvTf6TIB0&limit=50&offset=0 HTTP/1.1
+Authorization: Basic {{credentials}}
+
+###
 POST {{baseUrl}}/3rdparty/v1/messages/inbox/export HTTP/1.1
 Authorization: Basic {{credentials}}
 Content-Type: application/json

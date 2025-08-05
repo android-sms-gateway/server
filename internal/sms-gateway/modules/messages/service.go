@@ -102,7 +102,7 @@ func (s *Service) SelectPending(deviceID string) ([]MessageOut, error) {
 }
 
 func (s *Service) UpdateState(deviceID string, message MessageStateIn) error {
-	existing, err := s.messages.Get(message.ID, MessagesSelectFilter{DeviceID: deviceID})
+	existing, err := s.messages.Get(MessagesSelectFilter{ExtID: message.ID, DeviceID: deviceID}, MessagesSelectOptions{})
 	if err != nil {
 		return err
 	}
@@ -132,17 +132,23 @@ func (s *Service) UpdateState(deviceID string, message MessageStateIn) error {
 	return nil
 }
 
+func (s *Service) SelectStates(user models.User, filter MessagesSelectFilter, options MessagesSelectOptions) ([]MessageStateOut, int64, error) {
+	filter.UserID = user.ID
+
+	messages, total, err := s.messages.Select(filter, options)
+	if err != nil {
+		return nil, 0, fmt.Errorf("can't select messages: %w", err)
+	}
+
+	return slices.Map(messages, modelToMessageState), total, nil
+}
+
 func (s *Service) GetState(user models.User, ID string) (MessageStateOut, error) {
 	message, err := s.messages.Get(
-		ID,
-		MessagesSelectFilter{},
+		MessagesSelectFilter{ExtID: ID, UserID: user.ID},
 		MessagesSelectOptions{WithRecipients: true, WithDevice: true, WithStates: true},
 	)
 	if err != nil {
-		return MessageStateOut{}, ErrMessageNotFound
-	}
-
-	if message.Device.UserID != user.ID {
 		return MessageStateOut{}, ErrMessageNotFound
 	}
 

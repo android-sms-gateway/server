@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -15,46 +16,108 @@ const hashingLockName = "36444143-1ace-4dbf-891c-cc505911497e"
 
 var ErrMessageNotFound = gorm.ErrRecordNotFound
 var ErrMessageAlreadyExists = errors.New("duplicate id")
+var ErrMultipleMessagesFound = errors.New("multiple messages found")
 
 type repository struct {
 	db *gorm.DB
 }
 
-func (r *repository) SelectPending(deviceID string) (messages []Message, err error) {
-	err = r.db.
-		Where("device_id = ? AND state = ?", deviceID, ProcessingStatePending).
-		Order("priority DESC, id DESC").
-		Limit(100).
-		Preload("Recipients").
-		Find(&messages).
-		Error
+func (r *repository) Select(filter MessagesSelectFilter, options MessagesSelectOptions) ([]Message, int64, error) {
+	query := r.db.Model(&Message{})
 
-	return
+	// Apply date range filter
+	if !filter.StartDate.IsZero() {
+		query = query.Where("messages.created_at >= ?", filter.StartDate)
+	}
+	if !filter.EndDate.IsZero() {
+		query = query.Where("messages.created_at < ?", filter.EndDate)
+	}
+
+	// Apply ID filter
+	if filter.ExtID != "" {
+		query = query.Where("messages.ext_id = ?", filter.ExtID)
+	}
+
+	// Apply user filter
+	if filter.UserID != "" {
+		query = query.
+			Joins("JOIN devices ON messages.device_id = devices.id").
+			Where("devices.user_id = ?", filter.UserID)
+	}
+
+	// Apply state filter
+	if filter.State != "" {
+		query = query.Where("messages.state = ?", filter.State)
+	}
+
+	// Apply device filter
+	if filter.DeviceID != "" {
+		query = query.Where("messages.device_id = ?", filter.DeviceID)
+	}
+
+	// Get total count
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply pagination
+	if options.Limit > 0 {
+		query = query.Limit(options.Limit)
+	}
+	if options.Offset > 0 {
+		query = query.Offset(options.Offset)
+	}
+
+	// Apply ordering
+	query = query.Order("messages.priority DESC, messages.id DESC")
+
+	// Preload related data
+	if options.WithRecipients {
+		query = query.Preload("Recipients")
+	}
+	if filter.UserID == "" && options.WithDevice {
+		query = query.Joins("Device")
+	}
+	if options.WithStates {
+		query = query.Preload("States")
+	}
+
+	messages := make([]Message, 0, min(options.Limit, int(total)))
+	if err := query.Find(&messages).Error; err != nil {
+		return nil, 0, fmt.Errorf("can't select messages: %w", err)
+	}
+
+	return messages, total, nil
 }
 
-func (r *repository) Get(ID string, filter MessagesSelectFilter, options ...MessagesSelectOptions) (message Message, err error) {
-	query := r.db.Model(&message).
-		Where("ext_id = ?", ID)
+func (r *repository) SelectPending(deviceID string) ([]Message, error) {
+	messages, _, err := r.Select(MessagesSelectFilter{
+		DeviceID: deviceID,
+		State:    ProcessingStatePending,
+	}, MessagesSelectOptions{
+		WithRecipients: true,
+		Limit:          100,
+	})
 
-	if filter.DeviceID != "" {
-		query = query.Where("device_id = ?", filter.DeviceID)
+	return messages, err
+}
+
+func (r *repository) Get(filter MessagesSelectFilter, options MessagesSelectOptions) (Message, error) {
+	messages, _, err := r.Select(filter, options)
+	if err != nil {
+		return Message{}, fmt.Errorf("can't get message: %w", err)
 	}
 
-	if len(options) > 0 {
-		if options[0].WithRecipients {
-			query = query.Preload("Recipients")
-		}
-		if options[0].WithDevice {
-			query = query.Joins("Device")
-		}
-		if options[0].WithStates {
-			query = query.Preload("States")
-		}
+	if len(messages) == 0 {
+		return Message{}, ErrMessageNotFound
 	}
 
-	err = query.Take(&message).Error
+	if len(messages) > 1 {
+		return Message{}, ErrMultipleMessagesFound
+	}
 
-	return
+	return messages[0], nil
 }
 
 func (r *repository) Insert(message *Message) error {

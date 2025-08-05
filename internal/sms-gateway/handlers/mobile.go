@@ -172,7 +172,7 @@ func (h *mobileHandler) getMessage(device models.Device, c *fiber.Ctx) error {
 		smsgateway.MobileGetMessagesResponse(
 			slices.Map(
 				msgs,
-				converters.MessageToDTO,
+				converters.MessageToMobileDTO,
 			),
 		),
 	)
