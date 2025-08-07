@@ -9,7 +9,7 @@ import (
 func TestDeviceSelection(t *testing.T) {
 	// Register first device
 	firstDevice := mobileDeviceRegister(t, publicMobileClient)
-	client := publicUserClient.SetBasicAuth(firstDevice.Login, firstDevice.Password)
+	client := publicUserClient.Clone().SetBasicAuth(firstDevice.Login, firstDevice.Password)
 
 	// Register a second device to test explicit device selection
 	secondDevice := mobileDeviceRegister(

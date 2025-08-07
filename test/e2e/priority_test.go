@@ -47,7 +47,7 @@ func TestPriorityPost(t *testing.T) {
 	}
 
 	credentials := mobileDeviceRegister(t, publicMobileClient)
-	client := publicUserClient.SetBasicAuth(credentials.Login, credentials.Password)
+	client := publicUserClient.Clone().SetBasicAuth(credentials.Login, credentials.Password)
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
