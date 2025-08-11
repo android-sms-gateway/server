@@ -7,7 +7,7 @@ data "docker_network" "internal" {
 }
 
 resource "docker_image" "app" {
-  name         = "capcom6/${var.app-name}:${var.app-version}"
+  name         = "ghcr.io/android-sms-gateway/server:${var.app-version}"
   keep_locally = true
 }
 
