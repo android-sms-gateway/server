@@ -13,6 +13,7 @@ import (
 )
 
 const hashingLockName = "36444143-1ace-4dbf-891c-cc505911497e"
+const maxPendingBatch = 100
 
 var ErrMessageNotFound = gorm.ErrRecordNotFound
 var ErrMessageAlreadyExists = errors.New("duplicate id")
@@ -70,7 +71,11 @@ func (r *repository) Select(filter MessagesSelectFilter, options MessagesSelectO
 	}
 
 	// Apply ordering
-	query = query.Order("messages.priority DESC, messages.id DESC")
+	if options.OrderBy == MessagesOrderFIFO {
+		query = query.Order("messages.priority DESC, messages.id ASC")
+	} else {
+		query = query.Order("messages.priority DESC, messages.id DESC")
+	}
 
 	// Preload related data
 	if options.WithRecipients {
@@ -91,13 +96,14 @@ func (r *repository) Select(filter MessagesSelectFilter, options MessagesSelectO
 	return messages, total, nil
 }
 
-func (r *repository) SelectPending(deviceID string) ([]Message, error) {
+func (r *repository) SelectPending(deviceID string, order MessagesOrder) ([]Message, error) {
 	messages, _, err := r.Select(MessagesSelectFilter{
 		DeviceID: deviceID,
 		State:    ProcessingStatePending,
 	}, MessagesSelectOptions{
 		WithRecipients: true,
-		Limit:          100,
+		Limit:          maxPendingBatch,
+		OrderBy:        order,
 	})
 
 	return messages, err

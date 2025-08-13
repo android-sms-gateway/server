@@ -26,6 +26,7 @@ var Module = fx.Module(
 	fx.Provide(
 		newHealthHandler,
 		messages.NewThirdPartyController,
+		messages.NewMobileController,
 		webhooks.NewThirdPartyController,
 		webhooks.NewMobileController,
 		devices.NewThirdPartyController,

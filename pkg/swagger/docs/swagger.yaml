@@ -1417,6 +1417,15 @@ paths:
       consumes:
       - application/json
       description: Returns list of pending messages
+      parameters:
+      - default: lifo
+        description: 'Message processing order: lifo (default) or fifo'
+        enum:
+        - lifo
+        - fifo
+        in: query
+        name: order
+        type: string
       produces:
       - application/json
       responses:
@@ -1426,6 +1435,10 @@ paths:
             items:
               $ref: '#/definitions/smsgateway.MobileMessage'
             type: array
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/smsgateway.ErrorResponse'
         "500":
           description: Internal server error
           schema:

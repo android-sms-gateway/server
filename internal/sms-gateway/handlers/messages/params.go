@@ -7,12 +7,12 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 )
 
-type postQueryParams struct {
+type thirdPartyPostQueryParams struct {
 	SkipPhoneValidation bool `query:"skipPhoneValidation"`
 	DeviceActiveWithin  uint `query:"deviceActiveWithin"`
 }
 
-type getQueryParams struct {
+type thirdPartyGetQueryParams struct {
 	StartDate string `query:"from" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
 	EndDate   string `query:"to" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
 	State     string `query:"state" validate:"omitempty,oneof=Pending Processed Sent Delivered Failed"`
@@ -21,7 +21,7 @@ type getQueryParams struct {
 	Offset    int    `query:"offset" validate:"omitempty,min=0"`
 }
 
-func (p *getQueryParams) Validate() error {
+func (p *thirdPartyGetQueryParams) Validate() error {
 	if p.StartDate != "" && p.EndDate != "" && p.StartDate > p.EndDate {
 		return fmt.Errorf("`from` date must be before `to` date")
 	}
@@ -29,7 +29,7 @@ func (p *getQueryParams) Validate() error {
 	return nil
 }
 
-func (p *getQueryParams) ToFilter() messages.MessagesSelectFilter {
+func (p *thirdPartyGetQueryParams) ToFilter() messages.MessagesSelectFilter {
 	filter := messages.MessagesSelectFilter{}
 
 	if p.StartDate != "" {
@@ -55,7 +55,7 @@ func (p *getQueryParams) ToFilter() messages.MessagesSelectFilter {
 	return filter
 }
 
-func (p *getQueryParams) ToOptions() messages.MessagesSelectOptions {
+func (p *thirdPartyGetQueryParams) ToOptions() messages.MessagesSelectOptions {
 	options := messages.MessagesSelectOptions{
 		WithRecipients: true,
 		WithStates:     true,
@@ -72,4 +72,16 @@ func (p *getQueryParams) ToOptions() messages.MessagesSelectOptions {
 	}
 
 	return options
+}
+
+type mobileGetQueryParams struct {
+	Order messages.MessagesOrder `query:"order" validate:"omitempty,oneof=lifo fifo"`
+}
+
+func (p *mobileGetQueryParams) OrderOrDefault() messages.MessagesOrder {
+	if p.Order != "" {
+		return p.Order
+	}
+	return messages.MessagesOrderLIFO
+
 }

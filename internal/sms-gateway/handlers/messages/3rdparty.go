@@ -60,7 +60,7 @@ type ThirdPartyController struct {
 //
 // Enqueue message
 func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
-	var params postQueryParams
+	var params thirdPartyPostQueryParams
 	if err := h.QueryParserValidator(c, &params); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
@@ -190,7 +190,7 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 //
 // Get message history
 func (h *ThirdPartyController) list(user models.User, c *fiber.Ctx) error {
-	params := getQueryParams{}
+	params := thirdPartyGetQueryParams{}
 	if err := h.QueryParserValidator(c, &params); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}

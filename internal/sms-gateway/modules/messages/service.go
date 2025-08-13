@@ -92,8 +92,12 @@ func (s *Service) RunBackgroundTasks(ctx context.Context, wg *sync.WaitGroup) {
 	}()
 }
 
-func (s *Service) SelectPending(deviceID string) ([]MessageOut, error) {
-	messages, err := s.messages.SelectPending(deviceID)
+func (s *Service) SelectPending(deviceID string, order MessagesOrder) ([]MessageOut, error) {
+	if order == "" {
+		order = MessagesOrderLIFO
+	}
+
+	messages, err := s.messages.SelectPending(deviceID, order)
 	if err != nil {
 		return nil, err
 	}

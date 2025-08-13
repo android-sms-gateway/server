@@ -982,6 +982,19 @@
                     "Messages"
                 ],
                 "summary": "Get messages for sending",
+                "parameters": [
+                    {
+                        "enum": [
+                            "lifo",
+                            "fifo"
+                        ],
+                        "type": "string",
+                        "default": "lifo",
+                        "description": "Message processing order: lifo (default) or fifo",
+                        "name": "order",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of pending messages",
@@ -990,6 +1003,12 @@
                             "items": {
                                 "$ref": "#/definitions/smsgateway.MobileMessage"
                             }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
                     },
                     "500": {
