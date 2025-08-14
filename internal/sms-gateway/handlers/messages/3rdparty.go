@@ -62,12 +62,12 @@ type ThirdPartyController struct {
 func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 	var params thirdPartyPostQueryParams
 	if err := h.QueryParserValidator(c, &params); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	}
 
 	var req smsgateway.Message
 	if err := h.BodyParserValidator(c, &req); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	}
 
 	var device models.Device
@@ -192,7 +192,7 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 func (h *ThirdPartyController) list(user models.User, c *fiber.Ctx) error {
 	params := thirdPartyGetQueryParams{}
 	if err := h.QueryParserValidator(c, &params); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	}
 
 	messages, total, err := h.messagesSvc.SelectStates(user, params.ToFilter(), params.ToOptions())
@@ -252,7 +252,7 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 func (h *ThirdPartyController) postInboxExport(user models.User, c *fiber.Ctx) error {
 	req := smsgateway.MessagesExportRequest{}
 	if err := h.BodyParserValidator(c, &req); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	}
 
 	device, err := h.devicesSvc.Get(user.ID, devices.WithID(req.DeviceID))

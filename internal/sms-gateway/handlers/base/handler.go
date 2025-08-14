@@ -43,7 +43,7 @@ func (h *Handler) ParamsParserValidator(c *fiber.Ctx, out any) error {
 
 func (h *Handler) ValidateStruct(out any) error {
 	if h.Validator != nil {
-		if err := h.Validator.Struct(out); err != nil {
+		if err := h.Validator.Var(out, "required,dive"); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 	}

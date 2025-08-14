@@ -96,7 +96,7 @@ func (h *mobileHandler) postDevice(c *fiber.Ctx) (err error) {
 	req := smsgateway.MobileRegisterRequest{}
 
 	if err = h.BodyParserValidator(c, &req); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	}
 
 	var (
@@ -150,7 +150,7 @@ func (h *mobileHandler) patchDevice(device models.Device, c *fiber.Ctx) error {
 	req := smsgateway.MobileUpdateRequest{}
 
 	if err := h.BodyParserValidator(c, &req); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	}
 
 	if req.Id != device.ID {
@@ -205,7 +205,7 @@ func (h *mobileHandler) changePassword(device models.Device, c *fiber.Ctx) error
 	req := smsgateway.MobileChangePasswordRequest{}
 
 	if err := h.BodyParserValidator(c, &req); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	}
 
 	if err := h.authSvc.ChangePassword(device.UserID, req.CurrentPassword, req.NewPassword); err != nil {

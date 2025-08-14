@@ -49,7 +49,7 @@ func (h *MobileController) list(device models.Device, c *fiber.Ctx) error {
 	// Get and validate order parameter
 	params := mobileGetQueryParams{}
 	if err := h.QueryParserValidator(c, &params); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	}
 
 	msgs, err := h.messagesSvc.SelectPending(device.ID, params.OrderOrDefault())
@@ -81,9 +81,9 @@ func (h *MobileController) list(device models.Device, c *fiber.Ctx) error {
 //
 // Update message state
 func (h *MobileController) patch(device models.Device, c *fiber.Ctx) error {
-	var req smsgateway.MobilePatchMessageRequest
+	req := smsgateway.MobilePatchMessageRequest{}
 	if err := h.BodyParserValidator(c, &req); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	}
 
 	for _, v := range req {
