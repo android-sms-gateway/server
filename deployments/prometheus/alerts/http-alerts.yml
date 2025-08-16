@@ -1,0 +1,56 @@
+groups:
+  - name: http-alerts
+    rules:
+      - alert: HighHTTPErrorRateWarning
+        expr: sum(rate(http_requests_total{job="backend", status_code=~"5.."}[5m])) / sum(rate(http_requests_total{job="backend"}[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High HTTP error rate (Warning)"
+          description: "The HTTP error rate has exceeded 5% over the last 5 minutes."
+
+      - alert: HighHTTPErrorRateCritical
+        expr: sum(rate(http_requests_total{job="backend", status_code=~"5.."}[5m])) / sum(rate(http_requests_total{job="backend"}[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High HTTP error rate (Critical)"
+          description: "The HTTP error rate has exceeded 10% over the last 5 minutes."
+
+      - alert: HighHTTPLatencyWarning
+        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job="backend"}[5m])) by (le)) > 0.3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High HTTP latency (p99) (Warning)"
+          description: "The p99 HTTP latency has exceeded 0.3 seconds over the last 5 minutes."
+
+      - alert: HighHTTPLatencyCritical
+        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job="backend"}[5m])) by (le)) > 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High HTTP latency (p99) (Critical)"
+          description: "The p99 HTTP latency has exceeded 1 seconds over the last 5 minutes."
+
+      - alert: IncreasedHTTPRequestVolumeWarning
+        expr: rate(http_requests_total{job="backend"}[1m]) > 2 * avg_over_time(rate(http_requests_total{job="backend"}[1m])[10m:1m])
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Increased HTTP request volume (Warning)"
+          description: "The HTTP request volume has increased by 2x compared to the average of the last 10 minutes."
+
+      - alert: IncreasedHTTPRequestVolumeCritical
+        expr: rate(http_requests_total{job="backend"}[1m]) > 5 * avg_over_time(rate(http_requests_total{job="backend"}[1m])[10m])
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Increased HTTP request volume (Critical)"
+          description: "The HTTP request volume has increased by 5x compared to the average of the last 10 minutes."
