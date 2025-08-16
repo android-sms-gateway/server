@@ -26,6 +26,11 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    environment: production
+    concurrency: production
     needs:
       - build
 
@@ -61,3 +66,25 @@ jobs:
           -var "app-config-b64=${{ secrets.APP_CONFIG_B64 }}" \
           -var "app-env-json-b64=${{ secrets.APP_ENV_JSON_B64 }}" \
           -var "memory-limit=${{ vars.MEMORY_LIMIT }}"
+
+  deploy-secondary:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    environment: production-secondary
+    concurrency: production
+    env:
+      DEPLOY_WEBHOOK_URL: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+    steps:
+      - name: Trigger Deploy webhook
+        if: ${{ env.DEPLOY_WEBHOOK_URL != '' }}
+        run: |
+          curl -X POST "${DEPLOY_WEBHOOK_URL}" \
+          --fail \
+          --silent \
+          --max-time 10 \
+          --retry 3 \
+          --retry-delay 5 \
+          || exit 1
