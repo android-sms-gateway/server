@@ -196,6 +196,19 @@ resource "docker_service" "app" {
     value = true
   }
 
+  labels {
+    label = "prometheus.io/scrape"
+    value = true
+  }
+  labels {
+    label = "prometheus.io/port"
+    value = 3000
+  }
+  labels {
+    label = "prometheus.io/job"
+    value = "backend"
+  }
+
   rollback_config {
     order   = "start-first"
     monitor = "5s"
