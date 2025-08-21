@@ -24,6 +24,14 @@ type Gateway struct {
 type HTTP struct {
 	Listen  string   `yaml:"listen" envconfig:"HTTP__LISTEN"`   // listen address
 	Proxies []string `yaml:"proxies" envconfig:"HTTP__PROXIES"` // proxies
+
+	OpenAPI OpenAPI `yaml:"openapi"`
+}
+
+type OpenAPI struct {
+	Enabled bool   `yaml:"enabled" envconfig:"HTTP__OPENAPI__ENABLED"`   // openapi enabled
+	APIHost string `yaml:"api_host" envconfig:"HTTP__OPENAPI__API_HOST"` // public API host
+	APIPath string `yaml:"api_path" envconfig:"HTTP__OPENAPI__API_PATH"` // public API path
 }
 
 type Database struct {

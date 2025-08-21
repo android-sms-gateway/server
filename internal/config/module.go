@@ -9,6 +9,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/sse"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/openapi"
 	"github.com/capcom6/go-infra-fx/config"
 	"github.com/capcom6/go-infra-fx/db"
 	"github.com/capcom6/go-infra-fx/http"
@@ -96,5 +97,12 @@ var Module = fx.Module(
 		return sse.NewConfig(
 			sse.WithKeepAlivePeriod(time.Duration(cfg.SSE.KeepAlivePeriodSeconds) * time.Second),
 		)
+	}),
+	fx.Provide(func(cfg Config) openapi.Config {
+		return openapi.Config{
+			Enabled: cfg.HTTP.OpenAPI.Enabled,
+			APIHost: cfg.HTTP.OpenAPI.APIHost,
+			APIPath: cfg.HTTP.OpenAPI.APIPath,
+		}
 	}),
 )

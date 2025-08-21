@@ -1,39 +1,31 @@
 package handlers
 
 import (
-	"net/http"
-
-	"github.com/android-sms-gateway/server/pkg/swagger"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/openapi"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/filesystem"
 )
 
 type rootHandler struct {
-	healthHandler *healthHandler
+	healthHandler  *healthHandler
+	openapiHandler *openapi.Handler
 }
 
 func (h *rootHandler) Register(app *fiber.App) {
 	app.Use(func(c *fiber.Ctx) error {
-		if c.Path() == "/api" {
-			return c.Redirect("/api/", fiber.StatusMovedPermanently)
+		if c.Path() == "/api" || c.Path() == "/api/" {
+			return c.Redirect("/api/docs/", fiber.StatusMovedPermanently)
 		}
 
 		return c.Next()
 	})
 
 	h.healthHandler.Register(app)
-	app.Use("/api", filesystem.New(filesystem.Config{
-		Root:       http.FS(swagger.Docs),
-		PathPrefix: "docs",
-		MaxAge:     1 * 24 * 60 * 60,
-	}), func(c *fiber.Ctx) error {
-		// The filesystem middleware set 404 status before next, so we need to override it
-		return c.Status(fiber.StatusOK).Next()
-	})
+	h.openapiHandler.Register(app.Group("/api/docs"))
 }
 
-func newRootHandler(healthHandler *healthHandler) *rootHandler {
+func newRootHandler(healthHandler *healthHandler, openapiHandler *openapi.Handler) *rootHandler {
 	return &rootHandler{
-		healthHandler: healthHandler,
+		healthHandler:  healthHandler,
+		openapiHandler: openapiHandler,
 	}
 }
