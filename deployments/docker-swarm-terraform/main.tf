@@ -38,6 +38,21 @@ resource "docker_service" "app" {
         file_uid    = 405
         file_gid    = 100
       }
+
+      #region Prometheus support
+      labels {
+        label = "prometheus.io/scrape"
+        value = "true"
+      }
+      labels {
+        label = "prometheus.io/port"
+        value = "3000"
+      }
+      labels {
+        label = "prometheus.io/job"
+        value = "backend"
+      }
+      #endregion
     }
 
     networks_advanced {
@@ -190,7 +205,7 @@ resource "docker_service" "app" {
     value = 3000
   }
 
-  # Prometheus support
+  #region Prometheus support
   labels {
     label = "prometheus.enabled"
     value = true
@@ -208,6 +223,7 @@ resource "docker_service" "app" {
     label = "prometheus.io/job"
     value = "backend"
   }
+  #endregion
 
   rollback_config {
     order   = "start-first"
