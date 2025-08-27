@@ -5,6 +5,11 @@ http: # http server config
   listen: 127.0.0.1:3000 # listen address [HTTP__LISTEN]
   proxies:
     - "127.0.0.1" # proxy address [HTTP__PROXIES]
+  api:
+    host: # public API host [HTTP__API__HOST]
+    path: /api # public API path [HTTP__API__PATH]
+  openapi:
+    enabled: false # openapi enabled [HTTP__OPENAPI__ENABLED]
 database: # database
   dialect: mysql # database dialect (only mysql supported at the moment) [DATABASE__DIALECT]
   host: localhost # database host [DATABASE__HOST]

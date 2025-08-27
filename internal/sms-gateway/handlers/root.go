@@ -1,39 +1,59 @@
 package handlers
 
 import (
-	"net/http"
+	"path"
+	"strings"
 
-	"github.com/android-sms-gateway/server/pkg/swagger"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/openapi"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/filesystem"
 )
 
 type rootHandler struct {
-	healthHandler *healthHandler
+	config Config
+
+	healthHandler  *healthHandler
+	openapiHandler *openapi.Handler
 }
 
 func (h *rootHandler) Register(app *fiber.App) {
-	app.Use(func(c *fiber.Ctx) error {
-		if c.Path() == "/api" {
-			return c.Redirect("/api/", fiber.StatusMovedPermanently)
+	if h.config.PublicPath != "/api" {
+		app.Use(func(c *fiber.Ctx) error {
+			err := c.Next()
+
+			location := c.GetRespHeader(fiber.HeaderLocation)
+			if after, ok := strings.CutPrefix(location, "/api"); ok {
+				c.Set(fiber.HeaderLocation, path.Join(h.config.PublicPath, after))
+			}
+
+			return err
+		})
+	}
+
+	h.healthHandler.Register(app)
+
+	h.registerOpenAPI(app)
+}
+
+func (h *rootHandler) registerOpenAPI(router fiber.Router) {
+	if !h.config.OpenAPIEnabled {
+		return
+	}
+
+	router.Use(func(c *fiber.Ctx) error {
+		if c.Path() == "/api" || c.Path() == "/api/" {
+			return c.Redirect("/api/docs", fiber.StatusMovedPermanently)
 		}
 
 		return c.Next()
 	})
-
-	h.healthHandler.Register(app)
-	app.Use("/api", filesystem.New(filesystem.Config{
-		Root:       http.FS(swagger.Docs),
-		PathPrefix: "docs",
-		MaxAge:     1 * 24 * 60 * 60,
-	}), func(c *fiber.Ctx) error {
-		// The filesystem middleware set 404 status before next, so we need to override it
-		return c.Status(fiber.StatusOK).Next()
-	})
+	h.openapiHandler.Register(router.Group("/api/docs"), h.config.PublicHost, h.config.PublicPath)
 }
 
-func newRootHandler(healthHandler *healthHandler) *rootHandler {
+func newRootHandler(cfg Config, healthHandler *healthHandler, openapiHandler *openapi.Handler) *rootHandler {
 	return &rootHandler{
-		healthHandler: healthHandler,
+		config: cfg,
+
+		healthHandler:  healthHandler,
+		openapiHandler: openapiHandler,
 	}
 }

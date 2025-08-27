@@ -1,6 +1,7 @@
 package config
 
 import (
+	"strings"
 	"time"
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers"
@@ -53,7 +54,7 @@ var Module = fx.Module(
 	}),
 	fx.Provide(func(cfg Config) push.Config {
 		mode := push.ModeFCM
-		if cfg.Gateway.Mode == "private" {
+		if cfg.Gateway.Mode == GatewayModePrivate {
 			mode = push.ModeUpstream
 		}
 
@@ -78,8 +79,25 @@ var Module = fx.Module(
 		}
 	}),
 	fx.Provide(func(cfg Config) handlers.Config {
+		// Default and normalize API path/host
+		if cfg.HTTP.API.Host == "" {
+			cfg.HTTP.API.Path = "/api"
+		}
+		// Ensure leading slash and trim trailing slash (except root)
+		if !strings.HasPrefix(cfg.HTTP.API.Path, "/") {
+			cfg.HTTP.API.Path = "/" + cfg.HTTP.API.Path
+		}
+		if cfg.HTTP.API.Path != "/" && strings.HasSuffix(cfg.HTTP.API.Path, "/") {
+			cfg.HTTP.API.Path = strings.TrimRight(cfg.HTTP.API.Path, "/")
+		}
+		// Guard against misconfigured scheme in host (accept "host[:port]" only)
+		cfg.HTTP.API.Host = strings.TrimPrefix(strings.TrimPrefix(cfg.HTTP.API.Host, "https://"), "http://")
+
 		return handlers.Config{
-			GatewayMode: handlers.GatewayMode(cfg.Gateway.Mode),
+			PublicHost:      cfg.HTTP.API.Host,
+			PublicPath:      cfg.HTTP.API.Path,
+			UpstreamEnabled: cfg.Gateway.Mode == GatewayModePublic,
+			OpenAPIEnabled:  cfg.HTTP.OpenAPI.Enabled,
 		}
 	}),
 	fx.Provide(func(cfg Config) messages.Config {
