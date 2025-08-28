@@ -1,0 +1,17 @@
+apiVersion: v2
+name: sms-gateway
+description: Helm chart for SMS Gateway for Android™ Server
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - sms
+  - gateway
+  - android
+  - messaging
+home: https://github.com/android-sms-gateway/server
+sources:
+  - https://github.com/android-sms-gateway/server
+maintainers:
+  - name: DevOps Team
+    email: devops@example.com
