@@ -1,0 +1,68 @@
+name: Publish Helm Chart to S3
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "deployments/helm-chart/**"
+  release:
+    types: [published]
+
+# Required permissions for the workflow
+permissions:
+  contents: read # for actions/checkout
+  id-token: write # for AWS OIDC authentication (if using)
+  packages: write # for publishing artifacts
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Required for OIDC authentication to AWS
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.14.0
+
+      - name: Install helm-s3 plugin
+        run: |
+          helm plugin install https://github.com/hypnoglow/helm-s3.git
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }} # Optional if using IAM roles
+          role-session-name: GitHubActionsHelmPublish
+
+      - name: Package Helm chart
+        run: |
+          helm package deployments/helm-chart --version ${{ github.event.release.tag_name || '0.0.0-dev' }} --app-version ${{ github.event.release.tag_name || '0.0.0-dev' }}
+
+      - name: Initialize S3 repository
+        run: |
+          if ! helm repo list | grep s3-repo; then
+            helm repo add s3-repo s3://${{ secrets.S3_BUCKET_NAME }}/charts
+          fi
+
+      - name: Push Helm chart to S3
+        run: |
+          helm s3 push --force sms-gateway-*.tgz s3-repo
+
+      - name: Update Helm repository index
+        run: |
+          helm repo index --url s3://${{ secrets.S3_BUCKET_NAME }}/charts .
+          aws s3 sync . s3://${{ secrets.S3_BUCKET_NAME }}/charts --exclude "*" --include "index.yaml"
+
+      - name: Clean up
+        run: |
+          rm -f sms-gateway-*.tgz index.yaml
