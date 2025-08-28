@@ -51,6 +51,16 @@ github.com/capcom6/go-helpers v0.3.0 h1:ae18fLfluoPubiB2V+j4cIpfZaTuK4acS2entama
 github.com/capcom6/go-helpers v0.3.0/go.mod h1:WDqc7HZNqHxUTisArkYIBZtqUfJBVyPWeQI+FMwEzAw=
 github.com/capcom6/go-infra-fx v0.2.3 h1:ZSlBfz8qRaNVMtTBtJ4fLN89472CNimpJwy3kfBgGf8=
 github.com/capcom6/go-infra-fx v0.2.3/go.mod h1:KHApbB6bwF7WQNIXW6ZdC4YG+d+ciwxvsnRpbOJa/Ys=
+github.com/capcom6/go-infra-fx v0.2.5-0.20250828235240-ca43b2b295cd h1:2DXDbc0rCcIlcBNlf6Hz5wMzSVraLfZBr3zROJPdNWA=
+github.com/capcom6/go-infra-fx v0.2.5-0.20250828235240-ca43b2b295cd/go.mod h1:SpfKffK04JzQ18XNikHbKg3EhOdnUmItDfBFzmE0/9g=
+github.com/capcom6/go-infra-fx v0.2.5-0.20250829024248-89ef05730dad h1:wKMDHNDCCxv7Y3rAeBSvmDfJd01/cO2bMIcGsrWTiO4=
+github.com/capcom6/go-infra-fx v0.2.5-0.20250829024248-89ef05730dad/go.mod h1:SpfKffK04JzQ18XNikHbKg3EhOdnUmItDfBFzmE0/9g=
+github.com/capcom6/go-infra-fx v0.2.5-0.20250829074435-d2b471163a3a h1:ii/6SfX7KgsJnd55Hui7//QU4W++K6YLmEONJ0frRUs=
+github.com/capcom6/go-infra-fx v0.2.5-0.20250829074435-d2b471163a3a/go.mod h1:SpfKffK04JzQ18XNikHbKg3EhOdnUmItDfBFzmE0/9g=
+github.com/capcom6/go-infra-fx v0.2.5-0.20250829133704-1120ad345221 h1:3mPEGqCtn/9onOx9sxQjMgnYe0ULtsO73RfWxbj2qEs=
+github.com/capcom6/go-infra-fx v0.2.5-0.20250829133704-1120ad345221/go.mod h1:SpfKffK04JzQ18XNikHbKg3EhOdnUmItDfBFzmE0/9g=
+github.com/capcom6/go-infra-fx v0.3.0 h1:JEemwoslSj5zSdWp/OQoMV66tXVIrb6IMAPHQfLa1UI=
+github.com/capcom6/go-infra-fx v0.3.0/go.mod h1:SpfKffK04JzQ18XNikHbKg3EhOdnUmItDfBFzmE0/9g=
 github.com/cenkalti/backoff/v4 v4.2.1 h1:y4OZtCnogmCPw98Zjyt5a6+QwPLGkiQsYW5oUqylYbM=
 github.com/cenkalti/backoff/v4 v4.2.1/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
