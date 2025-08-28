@@ -65,7 +65,7 @@ spec:
                 secretKeyRef:
                   name: {{ include "sms-gateway.fullname" . }}-secrets
                   key: private-token
-            {{- else if .Values.gateway.fcmKey }}
+            {{- else if .Values.gateway.fcmCredentials }}
             - name: GATEWAY__MODE
               value: "public"
             - name: GATEWAY__FCM_KEY
