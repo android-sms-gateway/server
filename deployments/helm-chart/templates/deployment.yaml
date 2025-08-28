@@ -17,6 +17,7 @@ spec:
       {{- end }}
       labels:
         {{- include "sms-gateway.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: backend
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -38,17 +39,45 @@ spec:
           env:
             - name: CONFIG_PATH
               value: {{ .Values.gateway.configPath }}
-            - name: GOOSE_DBSTRING
-              value: "{{ .Values.database.user }}:{{ .Values.database.password }}@tcp({{ .Values.database.host }}:{{ .Values.database.port }})/{{ .Values.database.name }}"
             - name: HTTP__LISTEN
               value: "0.0.0.0:{{ .Values.service.port }}"
+            {{- if .Values.database.deployInternal }}
+            - name: DATABASE__HOST
+              value: {{ include "sms-gateway.fullname" . }}-db
+            {{- else }}
+            - name: DATABASE__HOST
+              value: {{ .Values.database.host }}
+            {{- end }}
+            - name: DATABASE__NAME
+              value: {{ .Values.database.name }}
+            - name: DATABASE__USER
+              value: {{ .Values.database.user }}
+            - name: DATABASE__PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "sms-gateway.fullname" . }}-secrets
+                  key: database-password
+            {{- if .Values.gateway.privateToken }}
+            - name: GATEWAY__MODE
+              value: "private"
+            - name: GATEWAY__PRIVATE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "sms-gateway.fullname" . }}-secrets
+                  key: private-token
+            {{- else if .Values.gateway.fcmKey }}
+            - name: GATEWAY__MODE
+              value: "public"
+            - name: GATEWAY__FCM_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "sms-gateway.fullname" . }}-secrets
+                  key: fcm-key
+            {{- end }}
             {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
               value: {{ $value | quote }}
             {{- end }}
-          envFrom:
-            - secretRef:
-                name: {{ include "sms-gateway.fullname" . }}-secrets
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           livenessProbe:
