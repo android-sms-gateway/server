@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sms-gateway.fullname" . }}
+  labels:
+    {{- include "sms-gateway.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "sms-gateway.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "sms-gateway.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: backend
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "sms-gateway.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if .Values.gateway.config.enabled }}
+      volumes:
+        - name: config-volume
+          {{- if .Values.gateway.config.existingConfigMap }}
+          configMap:
+            name: {{ .Values.gateway.config.existingConfigMap }}
+          {{- else }}
+          configMap:
+            name: {{ include "sms-gateway.fullname" . }}-config
+          {{- end }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          env:
+            - name: CONFIG_PATH
+              value: "/app/config.yml"
+            - name: HTTP__LISTEN
+              value: "0.0.0.0:{{ .Values.service.port }}"
+            {{- if .Values.database.deployInternal }}
+            - name: DATABASE__HOST
+              value: {{ include "sms-gateway.fullname" . }}-db
+            {{- else }}
+            - name: DATABASE__HOST
+              value: {{ .Values.database.host }}
+            {{- end }}
+            - name: DATABASE__NAME
+              value: {{ .Values.database.name }}
+            - name: DATABASE__USER
+              value: {{ .Values.database.user }}
+            - name: DATABASE__PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "sms-gateway.fullname" . }}-secrets
+                  key: database-password
+            {{- if .Values.gateway.privateToken }}
+            - name: GATEWAY__MODE
+              value: "private"
+            - name: GATEWAY__PRIVATE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "sms-gateway.fullname" . }}-secrets
+                  key: private-token
+            {{- else if .Values.gateway.fcmCredentials }}
+            - name: GATEWAY__MODE
+              value: "public"
+            - name: FCM__CREDENTIALS_JSON
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "sms-gateway.fullname" . }}-secrets
+                  key: fcm-credentials
+            {{- end }}
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+          {{- if .Values.gateway.config.enabled }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: "/app/config.yml"
+              subPath: config.yml
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

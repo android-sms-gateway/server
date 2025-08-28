@@ -1,0 +1,114 @@
+{{- if .Values.database.deployInternal }}
+# MariaDB StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "sms-gateway.fullname" . }}-db
+  labels:
+    {{- include "sms-gateway.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "sms-gateway.fullname" . }}-db
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "sms-gateway.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: database
+  template:
+    metadata:
+      labels:
+        {{- include "sms-gateway.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: database
+    spec:
+      containers:
+        - name: mariadb
+          image: {{ .Values.database.mariadb.image.repository }}:{{ .Values.database.mariadb.image.tag }}
+          env:
+            - name: MARIADB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "sms-gateway.fullname" . }}-db-secrets
+                  key: root-password
+            - name: MARIADB_DATABASE
+              value: {{ .Values.database.name }}
+            - name: MARIADB_USER
+              value: {{ .Values.database.user }}
+            - name: MARIADB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "sms-gateway.fullname" . }}-db-secrets
+                  key: database-password
+          ports:
+            - name: mysql
+              containerPort: 3306
+          volumeMounts:
+            - name: mariadb-data
+              mountPath: /var/lib/mysql
+          readinessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            exec:
+              command:
+                - healthcheck.sh
+                - --connect
+                - --innodb_initialized
+          livenessProbe:
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            exec:
+              command:
+                - healthcheck.sh
+                - --connect
+                - --innodb_initialized
+      volumes:
+        - name: mariadb-data
+          persistentVolumeClaim:
+            claimName: {{ include "sms-gateway.fullname" . }}-db-pvc
+
+---
+# Database Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sms-gateway.fullname" . }}-db
+  labels:
+    {{- include "sms-gateway.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: 3306
+      targetPort: mysql
+      name: mysql
+  selector:
+    {{- include "sms-gateway.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+
+---
+# Database Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "sms-gateway.fullname" . }}-db-secrets
+  labels:
+    {{- include "sms-gateway.labels" . | nindent 4 }}
+type: Opaque
+data:
+  root-password: {{ .Values.database.mariadb.rootPassword | b64enc | quote }}
+  database-password: {{ .Values.database.password | b64enc | quote }}
+
+---
+# Database Persistent Volume Claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "sms-gateway.fullname" . }}-db-pvc
+  labels:
+    {{- include "sms-gateway.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.database.mariadb.persistence.size }}
+  {{- if .Values.database.mariadb.persistence.storageClass }}
+  storageClassName: {{ .Values.database.mariadb.persistence.storageClass }}
+  {{- end }}
+{{- end }}

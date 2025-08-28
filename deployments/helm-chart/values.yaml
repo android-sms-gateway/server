@@ -1,0 +1,106 @@
+# Default values for sms-gateway
+# This is a YAML-formatted file
+replicaCount: 1
+
+image:
+  repository: ghcr.io/android-sms-gateway/server
+  tag: "1.29.3"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 3000
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: sms-gateway.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: sms-gateway-tls
+  #    hosts:
+  #      - sms-gateway.local
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Database configuration
+database:
+  host: ""
+  port: 3306
+  user: sms
+  password: "" # REQUIRED: Set a strong password for the database user
+  name: sms
+  # Set to true to deploy a MariaDB instance with the chart
+  deployInternal: true
+  mariadb:
+    image:
+      repository: mariadb
+      tag: lts
+    rootPassword: "" # REQUIRED: Set a strong root password for MariaDB
+    persistence:
+      enabled: true
+      size: 8Gi
+      storageClass: ""
+
+# Gateway configuration
+gateway:
+  privateToken: "" # REQUIRED for private mode: Set your gateway private token
+  fcmCredentials: "" # REQUIRED for public mode: Set your FCM credentials JSON
+  config:
+    enabled: false
+    existingConfigMap: "" # Name of existing ConfigMap to use (optional)
+    data: |
+      # Config content here (only used if existingConfigMap is not provided)
+      # This will be used to generate a ConfigMap when existingConfigMap is not set
+      # Example:
+      # tasks:
+      #   hashing:
+      #     interval_seconds: 900
+
+# Environment variables
+env: {}
+  # DEBUG: ""
+  # HTTP__LISTEN: "0.0.0.0:3000"

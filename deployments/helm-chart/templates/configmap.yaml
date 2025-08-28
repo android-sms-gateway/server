@@ -1,0 +1,11 @@
+{{- if and .Values.gateway.config.enabled (not .Values.gateway.config.existingConfigMap) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "sms-gateway.fullname" . }}-config
+  labels:
+    {{- include "sms-gateway.labels" . | nindent 4 }}
+data:
+  config.yml: |
+    {{- .Values.gateway.config.data | nindent 4 }}
+{{- end }}
