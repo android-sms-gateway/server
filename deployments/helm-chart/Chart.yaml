@@ -1,0 +1,17 @@
+apiVersion: v2
+name: server
+description: Helm chart for SMSGate Server
+type: application
+version: 0.1.0
+appVersion: "1.29.3"
+keywords:
+  - sms
+  - gateway
+  - android
+  - messaging
+home: https://sms-gate.app
+sources:
+  - https://github.com/android-sms-gateway/server
+maintainers:
+  - name: Aleksandr Soloshenko
+    email: support@sms-gate.app
