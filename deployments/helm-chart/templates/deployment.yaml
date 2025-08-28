@@ -68,11 +68,11 @@ spec:
             {{- else if .Values.gateway.fcmCredentials }}
             - name: GATEWAY__MODE
               value: "public"
-            - name: GATEWAY__FCM_KEY
+            - name: FCM__CREDENTIALS_JSON
               valueFrom:
                 secretKeyRef:
                   name: {{ include "sms-gateway.fullname" . }}-secrets
-                  key: fcm-key
+                  key: fcm-credentials
             {{- end }}
             {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
