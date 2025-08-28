@@ -88,9 +88,8 @@ database:
 
 # Gateway configuration
 gateway:
-  mode: "private"
   privateToken: ""
-  fcmKey: ""
+  fcmCredentials: ""
   configPath: "/app/config.yml"
 
 # Environment variables
