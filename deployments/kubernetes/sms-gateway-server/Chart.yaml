@@ -1,0 +1,9 @@
+apiVersion: v2
+name: sms-gateway-server
+description: A Helm chart for Kubernetes to deploy sms-gateway-server.
+
+type: application
+
+version: 0.2.6
+
+appVersion: "1.28.1"

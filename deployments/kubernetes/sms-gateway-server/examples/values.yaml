@@ -1,0 +1,31 @@
+replicaCount: 2
+
+image:
+  repository: capcom6/sms-gateway
+  pullPolicy: Always
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 250m
+    memory: 128Mi
+
+service:
+  type: ClusterIP
+  port: 8080
+
+config:
+  debug: false
+  secret:
+    enabled: true
+    secretName: "sms-gateway-config"
+  unsecure:
+    enabled: false
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
