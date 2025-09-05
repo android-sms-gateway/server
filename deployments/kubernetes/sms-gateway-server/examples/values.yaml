@@ -1,0 +1,73 @@
+#####################
+# Example values.yaml
+#####################
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/android-sms-gateway/server
+  pullPolicy: Always
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 250m
+    memory: 128Mi
+
+service:
+  type: ClusterIP
+  port: 8080
+
+config:
+  debug: false
+  secret:
+    enabled: true
+    # Define your secret and deploy it with any name below but it should be in the same namespace or use "sms-gateway-server-config"
+    # see configs/config.example.yml
+    secretName: "sms-gateway-config"
+    # If you do not care, just enable unsecure, it will create
+    # a config for you and it will apply what you configured. 
+    # configs/config.example.yml, DO NOT USE the default config below
+  unsecure:
+    enabled: false
+    # configYml: >-
+    #   gateway: # gateway config
+    #     mode: private # gateway mode (public - allow anonymous device registration, private - protected registration) [GATEWAY__MODE]
+    #     private_token: 123456789 # access token for device registration in private mode [GATEWAY__PRIVATE_TOKEN]
+    #   http: # http server config
+    #     listen: 0.0.0.0:8080 # listen address [HTTP__LISTEN]
+    #     proxies:
+    #       - "127.0.0.1" # proxy address [HTTP__PROXIES]
+    #   database: # database
+    #     dialect: mysql # database dialect (only mysql supported at the moment) [DATABASE__DIALECT]
+    #     host: localhost # database host [DATABASE__HOST]
+    #     port: 3306 # database port [DATABASE__PORT]
+    #     user: root # database user [DATABASE__USER]
+    #     password: root # database password [DATABASE__PASSWORD]
+    #     database: sms # database name [DATABASE__DATABASE]
+    #     timezone: UTC # database timezone (important for message TTL calculation) [DATABASE__TIMEZONE]
+    #     max_open_conns: 4 # database max open connections (default: 4 * CPU) [DATABASE__MAX_OPEN_CONNS]
+    #     max_idle_conns: 2 # database max idle connections (default: 2 * CPU) [DATABASE__MAX_IDLE_CONNS]
+    #   fcm: # firebase cloud messaging config
+    #     credentials_json: "{}" # firebase credentials json (for public mode only) [FCM__CREDENTIALS_JSON]
+    #     timeout_seconds: 1  # push notification send timeout [FCM__TIMEOUT_SECONDS]
+    #     debounce_seconds: 5 # push notification debounce (>= 5s) [FCM__DEBOUNCE_SECONDS]
+    #   tasks: # tasks config
+    #     hashing: # hashing task (hashes processed messages for privacy purposes)
+    #       interval_seconds: 15 # hashing interval in seconds [TASKS__HASHING__INTERVAL_SECONDS]
+
+extraEnv:
+  - name: HTTP__API__HOST
+    value: https://sms.example.com
+  - name: HTTP__OPENAPI__ENABLED
+    value: "true"
+  - name: HTTP__API__PATH
+    value: /api
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80

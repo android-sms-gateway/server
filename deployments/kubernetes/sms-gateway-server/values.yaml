@@ -1,0 +1,148 @@
+
+replicaCount: 1
+
+# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+image:
+  repository: ghcr.io/android-sms-gateway/server
+  # This sets the pull policy for images.
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+# This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+imagePullSecrets: []
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: ""
+
+# This is for setting Kubernetes Annotations to a Pod.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+podAnnotations: {}
+# This is for setting Kubernetes Labels to a Pod.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+podLabels: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
+service:
+  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+  type: ClusterIP
+  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
+  port: 8080
+# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+
+# This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+
+# Additional volumes on the output Deployment definition.
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+extraEnv: {}
+
+config:
+  debug: false
+  secret:
+    enabled: false
+    # Define your secret and deploy it with any name below but it should be in the same namespace
+    # see configs/config.example.yml
+    secretName: "sms-gateway-server-config"
+  unsecure:
+    enabled: false
+    # If you do not care, just enable unsecure, it will create
+    # a config for you and it will apply what you configured. 
+    # configs/config.example.yml, DO NOT USE the default config below
+    configYml: >-
+      gateway: # gateway config
+        mode: private # gateway mode (public - allow anonymous device registration, private - protected registration) [GATEWAY__MODE]
+        private_token: 123456789 # access token for device registration in private mode [GATEWAY__PRIVATE_TOKEN]
+      http: # http server config
+        listen: 0.0.0.0:8080 # listen address [HTTP__LISTEN]
+        proxies:
+          - "127.0.0.1" # proxy address [HTTP__PROXIES]
+      database: # database
+        dialect: mysql # database dialect (only mysql supported at the moment) [DATABASE__DIALECT]
+        host: localhost # database host [DATABASE__HOST]
+        port: 3306 # database port [DATABASE__PORT]
+        user: root # database user [DATABASE__USER]
+        password: root # database password [DATABASE__PASSWORD]
+        database: sms # database name [DATABASE__DATABASE]
+        timezone: UTC # database timezone (important for message TTL calculation) [DATABASE__TIMEZONE]
+        max_open_conns: 4 # database max open connections (default: 4 * CPU) [DATABASE__MAX_OPEN_CONNS]
+        max_idle_conns: 2 # database max idle connections (default: 2 * CPU) [DATABASE__MAX_IDLE_CONNS]
+      fcm: # firebase cloud messaging config
+        credentials_json: "{}" # firebase credentials json (for public mode only) [FCM__CREDENTIALS_JSON]
+        timeout_seconds: 1  # push notification send timeout [FCM__TIMEOUT_SECONDS]
+        debounce_seconds: 5 # push notification debounce (>= 5s) [FCM__DEBOUNCE_SECONDS]
+      tasks: # tasks config
+        hashing: # hashing task (hashes processed messages for privacy purposes)
+          interval_seconds: 15 # hashing interval in seconds [TASKS__HASHING__INTERVAL_SECONDS]
+
