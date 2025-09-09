@@ -23,15 +23,13 @@ var Module = fx.Module(
 	fx.Provide(
 		func(log *zap.Logger) Config {
 			localConfigPath := "config.yml"
-			if os.Getenv("CONFIG_PATH") != "" {
-				localConfigPath = os.Getenv("CONFIG_PATH")
+			if v := os.Getenv("CONFIG_PATH"); v != "" {
+				localConfigPath = v
 			}
 
 			if err := config.Load(&defaultConfig, config.WithLocalYAML(localConfigPath)); err != nil {
 				log.Error("Error loading config", zap.Error(err))
 			}
-
-			log.Info("Loaded config", zap.Any("config", defaultConfig))
 
 			return defaultConfig
 		},
