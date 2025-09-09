@@ -1,16 +1,17 @@
 package config
 
 import (
+	"os"
 	"strings"
 	"time"
 
+	"github.com/android-sms-gateway/core/config"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/sse"
-	"github.com/capcom6/go-infra-fx/config"
 	"github.com/capcom6/go-infra-fx/db"
 	"github.com/capcom6/go-infra-fx/http"
 	"go.uber.org/fx"
@@ -21,9 +22,16 @@ var Module = fx.Module(
 	"appconfig",
 	fx.Provide(
 		func(log *zap.Logger) Config {
-			if err := config.LoadConfig(&defaultConfig); err != nil {
+			localConfigPath := "config.yml"
+			if os.Getenv("CONFIG_PATH") != "" {
+				localConfigPath = os.Getenv("CONFIG_PATH")
+			}
+
+			if err := config.Load(&defaultConfig, config.WithLocalYaml(localConfigPath)); err != nil {
 				log.Error("Error loading config", zap.Error(err))
 			}
+
+			log.Info("Loaded config", zap.Any("config", defaultConfig))
 
 			return defaultConfig
 		},
