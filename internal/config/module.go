@@ -27,7 +27,7 @@ var Module = fx.Module(
 				localConfigPath = os.Getenv("CONFIG_PATH")
 			}
 
-			if err := config.Load(&defaultConfig, config.WithLocalYaml(localConfigPath)); err != nil {
+			if err := config.Load(&defaultConfig, config.WithLocalYAML(localConfigPath)); err != nil {
 				log.Error("Error loading config", zap.Error(err))
 			}
 

@@ -5,7 +5,7 @@ go 1.24.1
 require (
 	firebase.google.com/go/v4 v4.12.1
 	github.com/android-sms-gateway/client-go v1.9.5
-	github.com/android-sms-gateway/core v1.0.2-0.20250909103923-4ac88144f642
+	github.com/android-sms-gateway/core v1.0.2-0.20250909121446-fe349d185b6e
 	github.com/ansrivas/fiberprometheus/v2 v2.6.1
 	github.com/capcom6/go-helpers v0.3.0
 	github.com/capcom6/go-infra-fx v0.4.0
@@ -70,7 +70,7 @@ require (
 	github.com/knadh/koanf/maps v0.1.2 // indirect
 	github.com/knadh/koanf/parsers/dotenv v1.1.0 // indirect
 	github.com/knadh/koanf/parsers/yaml v1.1.0 // indirect
-	github.com/knadh/koanf/providers/env v1.1.0 // indirect
+	github.com/knadh/koanf/providers/env/v2 v2.0.0 // indirect
 	github.com/knadh/koanf/providers/file v1.2.0 // indirect
 	github.com/knadh/koanf/providers/s3 v1.0.0 // indirect
 	github.com/knadh/koanf/v2 v2.2.2 // indirect

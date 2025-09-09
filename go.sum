@@ -34,8 +34,8 @@ github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 h1:d+Bc7a5rLufV
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
 github.com/android-sms-gateway/client-go v1.9.5 h1:fHrE1Pi3rKUdPVMmI9evKW0iyjB5bMIhFRxyq1wVQ+o=
 github.com/android-sms-gateway/client-go v1.9.5/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
-github.com/android-sms-gateway/core v1.0.2-0.20250909103923-4ac88144f642 h1:K23BDMYfu5o6s3grNI+pEOwMnk4YV0PdCje0/0vBrBk=
-github.com/android-sms-gateway/core v1.0.2-0.20250909103923-4ac88144f642/go.mod h1:6VOqiStyswgAN5hApGUIJX6fmkHEqXiRX9NL9f8hy8g=
+github.com/android-sms-gateway/core v1.0.2-0.20250909121446-fe349d185b6e h1:PjJmgeNPIXzANHx0uCFvJkLNQXfrC31ZIApunyh9mFo=
+github.com/android-sms-gateway/core v1.0.2-0.20250909121446-fe349d185b6e/go.mod h1:kdCQ6yjQU2cprvjeQfL96U2ntqCdNg9bsxZ+A0Z31pE=
 github.com/andybalholm/brotli v1.1.0 h1:eLKJA0d02Lf0mVpIDgYnqXcUn0GqVmEFny3VuID1U3M=
 github.com/andybalholm/brotli v1.1.0/go.mod h1:sms7XGricyQI9K10gOSf56VKKWS4oLer58Q+mhRPtnY=
 github.com/ansrivas/fiberprometheus/v2 v2.6.1 h1:wac3pXaE6BYYTF04AC6K0ktk6vCD+MnDOJZ3SK66kXM=
@@ -196,8 +196,8 @@ github.com/knadh/koanf/parsers/dotenv v1.1.0 h1:dQaM0Jw54zRsqDcaJ27pciNExuKfOXag
 github.com/knadh/koanf/parsers/dotenv v1.1.0/go.mod h1:P3BQjxaIc2+SZ3n9BUceqYl95pz3qaGqYTZX0j0d/DI=
 github.com/knadh/koanf/parsers/yaml v1.1.0 h1:3ltfm9ljprAHt4jxgeYLlFPmUaunuCgu1yILuTXRdM4=
 github.com/knadh/koanf/parsers/yaml v1.1.0/go.mod h1:HHmcHXUrp9cOPcuC+2wrr44GTUB0EC+PyfN3HZD9tFg=
-github.com/knadh/koanf/providers/env v1.1.0 h1:U2VXPY0f+CsNDkvdsG8GcsnK4ah85WwWyJgef9oQMSc=
-github.com/knadh/koanf/providers/env v1.1.0/go.mod h1:QhHHHZ87h9JxJAn2czdEl6pdkNnDh/JS1Vtsyt65hTY=
+github.com/knadh/koanf/providers/env/v2 v2.0.0 h1:Ad5H3eun722u+FvchiIcEIJZsZ2M6oxCkgZfWN5B5KY=
+github.com/knadh/koanf/providers/env/v2 v2.0.0/go.mod h1:1g01PE+Ve1gBfWNNw2wmULRP0tc8RJrjn5p2N/jNCIc=
 github.com/knadh/koanf/providers/file v1.2.0 h1:hrUJ6Y9YOA49aNu/RSYzOTFlqzXSCpmYIDXI7OJU6+U=
 github.com/knadh/koanf/providers/file v1.2.0/go.mod h1:bp1PM5f83Q+TOUu10J/0ApLBd9uIzg+n9UgthfY+nRA=
 github.com/knadh/koanf/providers/s3 v1.0.0 h1:VYzH2B+/pxO2WGGPV0l7ANfYSl0Q6lLkseEiGjGTNz8=
