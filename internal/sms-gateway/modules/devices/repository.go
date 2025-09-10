@@ -71,8 +71,20 @@ func (r *repository) UpdatePushToken(id, token string) error {
 	return r.db.Model(&models.Device{}).Where("id", id).Update("push_token", token).Error
 }
 
-func (r *repository) UpdateLastSeen(id string) error {
-	return r.db.Model(&models.Device{}).Where("id", id).Update("last_seen", time.Now()).Error
+func (r *repository) SetLastSeen(ctx context.Context, id string, lastSeen time.Time) error {
+	if lastSeen.IsZero() {
+		return nil // ignore zero timestamps
+	}
+	res := r.db.WithContext(ctx).
+		Model(&models.Device{}).
+		Where("id = ? AND last_seen < ?", id, lastSeen).
+		Update("last_seen", lastSeen)
+	if res.Error != nil {
+		return res.Error
+	}
+
+	// RowsAffected==0 => not found or stale timestamp; treat as no-op.
+	return nil
 }
 
 func (r *repository) Remove(filter ...SelectFilter) error {

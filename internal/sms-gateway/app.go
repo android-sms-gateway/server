@@ -19,6 +19,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/settings"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/sse"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/webhooks"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/online"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/openapi"
 	"github.com/capcom6/go-infra-fx/cli"
 	"github.com/capcom6/go-infra-fx/db"
@@ -53,6 +54,7 @@ var Module = fx.Module(
 	metrics.Module,
 	cleaner.Module,
 	sse.Module,
+	online.Module(),
 )
 
 func Run() {

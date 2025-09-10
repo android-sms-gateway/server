@@ -1,3 +1,4 @@
+//nolint:errcheck
 package cache_test
 
 import (

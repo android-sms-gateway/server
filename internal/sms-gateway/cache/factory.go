@@ -8,6 +8,8 @@ import (
 	"github.com/android-sms-gateway/server/pkg/cache"
 )
 
+type Cache = cache.Cache
+
 type Factory interface {
 	New(name string) (cache.Cache, error)
 }

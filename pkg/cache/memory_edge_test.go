@@ -66,12 +66,12 @@ func TestMemoryCache_NilContext(t *testing.T) {
 	key := "nil-context-key"
 	value := "nil-context-value"
 
-	err := cache.Set(nil, key, value)
+	err := cache.Set(nil, key, value) //nolint:staticcheck
 	if err != nil {
 		t.Fatalf("Set with nil context failed: %v", err)
 	}
 
-	retrieved, err := cache.Get(nil, key)
+	retrieved, err := cache.Get(nil, key) //nolint:staticcheck
 	if err != nil {
 		t.Fatalf("Get with nil context failed: %v", err)
 	}

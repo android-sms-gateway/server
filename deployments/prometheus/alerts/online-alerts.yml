@@ -1,0 +1,38 @@
+groups:
+  - name: online_metrics_alerts
+    rules:
+      - alert: OnlineStatusErrors
+        expr: sum(increase(sms_online_status_set_total{status="error"}[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of online status errors"
+          description: "The number of online status errors has exceeded 10 in the last 5 minutes."
+
+      - alert: CacheOperationErrors
+        expr: sum by (operation) (increase(sms_online_cache_operations_total{status="error"}[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of cache operation errors"
+          description: "Cache errors for operation={{ $labels.operation }} exceeded 5 in 5m."
+
+      - alert: PersistenceErrors
+        expr: sum(increase(sms_online_persistence_errors_total[5m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Persistence errors detected"
+          description: "Persistence errors have been detected in the online module."
+
+      - alert: HighPersistenceLatency
+        expr: histogram_quantile(0.95, sum(rate(sms_online_persistence_latency_seconds_bucket[5m])) by (le)) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High persistence latency"
+          description: "The 95th percentile persistence latency has exceeded 0.5 seconds."
