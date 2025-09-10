@@ -2,6 +2,7 @@ package cache
 
 import "time"
 
+// Option configures per-item cache behavior (e.g., expiry).
 type Option func(*options)
 
 type options struct {
@@ -20,6 +21,10 @@ func (o *options) apply(opts ...Option) *options {
 // item will expire after the given duration from the time of insertion.
 func WithTTL(ttl time.Duration) Option {
 	return func(o *options) {
+		if ttl <= 0 {
+			o.validUntil = time.Time{}
+		}
+
 		o.validUntil = time.Now().Add(ttl)
 	}
 }

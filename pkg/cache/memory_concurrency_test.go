@@ -101,45 +101,51 @@ func TestMemoryCache_ConcurrentReadWrite(t *testing.T) {
 
 	ctx := context.Background()
 	const numOperations = 1000
-	const numReaders = 8
+	const numReaders = 5
 	const numWriters = 2
 	var wg sync.WaitGroup
+	var readCount, writeCount atomic.Int64
 
 	// Launch concurrent readers
-	for i := 0; i < numReaders; i++ {
+	for range numReaders {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
-			for j := 0; j < numOperations/numReaders; j++ {
+			for range numOperations / numReaders {
 				key := "shared-key"
 				_, err := c.Get(ctx, key)
 				if err != nil && err != cache.ErrKeyNotFound {
 					t.Errorf("Get failed: %v", err)
+				} else if err == nil {
+					readCount.Add(1)
 				}
 			}
 		}()
 	}
 
 	// Launch concurrent writers
-	for i := 0; i < numWriters; i++ {
+	for range numWriters {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
-			for j := 0; j < numOperations/numWriters; j++ {
+			for j := range numOperations / numWriters {
 				key := "shared-key"
 				value := "value-" + strconv.Itoa(j)
 
 				err := c.Set(ctx, key, value)
 				if err != nil {
 					t.Errorf("Set failed: %v", err)
+				} else {
+					writeCount.Add(1)
 				}
 			}
 		}()
 	}
 
 	wg.Wait()
+	t.Logf("Completed %d successful reads and %d writes", readCount.Load(), writeCount.Load())
 }
 
 func TestMemoryCache_ConcurrentSetAndGetAndDelete(t *testing.T) {
@@ -244,9 +250,10 @@ func TestMemoryCache_ConcurrentDrain(t *testing.T) {
 	const numItems = 100
 	const numGoroutines = 5
 	var wg sync.WaitGroup
+	var drainResults sync.Map
 
 	// Pre-populate cache with items
-	for i := 0; i < numItems; i++ {
+	for i := range numItems {
 		key := "item-" + strconv.Itoa(i)
 		value := "value-" + strconv.Itoa(i)
 
@@ -257,22 +264,35 @@ func TestMemoryCache_ConcurrentDrain(t *testing.T) {
 	}
 
 	// Launch concurrent drain operations
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		wg.Add(1)
-		go func() {
+		go func(id int) {
 			defer wg.Done()
 
-			_, err := c.Drain(ctx)
+			items, err := c.Drain(ctx)
 			if err != nil {
 				t.Errorf("Drain failed: %v", err)
 			}
-		}()
+			drainResults.Store(id, items)
+		}(i)
 	}
 
 	wg.Wait()
 
+	// Verify that items were drained (at least one goroutine should have gotten items)
+	totalDrained := 0
+	drainResults.Range(func(key, value any) bool {
+		items := value.(map[string]string)
+		totalDrained += len(items)
+		return true
+	})
+
+	if totalDrained != numItems {
+		t.Errorf("Expected %d total items drained, got %d", numItems, totalDrained)
+	}
+
 	// Cache should be empty after all drain operations
-	for i := 0; i < numItems; i++ {
+	for i := range numItems {
 		key := "item-" + strconv.Itoa(i)
 		_, err := c.Get(ctx, key)
 		if err != cache.ErrKeyNotFound {
@@ -290,7 +310,7 @@ func TestMemoryCache_ConcurrentCleanup(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Pre-populate cache with items that will expire quickly
-	for i := 0; i < numItems; i++ {
+	for i := range numItems {
 		key := "item-" + strconv.Itoa(i)
 		value := "value-" + strconv.Itoa(i)
 
@@ -300,8 +320,11 @@ func TestMemoryCache_ConcurrentCleanup(t *testing.T) {
 		}
 	}
 
+	// Wait for items to expire before launching cleanup operations
+	time.Sleep(15 * time.Millisecond)
+
 	// Launch concurrent cleanup operations
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -315,21 +338,12 @@ func TestMemoryCache_ConcurrentCleanup(t *testing.T) {
 
 	wg.Wait()
 
-	// Wait for items to actually expire
-	time.Sleep(50 * time.Millisecond)
-
-	// Run one final cleanup to ensure all expired items are removed
-	err := c.Cleanup(ctx)
-	if err != nil {
-		t.Errorf("Final cleanup failed: %v", err)
-	}
-
 	// All items should be expired and removed
-	for i := 0; i < numItems; i++ {
+	for i := range numItems {
 		key := "item-" + strconv.Itoa(i)
 		_, err := c.Get(ctx, key)
-		if err != cache.ErrKeyExpired && err != cache.ErrKeyNotFound {
-			t.Errorf("Expected ErrKeyExpired or ErrKeyNotFound for key %s, got %v", key, err)
+		if err != cache.ErrKeyNotFound {
+			t.Errorf("Expected ErrKeyNotFound for key %s, got %v", key, err)
 		}
 	}
 }

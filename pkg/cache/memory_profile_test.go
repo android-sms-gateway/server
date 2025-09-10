@@ -72,7 +72,7 @@ func TestMemoryCache_MemoryCleanup(t *testing.T) {
 
 	// Add many items to cache
 	const numItems = 5000
-	for i := 0; i < numItems; i++ {
+	for i := range numItems {
 		key := "cleanup-key-" + strconv.Itoa(i)
 		value := "cleanup-value-" + strconv.Itoa(i)
 
@@ -104,7 +104,7 @@ func TestMemoryCache_MemoryCleanup(t *testing.T) {
 	// Memory should not grow significantly after cleanup
 	// Allow some growth for overhead, but it should be reasonable
 	if allocDiff > 2*1024*1024 { // 2MB
-		t.Errorf("Expected less than 1MB memory growth after cleanup, got %d bytes", allocDiff)
+		t.Errorf("Expected less than 2MB memory growth after cleanup, got %d bytes", allocDiff)
 	}
 }
 
@@ -166,13 +166,13 @@ func TestMemoryCache_MemoryPressure(t *testing.T) {
 }
 
 func TestMemoryCache_GCStress(t *testing.T) {
-	// This test verifies c behavior under frequent GC cycles
+	// This test verifies cache behavior under frequent GC cycles
 	c := cache.NewMemory(0)
 	ctx := context.Background()
 
 	// Add items to cache
 	const numItems = 1000
-	for i := 0; i < numItems; i++ {
+	for i := range numItems {
 		key := "gc-key-" + strconv.Itoa(i)
 		value := "gc-value-" + strconv.Itoa(i)
 
@@ -184,7 +184,7 @@ func TestMemoryCache_GCStress(t *testing.T) {
 
 	// Perform frequent GC operations and verify cache still works
 	const numGCs = 10
-	for i := 0; i < numGCs; i++ {
+	for range numGCs {
 		// Force GC
 		runtime.GC()
 
@@ -199,7 +199,7 @@ func TestMemoryCache_GCStress(t *testing.T) {
 	}
 
 	// Verify all items are still accessible
-	for i := 0; i < numItems; i++ {
+	for i := range numItems {
 		key := "gc-key-" + strconv.Itoa(i)
 		value := "gc-value-" + strconv.Itoa(i)
 

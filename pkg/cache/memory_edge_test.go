@@ -3,6 +3,7 @@ package cache_test
 import (
 	"context"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -228,7 +229,7 @@ func TestMemoryCache_RapidOperations(t *testing.T) {
 	start := time.Now()
 	opsCompleted := 0
 
-	for i := 0; i < numOperations; i++ {
+	for i := range numOperations {
 		// Alternate between set and get
 		if i%2 == 0 {
 			key := "rapid-key-" + strconv.Itoa(i)
@@ -332,7 +333,7 @@ func TestMemoryCache_ExtremeKeyLength(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a very long key (1KB)
-	longKey := string(make([]byte, 1024))
+	longKey := strings.Repeat("a", 1024)
 	value := "extreme-key-value"
 
 	err := cache.Set(ctx, longKey, value)
@@ -369,20 +370,21 @@ func TestMemoryCache_RaceConditionWithExpiration(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Launch goroutines that try to access the key while it's expiring
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		wg.Add(1)
-		go func() {
+		go func(id int) {
 			defer wg.Done()
 
-			// Wait for the item to be close to expiration
-			time.Sleep(ttl)
+			// Wait for the item to be close to expiration with some jitter
+			jitter := time.Duration(id%3) * time.Millisecond
+			time.Sleep(ttl - 2*time.Millisecond + jitter)
 
 			// Try to get the item
 			_, err := c.Get(ctx, key)
 			if err != nil && err != cache.ErrKeyExpired && err != cache.ErrKeyNotFound {
 				t.Errorf("Get failed: %v", err)
 			}
-		}()
+		}(i)
 	}
 
 	wg.Wait()

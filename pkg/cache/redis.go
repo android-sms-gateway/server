@@ -11,6 +11,17 @@ import (
 
 const (
 	redisCacheKey = "cache"
+
+	// getAndDeleteScript atomically gets and deletes a hash field
+	getAndDeleteScript = `
+local value = redis.call('HGET', KEYS[1], ARGV[1])
+if value then
+	redis.call('HDEL', KEYS[1], ARGV[1])
+	return value
+else
+	return false
+end
+`
 )
 
 type redisCache struct {
@@ -36,11 +47,7 @@ func NewRedis(client *redis.Client, prefix string, ttl time.Duration) Cache {
 }
 
 // Cleanup implements Cache.
-func (r *redisCache) Cleanup(ctx context.Context) error {
-	if err := r.client.Del(ctx, r.key).Err(); err != nil {
-		return fmt.Errorf("can't cleanup cache: %w", err)
-	}
-
+func (r *redisCache) Cleanup(_ context.Context) error {
 	return nil
 }
 
@@ -84,20 +91,16 @@ func (r *redisCache) Get(ctx context.Context, key string) (string, error) {
 
 // GetAndDelete implements Cache.
 func (r *redisCache) GetAndDelete(ctx context.Context, key string) (string, error) {
-	val, err := r.client.HGet(ctx, r.key, key).Result()
+	result, err := r.client.Eval(ctx, getAndDeleteScript, []string{r.key}, key).Result()
 	if err != nil {
-		if err == redis.Nil {
-			return "", ErrKeyNotFound
-		}
-
 		return "", fmt.Errorf("can't get cache item: %w", err)
 	}
 
-	if err := r.client.HDel(ctx, r.key, key).Err(); err != nil {
-		return val, fmt.Errorf("can't delete cache item: %w", err)
+	if value, ok := result.(string); ok {
+		return value, nil
 	}
 
-	return val, nil
+	return "", ErrKeyNotFound
 }
 
 // Set implements Cache.
@@ -113,7 +116,7 @@ func (r *redisCache) Set(ctx context.Context, key string, value string, opts ...
 	}
 
 	if !options.validUntil.IsZero() {
-		if err := r.client.HExpireAt(ctx, r.key, options.validUntil).Err(); err != nil {
+		if err := r.client.HExpireAt(ctx, r.key, options.validUntil, key).Err(); err != nil {
 			return fmt.Errorf("can't set cache item ttl: %w", err)
 		}
 	}
