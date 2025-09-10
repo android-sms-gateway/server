@@ -22,7 +22,7 @@ func TestMemoryCache_MemoryAllocationPattern(t *testing.T) {
 
 	// Perform cache operations that trigger allocations
 	const numItems = 1000
-	for i := 0; i < numItems; i++ {
+	for i := range numItems {
 		key := "profile-key-" + strconv.Itoa(i)
 		value := "profile-value-" + strconv.Itoa(i)
 
@@ -225,12 +225,12 @@ func TestMemoryCache_MemoryLeakDetection(t *testing.T) {
 
 	// Create and destroy many cache instances
 	const numCaches = 1000
-	for i := 0; i < numCaches; i++ {
+	for i := range numCaches {
 		// Create a new cache
 		tempCache := cache.NewMemory(0)
 
 		// Add some items
-		for j := 0; j < 10; j++ {
+		for j := range 10 {
 			key := "leak-key-" + strconv.Itoa(i) + "-" + strconv.Itoa(j)
 			value := "leak-value-" + strconv.Itoa(i) + "-" + strconv.Itoa(j)
 
@@ -252,18 +252,18 @@ func TestMemoryCache_MemoryLeakDetection(t *testing.T) {
 	runtime.ReadMemStats(&m2)
 
 	// Calculate memory growth
-	allocDiff := m2.TotalAlloc - m1.TotalAlloc
+	heapDiff := m2.HeapAlloc - m1.HeapAlloc
 
 	t.Logf("Memory leak detection stats:")
-	t.Logf("  Total allocated: %d bytes", m2.TotalAlloc)
-	t.Logf("  Allocation difference: %d bytes", allocDiff)
+	t.Logf("  Heap alloc: %d bytes", m2.HeapAlloc)
+	t.Logf("  Heap delta: %d bytes", heapDiff)
 	t.Logf("  Heap objects: %d", m2.HeapObjects)
 	t.Logf("  GC cycles: %d", m2.NumGC)
 
 	// Memory should not grow significantly after cleanup
 	// This helps detect potential memory leaks
-	if allocDiff > 10*1024*1024 { // 10MB threshold for leak detection
-		t.Errorf("Potential memory leak detected: %d bytes unallocated after cleanup", allocDiff)
+	if heapDiff > 1*1024*1024 { // 1MB threshold for leak detection
+		t.Errorf("Potential memory leak detected: %d bytes retained after cleanup", heapDiff)
 	}
 }
 
@@ -272,11 +272,12 @@ func BenchmarkMemoryCache_MemoryUsage(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
 
+	b.ReportAllocs()
+	runtime.GC()
+	var m1, m2 runtime.MemStats
+	runtime.ReadMemStats(&m1)
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
-		var m1, m2 runtime.MemStats
-		runtime.ReadMemStats(&m1)
-
 		i := 0
 		for pb.Next() {
 			key := "bench-key-" + strconv.Itoa(i)
@@ -291,8 +292,7 @@ func BenchmarkMemoryCache_MemoryUsage(b *testing.B) {
 
 			i++
 		}
-
-		runtime.ReadMemStats(&m2)
-		b.Logf("Memory usage per iteration: %.2f bytes", float64(m2.TotalAlloc-m1.TotalAlloc)/float64(b.N))
 	})
+	runtime.ReadMemStats(&m2)
+	b.Logf("TotalAlloc per op: %.2f bytes/op", float64(m2.TotalAlloc-m1.TotalAlloc)/float64(b.N))
 }
