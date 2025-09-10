@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	appconfig "github.com/android-sms-gateway/server/internal/config"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/cache"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/cleaner"
@@ -42,6 +43,7 @@ var Module = fx.Module(
 	auth.Module,
 	push.Module,
 	db.Module,
+	cache.Module(),
 	events.Module,
 	messages.Module,
 	health.Module,

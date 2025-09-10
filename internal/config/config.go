@@ -14,6 +14,7 @@ type Config struct {
 	FCM      FCMConfig `yaml:"fcm"`      // firebase cloud messaging config
 	Tasks    Tasks     `yaml:"tasks"`    // tasks config
 	SSE      SSE       `yaml:"sse"`      // server-sent events config
+	Cache    Cache     `yaml:"cache"`    // cache (memory or redis) config
 }
 
 type Gateway struct {
@@ -70,6 +71,10 @@ type SSE struct {
 	KeepAlivePeriodSeconds uint16 `yaml:"keep_alive_period_seconds" envconfig:"SSE__KEEP_ALIVE_PERIOD_SECONDS"` // keep alive period in seconds, 0 for no keep alive
 }
 
+type Cache struct {
+	URL string `yaml:"url" envconfig:"CACHE__URL"`
+}
+
 var defaultConfig = Config{
 	Gateway: Gateway{Mode: GatewayModePublic},
 	HTTP: HTTP{
@@ -94,5 +99,8 @@ var defaultConfig = Config{
 	},
 	SSE: SSE{
 		KeepAlivePeriodSeconds: 15,
+	},
+	Cache: Cache{
+		URL: "memory://",
 	},
 }

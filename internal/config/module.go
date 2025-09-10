@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/android-sms-gateway/server/internal/sms-gateway/cache"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
@@ -114,5 +115,10 @@ var Module = fx.Module(
 		return sse.NewConfig(
 			sse.WithKeepAlivePeriod(time.Duration(cfg.SSE.KeepAlivePeriodSeconds) * time.Second),
 		)
+	}),
+	fx.Provide(func(cfg Config) cache.Config {
+		return cache.Config{
+			URL: cfg.Cache.URL,
+		}
 	}),
 )
