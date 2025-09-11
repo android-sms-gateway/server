@@ -8,6 +8,10 @@ import (
 	"github.com/android-sms-gateway/server/pkg/cache"
 )
 
+const (
+	keyPrefix = "sms-gateway:"
+)
+
 type Cache = cache.Cache
 
 type Factory interface {
@@ -52,5 +56,5 @@ func NewFactory(config Config) (Factory, error) {
 
 // New implements Factory.
 func (f *factory) New(name string) (cache.Cache, error) {
-	return f.new(name)
+	return f.new(keyPrefix + name)
 }
