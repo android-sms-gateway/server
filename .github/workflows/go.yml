@@ -18,6 +18,10 @@ on:
       - "go.mod"
       - "go.sum"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   golangci:
     name: Lint
@@ -60,7 +64,7 @@ jobs:
 
       # step 4: run test
       - name: Run coverage
-        run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
+        run: go test -race -shuffle=on -covermode=atomic -coverpkg=./... -coverprofile=coverage.out ./...
 
       # step 5: upload coverage
       - name: Upload coverage to Codecov
@@ -71,6 +75,9 @@ jobs:
   benchmark:
     name: Benchmark
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       # step 1: checkout repository code
       - name: Checkout code into workspace directory
@@ -82,16 +89,21 @@ jobs:
         with:
           go-version: stable
 
+      # step 3: install dependencies
+      - name: Install all Go dependencies
+        run: go mod download
+
+      # step 4: run benchmark
       - name: Run benchmarks
         run: go test -bench=. -benchmem ./... | tee benchmark.txt
 
       - name: Upload benchmark results
         uses: benchmark-action/github-action-benchmark@v1
         with:
-          # What benchmark tool the output.txt came from
+          # What benchmark tool the benchmark.txt came from
           tool: "go"
           # Where the output from the benchmark tool is stored
-          output-file-path: output.txt
+          output-file-path: benchmark.txt
           # Where the previous data file is stored
           external-data-json-path: ./cache/benchmark-data.json
           # Workflow will fail when an alert happens
