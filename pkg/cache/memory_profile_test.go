@@ -252,18 +252,21 @@ func TestMemoryCache_MemoryLeakDetection(t *testing.T) {
 	runtime.ReadMemStats(&m2)
 
 	// Calculate memory growth
-	heapDiff := m2.HeapAlloc - m1.HeapAlloc
+	// Convert to int64 to avoid unsigned wrap-around when memory decreases
+	heapDiff := int64(m2.HeapAlloc) - int64(m1.HeapAlloc)
 
 	t.Logf("Memory leak detection stats:")
-	t.Logf("  Heap alloc: %d bytes", m2.HeapAlloc)
+	t.Logf("  Initial heap: %d bytes", m1.HeapAlloc)
+	t.Logf("  Final heap: %d bytes", m2.HeapAlloc)
 	t.Logf("  Heap delta: %d bytes", heapDiff)
 	t.Logf("  Heap objects: %d", m2.HeapObjects)
 	t.Logf("  GC cycles: %d", m2.NumGC)
 
-	// Memory should not grow significantly after cleanup
-	// This helps detect potential memory leaks
+	// Only report as leak if memory increased beyond threshold
 	if heapDiff > 1*1024*1024 { // 1MB threshold for leak detection
 		t.Errorf("Potential memory leak detected: %d bytes retained after cleanup", heapDiff)
+	} else if heapDiff < 0 {
+		t.Logf("Memory reduced by %d bytes after cleanup", -heapDiff)
 	}
 }
 
