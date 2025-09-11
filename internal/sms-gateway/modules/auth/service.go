@@ -145,8 +145,8 @@ func (s *Service) AuthorizeDevice(token string) (models.Device, error) {
 
 	go func(id string) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
 		s.onlineSvc.SetOnline(ctx, id)
-		cancel()
 	}(device.ID)
 
 	device.LastSeen = time.Now()

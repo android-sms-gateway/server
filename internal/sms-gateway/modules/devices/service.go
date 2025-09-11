@@ -101,13 +101,21 @@ func (s *Service) UpdatePushToken(deviceId string, token string) error {
 }
 
 func (s *Service) SetLastSeen(ctx context.Context, batch map[string]time.Time) error {
+	if len(batch) == 0 {
+		return nil
+	}
+
 	for deviceId, lastSeen := range batch {
+		if ctx.Err() != nil {
+			break
+		}
+
 		if err := s.devices.SetLastSeen(ctx, deviceId, lastSeen); err != nil {
 			s.logger.Error("can't set last seen", zap.String("device_id", deviceId), zap.Error(err))
 		}
 	}
 
-	return nil
+	return ctx.Err()
 }
 
 // Remove removes devices for a specific user that match the provided filters.

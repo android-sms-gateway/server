@@ -43,11 +43,9 @@ func (s *service) Run(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			s.logger.Info("Persisting online status")
+			s.logger.Debug("Persisting online status")
 			if err := s.persist(ctx); err != nil {
 				s.logger.Error("Can't persist online status", zap.Error(err))
-			} else {
-				s.logger.Info("Online status persisted")
 			}
 		}
 	}
@@ -72,7 +70,11 @@ func (s *service) persist(ctx context.Context) error {
 		return fmt.Errorf("can't drain cache: %w", err)
 	}
 
-	s.logger.Info("Drained cache", zap.Int("count", len(items)))
+	if len(items) == 0 {
+		s.logger.Debug("No online statuses to persist")
+		return nil
+	}
+	s.logger.Debug("Drained cache", zap.Int("count", len(items)))
 
 	timestamps := maps.MapValues(items, func(v string) time.Time {
 		t, err := time.Parse(time.RFC3339, v)
@@ -84,7 +86,7 @@ func (s *service) persist(ctx context.Context) error {
 		return t
 	})
 
-	s.logger.Info("Parsed last seen timestamps", zap.Int("count", len(timestamps)))
+	s.logger.Debug("Parsed last seen timestamps", zap.Int("count", len(timestamps)))
 
 	if err := s.devicesSvc.SetLastSeen(ctx, timestamps); err != nil {
 		return fmt.Errorf("can't set last seen: %w", err)
