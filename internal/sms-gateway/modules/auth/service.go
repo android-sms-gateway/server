@@ -11,6 +11,7 @@ import (
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/online"
 	"github.com/android-sms-gateway/server/pkg/crypto"
 	"github.com/capcom6/go-helpers/cache"
 	"github.com/jaevor/go-nanoid"
@@ -30,6 +31,7 @@ type Params struct {
 
 	Users      *repository
 	DevicesSvc *devices.Service
+	OnlineSvc  online.Service
 
 	Logger *zap.Logger
 }
@@ -42,6 +44,7 @@ type Service struct {
 	usersCache *cache.Cache[models.User]
 
 	devicesSvc *devices.Service
+	onlineSvc  online.Service
 
 	logger *zap.Logger
 
@@ -55,7 +58,8 @@ func New(params Params) *Service {
 		config:     params.Config,
 		users:      params.Users,
 		devicesSvc: params.DevicesSvc,
-		logger:     params.Logger.Named("Service"),
+		onlineSvc:  params.OnlineSvc,
+		logger:     params.Logger,
 		idgen:      idgen,
 
 		codesCache: cache.New[string](cache.Config{}),
@@ -140,9 +144,9 @@ func (s *Service) AuthorizeDevice(token string) (models.Device, error) {
 	}
 
 	go func(id string) {
-		if err := s.devicesSvc.UpdateLastSeen(id); err != nil {
-			s.logger.Error("can't update last seen", zap.Error(err))
-		}
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		s.onlineSvc.SetOnline(ctx, id)
 	}(device.ID)
 
 	device.LastSeen = time.Now()

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"time"
 
@@ -100,8 +101,26 @@ func (s *Service) UpdatePushToken(deviceId string, token string) error {
 	return s.devices.UpdatePushToken(deviceId, token)
 }
 
-func (s *Service) UpdateLastSeen(deviceId string) error {
-	return s.devices.UpdateLastSeen(deviceId)
+func (s *Service) SetLastSeen(ctx context.Context, batch map[string]time.Time) error {
+	if len(batch) == 0 {
+		return nil
+	}
+
+	var multiErr error
+	for deviceID, lastSeen := range batch {
+		if err := ctx.Err(); err != nil {
+			return errors.Join(err, multiErr)
+		}
+		if err := s.devices.SetLastSeen(ctx, deviceID, lastSeen); err != nil {
+			multiErr = errors.Join(multiErr, fmt.Errorf("device %s: %w", deviceID, err))
+			s.logger.Error("can't set last seen",
+				zap.String("device_id", deviceID),
+				zap.Time("last_seen", lastSeen),
+				zap.Error(err),
+			)
+		}
+	}
+	return multiErr
 }
 
 // Remove removes devices for a specific user that match the provided filters.
@@ -114,7 +133,10 @@ func (s *Service) Remove(userID string, filter ...SelectFilter) error {
 		return err
 	}
 
-	if err := s.tokensCache.Delete(device.AuthToken); err != nil {
+	hash := sha256.Sum256([]byte(device.AuthToken))
+	cacheKey := hex.EncodeToString(hash[:])
+
+	if err := s.tokensCache.Delete(cacheKey); err != nil {
 		s.logger.Error("can't invalidate token cache", zap.Error(err))
 	}
 

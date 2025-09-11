@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	appconfig "github.com/android-sms-gateway/server/internal/config"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/cache"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/cleaner"
@@ -18,6 +19,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/settings"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/sse"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/webhooks"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/online"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/openapi"
 	"github.com/capcom6/go-infra-fx/cli"
 	"github.com/capcom6/go-infra-fx/db"
@@ -42,6 +44,7 @@ var Module = fx.Module(
 	auth.Module,
 	push.Module,
 	db.Module,
+	cache.Module(),
 	events.Module,
 	messages.Module,
 	health.Module,
@@ -51,6 +54,7 @@ var Module = fx.Module(
 	metrics.Module,
 	cleaner.Module,
 	sse.Module,
+	online.Module(),
 )
 
 func Run() {
