@@ -71,8 +71,12 @@ func (r *repository) UpdatePushToken(id, token string) error {
 	return r.db.Model(&models.Device{}).Where("id", id).Update("push_token", token).Error
 }
 
-func (r *repository) UpdateLastSeen(id string) error {
-	return r.db.Model(&models.Device{}).Where("id", id).Update("last_seen", time.Now()).Error
+func (r *repository) SetLastSeen(ctx context.Context, id string, lastSeen time.Time) error {
+	return r.db.WithContext(ctx).
+		Model(&models.Device{}).
+		Where("id", id).
+		Update("last_seen", lastSeen).
+		Error
 }
 
 func (r *repository) Remove(filter ...SelectFilter) error {

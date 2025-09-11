@@ -18,7 +18,7 @@ func Module() fx.Option {
 			return factory.New("online")
 		}, fx.Private),
 		fx.Provide(New),
-		fx.Invoke(func(lc fx.Lifecycle, svc *Service) {
+		fx.Invoke(func(lc fx.Lifecycle, svc Service) {
 			ctx, cancel := context.WithCancel(context.Background())
 			lc.Append(fx.Hook{
 				OnStart: func(_ context.Context) error {
