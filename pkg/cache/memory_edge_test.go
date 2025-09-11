@@ -241,7 +241,7 @@ func TestMemoryCache_RapidOperations(t *testing.T) {
 		} else {
 			key := "rapid-key-" + strconv.Itoa(i-1)
 			_, err := c.Get(ctx, key)
-			if err != nil && err != cache.ErrKeyNotFound {
+			if err != nil {
 				t.Errorf("Get failed: %v", err)
 			}
 		}

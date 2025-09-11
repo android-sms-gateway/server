@@ -22,6 +22,16 @@ else
 	return false
 end
 `
+
+	hgetallAndDeleteScript = `
+local items = redis.call('HGETALL', KEYS[1])
+if #items > 0 then
+  for i = 1, #items, 2 do
+    redis.call('HDEL', KEYS[1], items[i])
+  end
+end
+return items
+`
 )
 
 type redisCache struct {
@@ -62,17 +72,24 @@ func (r *redisCache) Delete(ctx context.Context, key string) error {
 
 // Drain implements Cache.
 func (r *redisCache) Drain(ctx context.Context) (map[string]string, error) {
-	items, err := r.client.HGetAll(ctx, r.key).Result()
+	res, err := r.client.Eval(ctx, hgetallAndDeleteScript, []string{r.key}).Result()
 	if err != nil {
 		return nil, fmt.Errorf("can't drain cache: %w", err)
 	}
 
-	if err := r.client.Del(ctx, r.key).Err(); err != nil {
-		return nil, fmt.Errorf("can't cleanup cache: %w", err)
+	arr, ok := res.([]any)
+	if !ok || len(arr) == 0 {
+		return map[string]string{}, nil
 	}
 
-	return items, nil
+	out := make(map[string]string, len(arr)/2)
+	for i := 0; i < len(arr); i += 2 {
+		f, _ := arr[i].(string)
+		v, _ := arr[i+1].(string)
+		out[f] = v
+	}
 
+	return out, nil
 }
 
 // Get implements Cache.

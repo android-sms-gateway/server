@@ -189,10 +189,10 @@ func TestMemoryCache_GCStress(t *testing.T) {
 		runtime.GC()
 
 		// Verify cache operations still work
-		for j := 0; j < 100; j++ {
+		for j := range 100 {
 			key := "gc-key-" + strconv.Itoa(j)
 			_, err := c.Get(ctx, key)
-			if err != nil && err != cache.ErrKeyNotFound {
+			if err != nil {
 				t.Errorf("Get failed during GC stress test: %v", err)
 			}
 		}

@@ -110,12 +110,13 @@ func (m *memoryCache) SetOrFail(_ context.Context, key string, value string, opt
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
-	if _, ok := m.items[key]; ok {
-		return ErrKeyExists
+	if item, ok := m.items[key]; ok {
+		if !item.isExpired(time.Now()) {
+			return ErrKeyExists
+		}
 	}
 
 	m.items[key] = m.newItem(value, opts...)
-
 	return nil
 }
 
