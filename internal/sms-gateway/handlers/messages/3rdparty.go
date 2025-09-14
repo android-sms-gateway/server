@@ -246,7 +246,7 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 //	@Failure		400		{object}	smsgateway.ErrorResponse			"Invalid request"
 //	@Failure		401		{object}	smsgateway.ErrorResponse			"Unauthorized"
 //	@Failure		500		{object}	smsgateway.ErrorResponse			"Internal server error"
-//	@Router			/3rdparty/v1/inbox/export [post]
+//	@Router			/3rdparty/v1/messages/inbox/export [post]
 //
 // Export inbox
 func (h *ThirdPartyController) postInboxExport(user models.User, c *fiber.Ctx) error {

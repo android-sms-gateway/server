@@ -147,64 +147,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/3rdparty/v1/inbox/export": {
-            "post": {
-                "security": [
-                    {
-                        "ApiAuth": []
-                    }
-                ],
-                "description": "Initiates process of inbox messages export via webhooks. For each message the ` + "`" + `sms:received` + "`" + ` webhook will be triggered. The webhooks will be triggered without specific order.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User",
-                    "Messages"
-                ],
-                "summary": "Request inbox messages export",
-                "parameters": [
-                    {
-                        "description": "Export inbox request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/smsgateway.MessagesExportRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "202": {
-                        "description": "Inbox export request accepted",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request",
-                        "schema": {
-                            "$ref": "#/definitions/smsgateway.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/smsgateway.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/smsgateway.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/3rdparty/v1/logs": {
             "get": {
                 "security": [
@@ -426,6 +368,64 @@ const docTemplate = `{
                     },
                     "409": {
                         "description": "Message with such ID already exists",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/3rdparty/v1/messages/inbox/export": {
+            "post": {
+                "security": [
+                    {
+                        "ApiAuth": []
+                    }
+                ],
+                "description": "Initiates process of inbox messages export via webhooks. For each message the ` + "`" + `sms:received` + "`" + ` webhook will be triggered. The webhooks will be triggered without specific order.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User",
+                    "Messages"
+                ],
+                "summary": "Request inbox messages export",
+                "parameters": [
+                    {
+                        "description": "Export inbox request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.MessagesExportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Inbox export request accepted",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
@@ -1368,7 +1368,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "passphrase": {
-                    "description": "Passphrase is the encryption passphrase. If nil or empty, encryption is disabled.",
+                    "description": "Passphrase is the encryption passphrase. If nil or empty, encryption is disabled. Must not be used with Cloud Server.",
                     "type": "string"
                 }
             }
@@ -1470,7 +1470,7 @@ const docTemplate = `{
                     "minimum": 1
                 },
                 "signing_key": {
-                    "description": "SigningKey is the secret key used for signing webhook payloads.",
+                    "description": "SigningKey is the secret key used for signing webhook payloads. Must not be used with Cloud Server.",
                     "type": "string"
                 }
             }
@@ -1546,7 +1546,8 @@ const docTemplate = `{
                 "sms:sent",
                 "sms:delivered",
                 "sms:failed",
-                "system:ping"
+                "system:ping",
+                "mms:received"
             ],
             "x-enum-varnames": [
                 "WebhookEventSmsReceived",
@@ -1554,7 +1555,8 @@ const docTemplate = `{
                 "WebhookEventSmsSent",
                 "WebhookEventSmsDelivered",
                 "WebhookEventSmsFailed",
-                "WebhookEventSystemPing"
+                "WebhookEventSystemPing",
+                "WebhookEventMmsReceived"
             ]
         }
     },
