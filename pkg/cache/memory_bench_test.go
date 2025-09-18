@@ -179,6 +179,7 @@ func BenchmarkMemoryCache_ConcurrentReads(b *testing.B) {
 
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
+			b.SetParallelism(bm.goroutines)
 			b.ResetTimer()
 			b.RunParallel(func(pb *testing.PB) {
 				for pb.Next() {
@@ -206,6 +207,7 @@ func BenchmarkMemoryCache_ConcurrentWrites(b *testing.B) {
 
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
+			b.SetParallelism(bm.goroutines)
 			b.ResetTimer()
 			b.RunParallel(func(pb *testing.PB) {
 				i := 0
@@ -238,6 +240,7 @@ func BenchmarkMemoryCache_MixedWorkload(b *testing.B) {
 
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
+			b.SetParallelism(bm.goroutines)
 			b.ResetTimer()
 			b.RunParallel(func(pb *testing.PB) {
 				r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -287,6 +290,7 @@ func BenchmarkMemoryCache_Scaling(b *testing.B) {
 				cache.Set(ctx, key, value)
 			}
 
+			b.SetParallelism(bm.goroutines)
 			b.ResetTimer()
 			b.RunParallel(func(pb *testing.PB) {
 				localI := 0
@@ -355,12 +359,17 @@ func BenchmarkMemoryCache_LargeValues(b *testing.B) {
 			for i := range value {
 				value[i] = byte(i % 256)
 			}
+			valueStr := string(value)
 
 			b.ResetTimer()
 			b.RunParallel(func(pb *testing.PB) {
 				for pb.Next() {
-					cache.Set(ctx, key, string(value))
-					cache.Get(ctx, key)
+					if err := cache.Set(ctx, key, valueStr); err != nil {
+						b.Fatal(err)
+					}
+					if _, err := cache.Get(ctx, key); err != nil {
+						b.Fatal(err)
+					}
 				}
 			})
 		})
@@ -371,6 +380,7 @@ func BenchmarkMemoryCache_LargeValues(b *testing.B) {
 func BenchmarkMemoryCache_MemoryGrowth(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
+	b.ReportAllocs()
 
 	sizes := []int{100, 1000, 10000, 100000}
 
@@ -378,12 +388,12 @@ func BenchmarkMemoryCache_MemoryGrowth(b *testing.B) {
 		b.Run(fmt.Sprintf("%d_items", size), func(b *testing.B) {
 			b.ResetTimer()
 
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				// Clear cache
 				cache.Drain(ctx)
 
 				// Add new items
-				for j := 0; j < size; j++ {
+				for j := range size {
 					key := "key-" + strconv.Itoa(j)
 					value := "value-" + strconv.Itoa(j)
 					cache.Set(ctx, key, value)

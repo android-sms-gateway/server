@@ -26,9 +26,8 @@ end
 	hgetallAndDeleteScript = `
 local items = redis.call('HGETALL', KEYS[1])
 if #items > 0 then
-  for i = 1, #items, 2 do
-    redis.call('HDEL', KEYS[1], items[i])
-  end
+  local ok = pcall(redis.call, 'UNLINK', KEYS[1])
+  if not ok then redis.call('DEL', KEYS[1]) end
 end
 return items
 `
@@ -128,14 +127,15 @@ func (r *redisCache) Set(ctx context.Context, key string, value string, opts ...
 	}
 	options.apply(opts...)
 
-	if err := r.client.HSet(ctx, r.key, key, value).Err(); err != nil {
-		return fmt.Errorf("can't set cache item: %w", err)
-	}
-
-	if !options.validUntil.IsZero() {
-		if err := r.client.HExpireAt(ctx, r.key, options.validUntil, key).Err(); err != nil {
-			return fmt.Errorf("can't set cache item ttl: %w", err)
+	_, err := r.client.Pipelined(ctx, func(p redis.Pipeliner) error {
+		p.HSet(ctx, r.key, key, value)
+		if !options.validUntil.IsZero() {
+			p.HExpireAt(ctx, r.key, options.validUntil, key)
 		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("can't set cache item: %w", err)
 	}
 
 	return nil
