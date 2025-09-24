@@ -1,0 +1,56 @@
+name: Release Charts
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'deployments/kubernetes/**'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Install yq
+        uses: mikefarah/yq@v4
+
+      - name: Get last Git tag
+        id: get_tag
+        # Forks will not have tags, so it won't change the version
+        run: |
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Update appVersion in Chart.yaml for release
+        if: steps.get_tag.outputs.tag != ''
+        run: |
+          FILE="deployments/kubernetes/sms-gateway-server/Chart.yaml"
+          TAG="${{ steps.get_tag.outputs.tag }}"
+
+          # Strip leading 'v' if present
+          APPVERSION="${TAG#v}"
+
+          echo "Temporarily updating appVersion in $FILE to $APPVERSION for release"
+          yq -i ".appVersion = \"$APPVERSION\"" "$FILE"
+
+      - name: Run chart-releaser
+        id: cr
+        uses: helm/chart-releaser-action@v1.5.0
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        with:
+          charts_dir: ./deployments/kubernetes

@@ -1,0 +1,17 @@
+apiVersion: v2
+name: sms-gateway-server
+description: A Helm chart for Kubernetes to deploy sms-gateway-server.
+
+type: application
+
+version: 0.2.11
+
+# appVersion is always updated in CI
+appVersion: "latest"
+
+home: https://github.com/android-sms-gateway/server
+sources:
+  - https://github.com/android-sms-gateway/server
+maintainers:
+  - name: SMSGate Team
+    email: support@sms-gate.app
