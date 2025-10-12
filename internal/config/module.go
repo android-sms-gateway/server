@@ -11,6 +11,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/sse"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/pubsub"
 	"github.com/capcom6/go-infra-fx/config"
 	"github.com/capcom6/go-infra-fx/db"
 	"github.com/capcom6/go-infra-fx/http"
@@ -120,6 +121,12 @@ var Module = fx.Module(
 	fx.Provide(func(cfg Config) cache.Config {
 		return cache.Config{
 			URL: cfg.Cache.URL,
+		}
+	}),
+	fx.Provide(func(cfg Config) pubsub.Config {
+		return pubsub.Config{
+			URL:        cfg.PubSub.URL,
+			BufferSize: 128,
 		}
 	}),
 )

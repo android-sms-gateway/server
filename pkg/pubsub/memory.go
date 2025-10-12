@@ -12,8 +12,13 @@ type memoryPubSub struct {
 
 	wg      sync.WaitGroup
 	mu      sync.RWMutex
-	topics  map[string]map[string]chan Message
+	topics  map[string]map[string]subscriber
 	closeCh chan struct{}
+}
+
+type subscriber struct {
+	ch  chan Message
+	ctx context.Context
 }
 
 func NewMemory(opts ...Option) *memoryPubSub {
@@ -25,7 +30,7 @@ func NewMemory(opts ...Option) *memoryPubSub {
 	return &memoryPubSub{
 		bufferSize: o.bufferSize,
 
-		topics:  make(map[string]map[string]chan Message),
+		topics:  make(map[string]map[string]subscriber),
 		closeCh: make(chan struct{}),
 	}
 }
@@ -55,19 +60,21 @@ func (m *memoryPubSub) Publish(ctx context.Context, topic string, data []byte) e
 	wg := &sync.WaitGroup{}
 	msg := Message{Topic: topic, Data: data}
 
-	for _, ch := range subscribers {
+	for _, sub := range subscribers {
 		wg.Add(1)
-		go func(ch chan Message) {
+		go func(sub subscriber) {
 			defer wg.Done()
 
 			select {
-			case ch <- msg:
+			case sub.ch <- msg:
 			case <-ctx.Done():
 				return
 			case <-m.closeCh:
 				return
+			case <-sub.ctx.Done():
+				return
 			}
-		}(ch)
+		}(sub)
 	}
 
 	wg.Wait()
@@ -90,7 +97,7 @@ func (m *memoryPubSub) Subscribe(ctx context.Context, topic string) (*Subscripti
 	subCtx, cancel := context.WithCancel(ctx)
 	ch := make(chan Message, m.bufferSize)
 
-	m.subscribe(id, topic, ch)
+	m.subscribe(id, topic, subscriber{ch: ch, ctx: subCtx})
 
 	m.wg.Add(1)
 	go func() {
@@ -109,16 +116,16 @@ func (m *memoryPubSub) Subscribe(ctx context.Context, topic string) (*Subscripti
 	return &Subscription{id: id, ctx: subCtx, cancel: cancel, ch: ch}, nil
 }
 
-func (m *memoryPubSub) subscribe(id, topic string, ch chan Message) {
+func (m *memoryPubSub) subscribe(id, topic string, sub subscriber) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	subscriptions, ok := m.topics[topic]
 	if !ok {
-		subscriptions = make(map[string]chan Message)
+		subscriptions = make(map[string]subscriber)
 		m.topics[topic] = subscriptions
 	}
-	subscriptions[id] = ch
+	subscriptions[id] = sub
 }
 
 func (m *memoryPubSub) unsubscribe(id, topic string) {
