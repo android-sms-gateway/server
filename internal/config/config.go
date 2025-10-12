@@ -15,6 +15,7 @@ type Config struct {
 	Tasks    Tasks     `yaml:"tasks"`    // tasks config
 	SSE      SSE       `yaml:"sse"`      // server-sent events config
 	Cache    Cache     `yaml:"cache"`    // cache (memory or redis) config
+	PubSub   PubSub    `yaml:"pubsub"`   // pubsub (memory or redis) config
 }
 
 type Gateway struct {
@@ -75,6 +76,10 @@ type Cache struct {
 	URL string `yaml:"url" envconfig:"CACHE__URL"`
 }
 
+type PubSub struct {
+	URL string `yaml:"url" envconfig:"PUBSUB__URL"`
+}
+
 var defaultConfig = Config{
 	Gateway: Gateway{Mode: GatewayModePublic},
 	HTTP: HTTP{
@@ -101,6 +106,9 @@ var defaultConfig = Config{
 		KeepAlivePeriodSeconds: 15,
 	},
 	Cache: Cache{
+		URL: "memory://",
+	},
+	PubSub: PubSub{
 		URL: "memory://",
 	},
 }

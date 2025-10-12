@@ -4,17 +4,34 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
 
+// RedisConfig configures the Redis pubsub backend.
+type RedisConfig struct {
+	// Client is the Redis client to use.
+	// If nil, a client is created from the URL.
+	// If both Client and URL are provided, Client takes precedence.
+	Client *redis.Client
+
+	// URL is the Redis URL to use.
+	// If empty, the Redis client is not created.
+	URL string
+
+	// Prefix is the prefix to use for all topics.
+	Prefix string
+}
+
 type redisPubSub struct {
 	prefix     string
 	bufferSize uint
 
-	client *redis.Client
+	client      *redis.Client
+	ownedClient bool
 
 	wg          sync.WaitGroup
 	mu          sync.Mutex
@@ -22,21 +39,40 @@ type redisPubSub struct {
 	closeCh     chan struct{}
 }
 
-func NewRedis(client *redis.Client, prefix string, opts ...Option) *redisPubSub {
+func NewRedis(config RedisConfig, opts ...Option) (*redisPubSub, error) {
+	if config.Prefix != "" && !strings.HasSuffix(config.Prefix, ":") {
+		config.Prefix += ":"
+	}
+
+	if config.Client == nil && config.URL == "" {
+		return nil, fmt.Errorf("no redis client or url provided")
+	}
+
+	client := config.Client
+	if client == nil {
+		opt, err := redis.ParseURL(config.URL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse redis url: %w", err)
+		}
+
+		client = redis.NewClient(opt)
+	}
+
 	o := options{
 		bufferSize: 0,
 	}
 	o.apply(opts...)
 
 	return &redisPubSub{
-		prefix:     prefix,
+		prefix:     config.Prefix,
 		bufferSize: o.bufferSize,
 
-		client: client,
+		client:      client,
+		ownedClient: config.Client == nil,
 
 		subscribers: make(map[string]context.CancelFunc),
 		closeCh:     make(chan struct{}),
-	}
+	}, nil
 }
 
 func (r *redisPubSub) Publish(ctx context.Context, topic string, data []byte) error {
@@ -103,11 +139,19 @@ func (r *redisPubSub) Subscribe(ctx context.Context, topic string) (*Subscriptio
 				if !ok {
 					return
 				}
-				if msg != nil {
-					ch <- Message{
-						Topic: topic,
-						Data:  []byte(msg.Payload),
-					}
+				if msg == nil {
+					continue
+				}
+
+				select {
+				case ch <- Message{
+					Topic: topic,
+					Data:  []byte(msg.Payload),
+				}:
+				case <-r.closeCh:
+					return
+				case <-subCtx.Done():
+					return
 				}
 			}
 		}
@@ -125,6 +169,10 @@ func (r *redisPubSub) Close() error {
 	}
 
 	r.wg.Wait()
+
+	if r.ownedClient {
+		return r.client.Close()
+	}
 
 	return nil
 }
