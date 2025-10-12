@@ -21,6 +21,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/webhooks"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/online"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/openapi"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/pubsub"
 	"github.com/capcom6/go-infra-fx/cli"
 	"github.com/capcom6/go-infra-fx/db"
 	"github.com/capcom6/go-infra-fx/http"
@@ -45,6 +46,7 @@ var Module = fx.Module(
 	push.Module,
 	db.Module,
 	cache.Module(),
+	pubsub.Module(),
 	events.Module,
 	messages.Module(),
 	health.Module,
