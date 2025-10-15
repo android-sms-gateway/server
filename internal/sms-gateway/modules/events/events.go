@@ -6,15 +6,15 @@ import (
 	"github.com/android-sms-gateway/client-go/smsgateway"
 )
 
-func NewMessageEnqueuedEvent() *Event {
+func NewMessageEnqueuedEvent() Event {
 	return NewEvent(smsgateway.PushMessageEnqueued, nil)
 }
 
-func NewWebhooksUpdatedEvent() *Event {
+func NewWebhooksUpdatedEvent() Event {
 	return NewEvent(smsgateway.PushWebhooksUpdated, nil)
 }
 
-func NewMessagesExportRequestedEvent(since, until time.Time) *Event {
+func NewMessagesExportRequestedEvent(since, until time.Time) Event {
 	return NewEvent(
 		smsgateway.PushMessagesExportRequested,
 		map[string]string{
@@ -24,6 +24,6 @@ func NewMessagesExportRequestedEvent(since, until time.Time) *Event {
 	)
 }
 
-func NewSettingsUpdatedEvent() *Event {
+func NewSettingsUpdatedEvent() Event {
 	return NewEvent(smsgateway.PushSettingsUpdated, nil)
 }

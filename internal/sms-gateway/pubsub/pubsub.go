@@ -11,7 +11,9 @@ const (
 	topicPrefix = "sms-gateway:"
 )
 
-func New(config Config) (pubsub.PubSub, error) {
+type PubSub = pubsub.PubSub
+
+func New(config Config) (PubSub, error) {
 	if config.URL == "" {
 		config.URL = "memory://"
 	}
