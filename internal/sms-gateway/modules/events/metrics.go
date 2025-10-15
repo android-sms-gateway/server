@@ -19,8 +19,11 @@ const (
 	DeliveryTypeSSE     = "sse"
 	DeliveryTypeUnknown = "unknown"
 
-	FailureReasonQueueFull      = "queue_full"
-	FailureReasonProviderFailed = "provider_failed"
+	FailureReasonSerializationError = "serialization_error"
+	FailureReasonPublishError       = "publish_error"
+	FailureReasonProviderFailed     = "provider_failed"
+
+	EventTypeUnknown = "unknown"
 )
 
 // metrics contains all Prometheus metrics for the events module
