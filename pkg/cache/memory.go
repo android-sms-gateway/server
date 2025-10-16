@@ -192,4 +192,8 @@ func (m *memoryCache) cleanup(cb func()) {
 	m.mux.Unlock()
 }
 
+func (m *memoryCache) Close() error {
+	return nil
+}
+
 var _ Cache = (*memoryCache)(nil)

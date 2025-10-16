@@ -48,26 +48,59 @@ return value
 `
 )
 
+// RedisConfig configures the Redis cache backend.
+type RedisConfig struct {
+	// Client is the Redis client to use.
+	// If nil, a client is created from the URL.
+	Client *redis.Client
+
+	// URL is the Redis URL to use.
+	// If empty, the Redis client is not created.
+	URL string
+
+	// Prefix is the prefix to use for all keys in the Redis cache.
+	Prefix string
+
+	// TTL is the time-to-live for all cache entries.
+	TTL time.Duration
+}
+
 type redisCache struct {
-	client *redis.Client
+	client      *redis.Client
+	ownedClient bool
 
 	key string
 
 	ttl time.Duration
 }
 
-func NewRedis(client *redis.Client, prefix string, ttl time.Duration) *redisCache {
-	if prefix != "" && !strings.HasSuffix(prefix, ":") {
-		prefix += ":"
+func NewRedis(config RedisConfig) (*redisCache, error) {
+	if config.Prefix != "" && !strings.HasSuffix(config.Prefix, ":") {
+		config.Prefix += ":"
+	}
+
+	if config.Client == nil && config.URL == "" {
+		return nil, fmt.Errorf("no redis client or url provided")
+	}
+
+	client := config.Client
+	if client == nil {
+		opt, err := redis.ParseURL(config.URL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse redis url: %w", err)
+		}
+
+		client = redis.NewClient(opt)
 	}
 
 	return &redisCache{
-		client: client,
+		client:      client,
+		ownedClient: config.Client == nil,
 
-		key: prefix + redisCacheKey,
+		key: config.Prefix + redisCacheKey,
 
-		ttl: ttl,
-	}
+		ttl: config.TTL,
+	}, nil
 }
 
 // Cleanup implements Cache.
@@ -213,6 +246,14 @@ func (r *redisCache) SetOrFail(ctx context.Context, key string, value []byte, op
 		if err := r.client.HExpireAt(ctx, r.key, options.validUntil, key).Err(); err != nil {
 			return fmt.Errorf("can't set cache item ttl: %w", err)
 		}
+	}
+
+	return nil
+}
+
+func (r *redisCache) Close() error {
+	if r.ownedClient {
+		return r.client.Close()
 	}
 
 	return nil
