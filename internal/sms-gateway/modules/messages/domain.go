@@ -29,23 +29,16 @@ type MessageOut struct {
 }
 
 type MessageStateIn struct {
-	// Message ID
-	ID string
-	// State
-	State ProcessingState
-	// Recipients states
-	Recipients []smsgateway.RecipientState
-	// History of states
-	States map[string]time.Time
+	ID         string                      `json:"id"`         // Message ID
+	State      ProcessingState             `json:"state"`      // State
+	Recipients []smsgateway.RecipientState `json:"recipients"` // Recipients states
+	States     map[string]time.Time        `json:"states"`     // History of states
 }
 
 type MessageStateOut struct {
-	// Device ID
-	DeviceID string
-	// Hashed
-	IsHashed bool
-	// Encrypted
-	IsEncrypted bool
-
 	MessageStateIn
+
+	DeviceID    string `json:"device_id"`    // Device ID
+	IsHashed    bool   `json:"is_hashed"`    // Hashed
+	IsEncrypted bool   `json:"is_encrypted"` // Encrypted
 }

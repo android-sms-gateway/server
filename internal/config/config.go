@@ -14,6 +14,7 @@ type Config struct {
 	FCM      FCMConfig `yaml:"fcm"`      // firebase cloud messaging config
 	Tasks    Tasks     `yaml:"tasks"`    // tasks config
 	SSE      SSE       `yaml:"sse"`      // server-sent events config
+	Messages Messages  `yaml:"messages"` // messages config
 	Cache    Cache     `yaml:"cache"`    // cache (memory or redis) config
 }
 
@@ -71,6 +72,11 @@ type SSE struct {
 	KeepAlivePeriodSeconds uint16 `yaml:"keep_alive_period_seconds" envconfig:"SSE__KEEP_ALIVE_PERIOD_SECONDS"` // keep alive period in seconds, 0 for no keep alive
 }
 
+type Messages struct {
+	CacheTTLSeconds        uint16 `yaml:"cache_ttl_seconds" envconfig:"MESSAGES__CACHE_TTL_SECONDS"` // cache ttl in seconds
+	ProcessedLifetimeHours uint16 `yaml:"processed_lifetime_hours" envconfig:"MESSAGES__PROCESSED_LIFETIME_HOURS"`
+}
+
 type Cache struct {
 	URL string `yaml:"url" envconfig:"CACHE__URL"`
 }
@@ -99,6 +105,10 @@ var defaultConfig = Config{
 	},
 	SSE: SSE{
 		KeepAlivePeriodSeconds: 15,
+	},
+	Messages: Messages{
+		CacheTTLSeconds:        300, // 5 minutes
+		ProcessedLifetimeHours: 720, // 30 days
 	},
 	Cache: Cache{
 		URL: "memory://",

@@ -103,7 +103,8 @@ var Module = fx.Module(
 	}),
 	fx.Provide(func(cfg Config) messages.Config {
 		return messages.Config{
-			ProcessedLifetime: 30 * 24 * time.Hour, //TODO: make it configurable
+			ProcessedLifetime: time.Duration(cfg.Messages.ProcessedLifetimeHours) * time.Hour,
+			CacheTTL:          time.Duration(cfg.Messages.CacheTTLSeconds) * time.Second,
 		}
 	}),
 	fx.Provide(func(cfg Config) devices.Config {
