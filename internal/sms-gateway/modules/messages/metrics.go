@@ -10,6 +10,8 @@ const (
 	metricsSubsystem = "messages"
 
 	metricMessagesTotal = "total"
+	metricCacheHits   = "cache_hits_total"
+	metricCacheMisses = "cache_misses_total"
 
 	labelState = "state"
 )
@@ -33,13 +35,13 @@ func newMetrics() *metrics {
 		cacheHits: promauto.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
-			Name:      "cache_hits",
+			Name:      metricCacheHits,
 			Help:      "Number of cache hits",
 		}),
 		cacheMisses: promauto.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
-			Name:      "cache_misses",
+			Name:      metricCacheMisses,
 			Help:      "Number of cache misses",
 		}),
 	}

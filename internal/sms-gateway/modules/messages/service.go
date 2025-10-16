@@ -235,7 +235,7 @@ func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueO
 	}
 
 	if err := s.cache.Set(context.Background(), device.UserID, message.ID, anys.AsPointer(modelToMessageState(msg))); err != nil {
-		s.logger.Warn("can't cache message", zap.String("id", message.ID), zap.Error(err))
+		s.logger.Warn("can't cache message", zap.String("id", msg.ExtID), zap.Error(err))
 	}
 	s.metrics.IncTotal(string(msg.State))
 
