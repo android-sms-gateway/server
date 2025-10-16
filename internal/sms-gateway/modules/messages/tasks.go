@@ -22,7 +22,7 @@ type HashingTaskParams struct {
 	Logger   *zap.Logger
 }
 
-type HashingTask struct {
+type hashingTask struct {
 	Messages *repository
 	Config   HashingTaskConfig
 	Logger   *zap.Logger
@@ -31,7 +31,7 @@ type HashingTask struct {
 	mux   sync.Mutex
 }
 
-func (t *HashingTask) Run(ctx context.Context) {
+func (t *hashingTask) Run(ctx context.Context) {
 	t.Logger.Info("Starting hashing task...")
 	ticker := time.NewTicker(t.Config.Interval)
 	defer ticker.Stop()
@@ -54,13 +54,13 @@ func (t *HashingTask) Run(ctx context.Context) {
 }
 
 // Enqueue adds a message ID to the processing queue to be hashed in the next batch
-func (t *HashingTask) Enqueue(id uint64) {
+func (t *hashingTask) Enqueue(id uint64) {
 	t.mux.Lock()
 	t.queue[id] = struct{}{}
 	t.mux.Unlock()
 }
 
-func (t *HashingTask) process() {
+func (t *hashingTask) process() {
 	t.mux.Lock()
 
 	ids := maps.Keys(t.queue)
@@ -78,8 +78,8 @@ func (t *HashingTask) process() {
 	}
 }
 
-func NewHashingTask(params HashingTaskParams) *HashingTask {
-	return &HashingTask{
+func newHashingTask(params HashingTaskParams) *hashingTask {
+	return &hashingTask{
 		Messages: params.Messages,
 		Config:   params.Config,
 		Logger:   params.Logger,
