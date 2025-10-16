@@ -20,7 +20,7 @@ func TestMemoryCache_ConcurrentReads(t *testing.T) {
 	value := "test-value"
 
 	// Set initial value
-	err := cache.Set(ctx, key, value)
+	err := cache.Set(ctx, key, []byte(value))
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
@@ -40,7 +40,7 @@ func TestMemoryCache_ConcurrentReads(t *testing.T) {
 				return
 			}
 
-			if retrieved != value {
+			if string(retrieved) != value {
 				t.Errorf("Expected %s, got %s", value, retrieved)
 			}
 		}()
@@ -67,7 +67,7 @@ func TestMemoryCache_ConcurrentWrites(t *testing.T) {
 				key := "key-" + strconv.Itoa(goroutineID) + "-" + strconv.Itoa(j)
 				value := "value-" + strconv.Itoa(goroutineID) + "-" + strconv.Itoa(j)
 
-				err := cache.Set(ctx, key, value)
+				err := cache.Set(ctx, key, []byte(value))
 				if err != nil {
 					t.Errorf("Set failed for key %s: %v", key, err)
 				}
@@ -89,7 +89,7 @@ func TestMemoryCache_ConcurrentWrites(t *testing.T) {
 				continue
 			}
 
-			if retrieved != expectedValue {
+			if string(retrieved) != expectedValue {
 				t.Errorf("Expected %s, got %s for key %s", expectedValue, retrieved, key)
 			}
 		}
@@ -134,7 +134,7 @@ func TestMemoryCache_ConcurrentReadWrite(t *testing.T) {
 				key := "shared-key"
 				value := "value-" + strconv.Itoa(j)
 
-				err := c.Set(ctx, key, value)
+				err := c.Set(ctx, key, []byte(value))
 				if err != nil {
 					t.Errorf("Set failed: %v", err)
 				} else {
@@ -167,7 +167,7 @@ func TestMemoryCache_ConcurrentSetAndGetAndDelete(t *testing.T) {
 				value := "value-" + strconv.Itoa(goroutineID) + "-" + strconv.Itoa(j)
 
 				// Set
-				err := cache.Set(ctx, key, value)
+				err := cache.Set(ctx, key, []byte(value))
 				if err != nil {
 					t.Errorf("Set failed: %v", err)
 					continue
@@ -180,7 +180,7 @@ func TestMemoryCache_ConcurrentSetAndGetAndDelete(t *testing.T) {
 					continue
 				}
 
-				if retrieved != value {
+				if string(retrieved) != value {
 					t.Errorf("Expected %s, got %s", value, retrieved)
 				}
 
@@ -217,7 +217,7 @@ func TestMemoryCache_ConcurrentSetOrFail(t *testing.T) {
 			defer wg.Done()
 
 			for range attemptsPerGoroutine {
-				err := c.SetOrFail(ctx, key, value)
+				err := c.SetOrFail(ctx, key, []byte(value))
 				switch err {
 				case nil:
 					successCount.Add(1)
@@ -257,7 +257,7 @@ func TestMemoryCache_ConcurrentDrain(t *testing.T) {
 		key := "item-" + strconv.Itoa(i)
 		value := "value-" + strconv.Itoa(i)
 
-		err := c.Set(ctx, key, value)
+		err := c.Set(ctx, key, []byte(value))
 		if err != nil {
 			t.Fatalf("Set failed for item %d: %v", i, err)
 		}
@@ -282,7 +282,7 @@ func TestMemoryCache_ConcurrentDrain(t *testing.T) {
 	// Verify that items were drained (at least one goroutine should have gotten items)
 	totalDrained := 0
 	drainResults.Range(func(key, value any) bool {
-		items := value.(map[string]string)
+		items := value.(map[string][]byte)
 		totalDrained += len(items)
 		return true
 	})
@@ -314,7 +314,7 @@ func TestMemoryCache_ConcurrentCleanup(t *testing.T) {
 		key := "item-" + strconv.Itoa(i)
 		value := "value-" + strconv.Itoa(i)
 
-		err := c.Set(ctx, key, value, cache.WithTTL(10*time.Millisecond))
+		err := c.Set(ctx, key, []byte(value), cache.WithTTL(10*time.Millisecond))
 		if err != nil {
 			t.Fatalf("Set failed for item %d: %v", i, err)
 		}
@@ -361,7 +361,7 @@ func TestMemoryCache_ConcurrentGetAndDelete(t *testing.T) {
 		key := "item-" + strconv.Itoa(i)
 		value := "value-" + strconv.Itoa(i)
 
-		err := c.Set(ctx, key, value)
+		err := c.Set(ctx, key, []byte(value))
 		if err != nil {
 			t.Fatalf("Set failed for item %d: %v", i, err)
 		}
@@ -421,7 +421,7 @@ func TestMemoryCache_RaceConditionDetection(t *testing.T) {
 				// Randomly choose operation
 				switch time.Now().UnixNano() % 4 {
 				case 0:
-					cache.Set(ctx, key, value)
+					cache.Set(ctx, key, []byte(value))
 				case 1:
 					cache.Get(ctx, key)
 				case 2:

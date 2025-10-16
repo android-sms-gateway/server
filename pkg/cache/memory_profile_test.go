@@ -26,7 +26,7 @@ func TestMemoryCache_MemoryAllocationPattern(t *testing.T) {
 		key := "profile-key-" + strconv.Itoa(i)
 		value := "profile-value-" + strconv.Itoa(i)
 
-		err := cache.Set(ctx, key, value)
+		err := cache.Set(ctx, key, []byte(value))
 		if err != nil {
 			t.Errorf("Set failed: %v", err)
 		}
@@ -76,7 +76,7 @@ func TestMemoryCache_MemoryCleanup(t *testing.T) {
 		key := "cleanup-key-" + strconv.Itoa(i)
 		value := "cleanup-value-" + strconv.Itoa(i)
 
-		err := cache.Set(ctx, key, value)
+		err := cache.Set(ctx, key, []byte(value))
 		if err != nil {
 			t.Errorf("Set failed: %v", err)
 		}
@@ -130,7 +130,7 @@ func TestMemoryCache_MemoryPressure(t *testing.T) {
 			key := "pressure-key-" + strconv.Itoa(i) + "-" + strconv.Itoa(j)
 			value := "pressure-value-" + strconv.Itoa(i) + "-" + strconv.Itoa(j)
 
-			err := tempCache.Set(ctx, key, value)
+			err := tempCache.Set(ctx, key, []byte(value))
 			if err != nil {
 				t.Errorf("Set failed: %v", err)
 			}
@@ -176,7 +176,7 @@ func TestMemoryCache_GCStress(t *testing.T) {
 		key := "gc-key-" + strconv.Itoa(i)
 		value := "gc-value-" + strconv.Itoa(i)
 
-		err := c.Set(ctx, key, value)
+		err := c.Set(ctx, key, []byte(value))
 		if err != nil {
 			t.Errorf("Set failed: %v", err)
 		}
@@ -208,7 +208,7 @@ func TestMemoryCache_GCStress(t *testing.T) {
 			t.Errorf("Get failed after GC stress: %v", err)
 		}
 
-		if retrieved != value {
+		if string(retrieved) != value {
 			t.Errorf("Value mismatch after GC stress: expected %s, got %s", value, retrieved)
 		}
 	}
@@ -234,7 +234,7 @@ func TestMemoryCache_MemoryLeakDetection(t *testing.T) {
 			key := "leak-key-" + strconv.Itoa(i) + "-" + strconv.Itoa(j)
 			value := "leak-value-" + strconv.Itoa(i) + "-" + strconv.Itoa(j)
 
-			err := tempCache.Set(ctx, key, value)
+			err := tempCache.Set(ctx, key, []byte(value))
 			if err != nil {
 				t.Errorf("Set failed: %v", err)
 			}
@@ -287,7 +287,7 @@ func BenchmarkMemoryCache_MemoryUsage(b *testing.B) {
 			value := "bench-value-" + strconv.Itoa(i)
 
 			// Set and get
-			cache.Set(ctx, key, value)
+			cache.Set(ctx, key, []byte(value))
 			cache.Get(ctx, key)
 
 			// Delete
