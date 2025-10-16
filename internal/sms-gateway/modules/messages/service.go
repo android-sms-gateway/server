@@ -31,6 +31,7 @@ type Service struct {
 	config Config
 
 	metrics     *metrics
+	cache       *cache
 	messages    *repository
 	hashingTask *hashingTask
 
@@ -43,6 +44,7 @@ type Service struct {
 func NewService(
 	config Config,
 	metrics *metrics,
+	cache *cache,
 	messages *repository,
 	eventsSvc *events.Service,
 	hashingTask *hashingTask,
@@ -53,6 +55,7 @@ func NewService(
 		config: config,
 
 		metrics:     metrics,
+		cache:       cache,
 		messages:    messages,
 		hashingTask: hashingTask,
 
@@ -84,8 +87,8 @@ func (s *Service) SelectPending(deviceID string, order MessagesOrder) ([]Message
 	return slices.MapOrError(messages, messageToDomain)
 }
 
-func (s *Service) UpdateState(deviceID string, message MessageStateIn) error {
-	existing, err := s.messages.Get(MessagesSelectFilter{ExtID: message.ID, DeviceID: deviceID}, MessagesSelectOptions{})
+func (s *Service) UpdateState(device *models.Device, message MessageStateIn) error {
+	existing, err := s.messages.Get(MessagesSelectFilter{ExtID: message.ID, DeviceID: device.ID}, MessagesSelectOptions{})
 	if err != nil {
 		return err
 	}
@@ -108,8 +111,10 @@ func (s *Service) UpdateState(deviceID string, message MessageStateIn) error {
 		return err
 	}
 
+	if err := s.cache.Set(context.Background(), device.UserID, existing.ExtID, anys.AsPointer(modelToMessageState(existing))); err != nil {
+		s.logger.Warn("can't cache message", zap.String("id", existing.ExtID), zap.Error(err))
+	}
 	s.hashingTask.Enqueue(existing.ID)
-
 	s.metrics.IncTotal(string(existing.State))
 
 	return nil
@@ -126,16 +131,39 @@ func (s *Service) SelectStates(user models.User, filter MessagesSelectFilter, op
 	return slices.Map(messages, modelToMessageState), total, nil
 }
 
-func (s *Service) GetState(user models.User, ID string) (MessageStateOut, error) {
+func (s *Service) GetState(user models.User, ID string) (*MessageStateOut, error) {
+	dto, err := s.cache.Get(context.Background(), user.ID, ID)
+	if err == nil {
+		s.metrics.IncCache(true)
+
+		// Cache nil entries represent "not found" and prevent repeated lookups
+		if dto == nil {
+			return nil, ErrMessageNotFound
+		}
+		return dto, nil
+	}
+	s.metrics.IncCache(false)
+
 	message, err := s.messages.Get(
 		MessagesSelectFilter{ExtID: ID, UserID: user.ID},
 		MessagesSelectOptions{WithRecipients: true, WithDevice: true, WithStates: true},
 	)
 	if err != nil {
-		return MessageStateOut{}, ErrMessageNotFound
+		if errors.Is(err, ErrMessageNotFound) {
+			if err := s.cache.Set(context.Background(), user.ID, ID, nil); err != nil {
+				s.logger.Warn("can't cache message", zap.String("id", ID), zap.Error(err))
+			}
+		}
+
+		return nil, err
 	}
 
-	return modelToMessageState(message), nil
+	dto = anys.AsPointer(modelToMessageState(message))
+	if err := s.cache.Set(context.Background(), user.ID, ID, dto); err != nil {
+		s.logger.Warn("can't cache message", zap.String("id", ID), zap.Error(err))
+	}
+
+	return dto, nil
 }
 
 func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueOptions) (MessageStateOut, error) {
@@ -206,6 +234,9 @@ func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueO
 		return state, err
 	}
 
+	if err := s.cache.Set(context.Background(), device.UserID, message.ID, anys.AsPointer(modelToMessageState(msg))); err != nil {
+		s.logger.Warn("can't cache message", zap.String("id", message.ID), zap.Error(err))
+	}
 	s.metrics.IncTotal(string(msg.State))
 
 	go func(userID, deviceID string) {

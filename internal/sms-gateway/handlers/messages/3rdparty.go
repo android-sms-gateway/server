@@ -232,7 +232,7 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.JSON(converters.MessageStateToDTO(state))
+	return c.JSON(converters.MessageStateToDTO(*state))
 }
 
 //	@Summary		Request inbox messages export
