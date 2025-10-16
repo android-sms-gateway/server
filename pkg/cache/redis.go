@@ -41,7 +41,7 @@ type redisCache struct {
 	ttl time.Duration
 }
 
-func NewRedis(client *redis.Client, prefix string, ttl time.Duration) Cache {
+func NewRedis(client *redis.Client, prefix string, ttl time.Duration) *redisCache {
 	if prefix != "" && !strings.HasSuffix(prefix, ":") {
 		prefix += ":"
 	}
@@ -70,7 +70,7 @@ func (r *redisCache) Delete(ctx context.Context, key string) error {
 }
 
 // Drain implements Cache.
-func (r *redisCache) Drain(ctx context.Context) (map[string]string, error) {
+func (r *redisCache) Drain(ctx context.Context) (map[string][]byte, error) {
 	res, err := r.client.Eval(ctx, hgetallAndDeleteScript, []string{r.key}).Result()
 	if err != nil {
 		return nil, fmt.Errorf("can't drain cache: %w", err)
@@ -78,49 +78,49 @@ func (r *redisCache) Drain(ctx context.Context) (map[string]string, error) {
 
 	arr, ok := res.([]any)
 	if !ok || len(arr) == 0 {
-		return map[string]string{}, nil
+		return map[string][]byte{}, nil
 	}
 
-	out := make(map[string]string, len(arr)/2)
+	out := make(map[string][]byte, len(arr)/2)
 	for i := 0; i < len(arr); i += 2 {
 		f, _ := arr[i].(string)
 		v, _ := arr[i+1].(string)
-		out[f] = v
+		out[f] = []byte(v)
 	}
 
 	return out, nil
 }
 
 // Get implements Cache.
-func (r *redisCache) Get(ctx context.Context, key string) (string, error) {
+func (r *redisCache) Get(ctx context.Context, key string) ([]byte, error) {
 	val, err := r.client.HGet(ctx, r.key, key).Result()
 	if err != nil {
 		if err == redis.Nil {
-			return "", ErrKeyNotFound
+			return nil, ErrKeyNotFound
 		}
 
-		return "", fmt.Errorf("can't get cache item: %w", err)
+		return nil, fmt.Errorf("can't get cache item: %w", err)
 	}
 
-	return val, nil
+	return []byte(val), nil
 }
 
 // GetAndDelete implements Cache.
-func (r *redisCache) GetAndDelete(ctx context.Context, key string) (string, error) {
+func (r *redisCache) GetAndDelete(ctx context.Context, key string) ([]byte, error) {
 	result, err := r.client.Eval(ctx, getAndDeleteScript, []string{r.key}, key).Result()
 	if err != nil {
-		return "", fmt.Errorf("can't get cache item: %w", err)
+		return nil, fmt.Errorf("can't get cache item: %w", err)
 	}
 
 	if value, ok := result.(string); ok {
-		return value, nil
+		return []byte(value), nil
 	}
 
-	return "", ErrKeyNotFound
+	return nil, ErrKeyNotFound
 }
 
 // Set implements Cache.
-func (r *redisCache) Set(ctx context.Context, key string, value string, opts ...Option) error {
+func (r *redisCache) Set(ctx context.Context, key string, value []byte, opts ...Option) error {
 	options := new(options)
 	if r.ttl > 0 {
 		options.validUntil = time.Now().Add(r.ttl)
@@ -142,7 +142,7 @@ func (r *redisCache) Set(ctx context.Context, key string, value string, opts ...
 }
 
 // SetOrFail implements Cache.
-func (r *redisCache) SetOrFail(ctx context.Context, key string, value string, opts ...Option) error {
+func (r *redisCache) SetOrFail(ctx context.Context, key string, value []byte, opts ...Option) error {
 	val, err := r.client.HSetNX(ctx, r.key, key, value).Result()
 	if err != nil {
 		return fmt.Errorf("can't set cache item: %w", err)
@@ -166,3 +166,5 @@ func (r *redisCache) SetOrFail(ctx context.Context, key string, value string, op
 
 	return nil
 }
+
+var _ Cache = (*redisCache)(nil)

@@ -19,7 +19,7 @@ func TestMemoryCache_ZeroTTL(t *testing.T) {
 	key := "zero-ttl-key"
 	value := "zero-ttl-value"
 
-	err := cache.Set(ctx, key, value)
+	err := cache.Set(ctx, key, []byte(value))
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
@@ -32,7 +32,7 @@ func TestMemoryCache_ZeroTTL(t *testing.T) {
 		t.Fatalf("Get failed: %v", err)
 	}
 
-	if retrieved != value {
+	if string(retrieved) != value {
 		t.Errorf("Expected %s, got %s", value, retrieved)
 	}
 }
@@ -46,7 +46,7 @@ func TestMemoryCache_ImmediateExpiration(t *testing.T) {
 	value := "expiring-value"
 	ttl := 1 * time.Millisecond
 
-	err := c.Set(ctx, key, value, cache.WithTTL(ttl))
+	err := c.Set(ctx, key, []byte(value), cache.WithTTL(ttl))
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
@@ -66,7 +66,7 @@ func TestMemoryCache_NilContext(t *testing.T) {
 	key := "nil-context-key"
 	value := "nil-context-value"
 
-	err := cache.Set(nil, key, value) //nolint:staticcheck
+	err := cache.Set(nil, key, []byte(value)) //nolint:staticcheck
 	if err != nil {
 		t.Fatalf("Set with nil context failed: %v", err)
 	}
@@ -76,7 +76,7 @@ func TestMemoryCache_NilContext(t *testing.T) {
 		t.Fatalf("Get with nil context failed: %v", err)
 	}
 
-	if retrieved != value {
+	if string(retrieved) != value {
 		t.Errorf("Expected %s, got %s", value, retrieved)
 	}
 }
@@ -88,7 +88,7 @@ func TestMemoryCache_EmptyKey(t *testing.T) {
 	key := ""
 	value := "empty-key-value"
 
-	err := cache.Set(ctx, key, value)
+	err := cache.Set(ctx, key, []byte(value))
 	if err != nil {
 		t.Fatalf("Set with empty key failed: %v", err)
 	}
@@ -98,7 +98,7 @@ func TestMemoryCache_EmptyKey(t *testing.T) {
 		t.Fatalf("Get with empty key failed: %v", err)
 	}
 
-	if retrieved != value {
+	if string(retrieved) != value {
 		t.Errorf("Expected %s, got %s", value, retrieved)
 	}
 }
@@ -112,13 +112,13 @@ func TestMemoryCache_OverwriteWithDifferentTTL(t *testing.T) {
 	value2 := "value2"
 
 	// Set with short TTL
-	err := c.Set(ctx, key, value1, cache.WithTTL(100*time.Millisecond))
+	err := c.Set(ctx, key, []byte(value1), cache.WithTTL(100*time.Millisecond))
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
 
 	// Overwrite with longer TTL
-	err = c.Set(ctx, key, value2, cache.WithTTL(1*time.Second))
+	err = c.Set(ctx, key, []byte(value2), cache.WithTTL(1*time.Second))
 	if err != nil {
 		t.Fatalf("Set overwrite failed: %v", err)
 	}
@@ -128,7 +128,7 @@ func TestMemoryCache_OverwriteWithDifferentTTL(t *testing.T) {
 		t.Fatalf("Get failed: %v", err)
 	}
 
-	if retrieved != value2 {
+	if string(retrieved) != value2 {
 		t.Errorf("Expected %s, got %s", value2, retrieved)
 	}
 
@@ -140,7 +140,7 @@ func TestMemoryCache_OverwriteWithDifferentTTL(t *testing.T) {
 		t.Fatalf("Get after partial wait failed: %v", err)
 	}
 
-	if retrieved != value2 {
+	if string(retrieved) != value2 {
 		t.Errorf("Expected %s after partial wait, got %s", value2, retrieved)
 	}
 }
@@ -162,9 +162,9 @@ func TestMemoryCache_MixedTTLScenarios(t *testing.T) {
 		value := "value-" + key
 		var err error
 		if ttl > 0 {
-			err = c.Set(ctx, key, value, cache.WithTTL(ttl))
+			err = c.Set(ctx, key, []byte(value), cache.WithTTL(ttl))
 		} else {
-			err = c.Set(ctx, key, value)
+			err = c.Set(ctx, key, []byte(value))
 		}
 		if err != nil {
 			t.Fatalf("Set %s failed: %v", key, err)
@@ -234,7 +234,7 @@ func TestMemoryCache_RapidOperations(t *testing.T) {
 		if i%2 == 0 {
 			key := "rapid-key-" + strconv.Itoa(i)
 			value := "rapid-value-" + strconv.Itoa(i)
-			err := c.Set(ctx, key, value)
+			err := c.Set(ctx, key, []byte(value))
 			if err != nil {
 				t.Errorf("Set failed: %v", err)
 			}
@@ -271,7 +271,7 @@ func TestMemoryCache_CleanupOnEmptyCache(t *testing.T) {
 	key := "post-cleanup-key"
 	value := "post-cleanup-value"
 
-	err = cache.Set(ctx, key, value)
+	err = cache.Set(ctx, key, []byte(value))
 	if err != nil {
 		t.Fatalf("Set after cleanup failed: %v", err)
 	}
@@ -281,7 +281,7 @@ func TestMemoryCache_CleanupOnEmptyCache(t *testing.T) {
 		t.Fatalf("Get after cleanup failed: %v", err)
 	}
 
-	if retrieved != value {
+	if string(retrieved) != value {
 		t.Errorf("Expected %s, got %s", value, retrieved)
 	}
 }
@@ -292,13 +292,13 @@ func TestMemoryCache_DrainWithExpiredItems(t *testing.T) {
 	ctx := context.Background()
 
 	// Set non-expired item
-	err := c.Set(ctx, "valid-key", "valid-value")
+	err := c.Set(ctx, "valid-key", []byte("valid-value"))
 	if err != nil {
 		t.Fatalf("Set valid key failed: %v", err)
 	}
 
 	// Set expired item
-	err = c.Set(ctx, "expired-key", "expired-value", cache.WithTTL(1*time.Millisecond))
+	err = c.Set(ctx, "expired-key", []byte("expired-value"), cache.WithTTL(1*time.Millisecond))
 	if err != nil {
 		t.Fatalf("Set expired key failed: %v", err)
 	}
@@ -316,7 +316,7 @@ func TestMemoryCache_DrainWithExpiredItems(t *testing.T) {
 		t.Errorf("Expected 1 item in drain result, got %d", len(items))
 	}
 
-	if items["valid-key"] != "valid-value" {
+	if string(items["valid-key"]) != "valid-value" {
 		t.Errorf("Expected valid-value, got %s", items["valid-key"])
 	}
 
@@ -336,7 +336,7 @@ func TestMemoryCache_ExtremeKeyLength(t *testing.T) {
 	longKey := strings.Repeat("a", 1024)
 	value := "extreme-key-value"
 
-	err := cache.Set(ctx, longKey, value)
+	err := cache.Set(ctx, longKey, []byte(value))
 	if err != nil {
 		t.Fatalf("Set with long key failed: %v", err)
 	}
@@ -346,7 +346,7 @@ func TestMemoryCache_ExtremeKeyLength(t *testing.T) {
 		t.Fatalf("Get with long key failed: %v", err)
 	}
 
-	if retrieved != value {
+	if string(retrieved) != value {
 		t.Errorf("Expected %s, got %s", value, retrieved)
 	}
 }
@@ -361,7 +361,7 @@ func TestMemoryCache_RaceConditionWithExpiration(t *testing.T) {
 	ttl := 10 * time.Millisecond
 
 	// Set item with short TTL
-	err := c.Set(ctx, key, value, cache.WithTTL(ttl))
+	err := c.Set(ctx, key, []byte(value), cache.WithTTL(ttl))
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
