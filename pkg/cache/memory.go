@@ -13,7 +13,7 @@ type memoryCache struct {
 	mux sync.RWMutex
 }
 
-func NewMemory(ttl time.Duration) Cache {
+func NewMemory(ttl time.Duration) *memoryCache {
 	return &memoryCache{
 		items: make(map[string]*memoryItem),
 		ttl:   ttl,
@@ -168,3 +168,9 @@ func (m *memoryCache) cleanup(cb func()) {
 	cb()
 	m.mux.Unlock()
 }
+
+func (m *memoryCache) Close() error {
+	return nil
+}
+
+var _ Cache = (*memoryCache)(nil)
