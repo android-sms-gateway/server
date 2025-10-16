@@ -7,31 +7,25 @@ import (
 	"go.uber.org/zap"
 )
 
-// TODO: merge service and hashing task configs
-// TODO: run hashing task inside service
-
-type FxResult struct {
-	fx.Out
-
-	Service   *Service
-	AsCleaner cleaner.Cleanable `group:"cleaners"`
+func Module() fx.Option {
+	return fx.Module(
+		"messages",
+		fx.Decorate(func(log *zap.Logger) *zap.Logger {
+			return log.Named("messages")
+		}),
+		fx.Provide(newMetrics, fx.Private),
+		fx.Provide(newRepository, fx.Private),
+		fx.Provide(newHashingTask, fx.Private),
+		fx.Provide(NewService),
+		fx.Provide(
+			cleaner.AsCleanable(
+				func(svc *Service) cleaner.Cleanable {
+					return svc
+				},
+			),
+		),
+	)
 }
-
-var Module = fx.Module(
-	"messages",
-	fx.Decorate(func(log *zap.Logger) *zap.Logger {
-		return log.Named("messages")
-	}),
-	fx.Provide(func(p ServiceParams) FxResult {
-		svc := NewService(p)
-		return FxResult{
-			Service:   svc,
-			AsCleaner: svc,
-		}
-	}),
-	fx.Provide(newRepository),
-	fx.Provide(NewHashingTask, fx.Private),
-)
 
 func init() {
 	db.RegisterMigration(Migrate)

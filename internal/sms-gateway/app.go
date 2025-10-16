@@ -46,7 +46,7 @@ var Module = fx.Module(
 	db.Module,
 	cache.Module(),
 	events.Module,
-	messages.Module,
+	messages.Module(),
 	health.Module,
 	webhooks.Module,
 	settings.Module,
