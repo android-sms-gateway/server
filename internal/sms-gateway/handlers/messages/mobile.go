@@ -94,7 +94,7 @@ func (h *MobileController) patch(device models.Device, c *fiber.Ctx) error {
 			States:     v.States,
 		}
 
-		err := h.messagesSvc.UpdateState(device.ID, messageState)
+		err := h.messagesSvc.UpdateState(&device, messageState)
 		if err != nil && !errors.Is(err, messages.ErrMessageNotFound) {
 			h.Logger.Error("Can't update message status",
 				zap.String("message_id", v.ID),

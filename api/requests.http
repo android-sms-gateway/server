@@ -71,7 +71,7 @@ Authorization: Basic {{credentials}}
 }
 
 ###
-GET {{baseUrl}}/3rdparty/v1/messages/K56aIsVsQ2rECdv_ajzTd HTTP/1.1
+GET {{baseUrl}}/3rdparty/v1/messages/Fc10ZyTRDVlqPjIm9Jbly HTTP/1.1
 Authorization: Basic {{credentials}}
 
 ###
