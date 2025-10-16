@@ -15,9 +15,6 @@ import (
 	"github.com/capcom6/go-helpers/anys"
 	"github.com/capcom6/go-helpers/slices"
 	"github.com/nyaruka/phonenumbers"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
-	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
 )
@@ -30,57 +27,39 @@ type EnqueueOptions struct {
 	SkipPhoneValidation bool
 }
 
-type ServiceParams struct {
-	fx.In
-
-	IDGen db.IDGen
-
-	Config Config
-
-	Messages    *repository
-	HashingTask *HashingTask
-
-	EventsSvc *events.Service
-
-	Logger *zap.Logger
-}
-
 type Service struct {
 	config Config
 
+	metrics     *metrics
 	messages    *repository
-	hashingTask *HashingTask
+	hashingTask *hashingTask
 
 	eventsSvc *events.Service
 
 	logger *zap.Logger
-
-	messagesCounter *prometheus.CounterVec
-
-	idgen func() string
+	idgen  func() string
 }
 
-func NewService(params ServiceParams) *Service {
-	messagesCounter := promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "sms",
-		Subsystem: "messages",
-		Name:      "total",
-		Help:      "Total number of messages by state",
-	}, []string{"state"})
-
+func NewService(
+	config Config,
+	metrics *metrics,
+	messages *repository,
+	eventsSvc *events.Service,
+	hashingTask *hashingTask,
+	logger *zap.Logger,
+	idgen db.IDGen,
+) *Service {
 	return &Service{
-		config: params.Config,
+		config: config,
 
-		messages:    params.Messages,
-		hashingTask: params.HashingTask,
+		metrics:     metrics,
+		messages:    messages,
+		hashingTask: hashingTask,
 
-		eventsSvc: params.EventsSvc,
+		eventsSvc: eventsSvc,
 
-		logger: params.Logger.Named("Service"),
-
-		messagesCounter: messagesCounter,
-
-		idgen: params.IDGen,
+		logger: logger,
+		idgen:  idgen,
 	}
 }
 
@@ -131,7 +110,7 @@ func (s *Service) UpdateState(deviceID string, message MessageStateIn) error {
 
 	s.hashingTask.Enqueue(existing.ID)
 
-	s.messagesCounter.WithLabelValues(string(existing.State)).Inc()
+	s.metrics.IncTotal(string(existing.State))
 
 	return nil
 }
@@ -227,7 +206,7 @@ func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueO
 		return state, err
 	}
 
-	s.messagesCounter.WithLabelValues(string(state.State)).Inc()
+	s.metrics.IncTotal(string(msg.State))
 
 	go func(userID, deviceID string) {
 		if err := s.eventsSvc.Notify(userID, &deviceID, events.NewMessageEnqueuedEvent()); err != nil {
