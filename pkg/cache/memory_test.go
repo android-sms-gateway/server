@@ -16,7 +16,7 @@ func TestMemoryCache_SetAndGet(t *testing.T) {
 	value := "test-value"
 
 	// Test setting a value
-	err := cache.Set(ctx, key, value)
+	err := cache.Set(ctx, key, []byte(value))
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
@@ -27,7 +27,7 @@ func TestMemoryCache_SetAndGet(t *testing.T) {
 		t.Fatalf("Get failed: %v", err)
 	}
 
-	if retrieved != value {
+	if string(retrieved) != value {
 		t.Errorf("Expected %s, got %s", value, retrieved)
 	}
 }
@@ -41,7 +41,7 @@ func TestMemoryCache_SetAndGetWithTTL(t *testing.T) {
 	ttl := 2 * time.Hour
 
 	// Test setting a value with TTL
-	err := c.Set(ctx, key, value, cache.WithTTL(ttl))
+	err := c.Set(ctx, key, []byte(value), cache.WithTTL(ttl))
 	if err != nil {
 		t.Fatalf("Set with TTL failed: %v", err)
 	}
@@ -52,7 +52,7 @@ func TestMemoryCache_SetAndGetWithTTL(t *testing.T) {
 		t.Fatalf("Get failed: %v", err)
 	}
 
-	if retrieved != value {
+	if string(retrieved) != value {
 		t.Errorf("Expected %s, got %s", value, retrieved)
 	}
 }
@@ -66,7 +66,7 @@ func TestMemoryCache_SetAndGetWithValidUntil(t *testing.T) {
 	validUntil := time.Now().Add(2 * time.Hour)
 
 	// Test setting a value with validUntil
-	err := c.Set(ctx, key, value, cache.WithValidUntil(validUntil))
+	err := c.Set(ctx, key, []byte(value), cache.WithValidUntil(validUntil))
 	if err != nil {
 		t.Fatalf("Set with validUntil failed: %v", err)
 	}
@@ -77,7 +77,7 @@ func TestMemoryCache_SetAndGetWithValidUntil(t *testing.T) {
 		t.Fatalf("Get failed: %v", err)
 	}
 
-	if retrieved != value {
+	if string(retrieved) != value {
 		t.Errorf("Expected %s, got %s", value, retrieved)
 	}
 }
@@ -91,7 +91,7 @@ func TestMemoryCache_SetAndGetWithDefaultTTL(t *testing.T) {
 	value := "test-value"
 
 	// Test setting a value without explicit TTL (should use default)
-	err := cache.Set(ctx, key, value)
+	err := cache.Set(ctx, key, []byte(value))
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
@@ -102,7 +102,7 @@ func TestMemoryCache_SetAndGetWithDefaultTTL(t *testing.T) {
 		t.Fatalf("Get failed: %v", err)
 	}
 
-	if retrieved != value {
+	if string(retrieved) != value {
 		t.Errorf("Expected %s, got %s", value, retrieved)
 	}
 }
@@ -127,7 +127,7 @@ func TestMemoryCache_SetOrFailNewKey(t *testing.T) {
 	value := "test-value"
 
 	// Test SetOrFail with new key
-	err := cache.SetOrFail(ctx, key, value)
+	err := cache.SetOrFail(ctx, key, []byte(value))
 	if err != nil {
 		t.Fatalf("SetOrFail failed: %v", err)
 	}
@@ -138,7 +138,7 @@ func TestMemoryCache_SetOrFailNewKey(t *testing.T) {
 		t.Fatalf("Get failed: %v", err)
 	}
 
-	if retrieved != value {
+	if string(retrieved) != value {
 		t.Errorf("Expected %s, got %s", value, retrieved)
 	}
 }
@@ -152,13 +152,13 @@ func TestMemoryCache_SetOrFailExistingKey(t *testing.T) {
 	value2 := "value2"
 
 	// Set initial value
-	err := c.Set(ctx, key, value1)
+	err := c.Set(ctx, key, []byte(value1))
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
 
 	// Try SetOrFail with existing key
-	err = c.SetOrFail(ctx, key, value2)
+	err = c.SetOrFail(ctx, key, []byte(value2))
 	if err != cache.ErrKeyExists {
 		t.Errorf("Expected ErrKeyExists, got %v", err)
 	}
@@ -169,7 +169,7 @@ func TestMemoryCache_SetOrFailExistingKey(t *testing.T) {
 		t.Fatalf("Get failed: %v", err)
 	}
 
-	if retrieved != value1 {
+	if string(retrieved) != value1 {
 		t.Errorf("Expected %s, got %s", value1, retrieved)
 	}
 }
@@ -182,7 +182,7 @@ func TestMemoryCache_Delete(t *testing.T) {
 	value := "test-value"
 
 	// Set a value
-	err := c.Set(ctx, key, value)
+	err := c.Set(ctx, key, []byte(value))
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
@@ -221,7 +221,7 @@ func TestMemoryCache_GetAndDelete(t *testing.T) {
 	value := "test-value"
 
 	// Set a value
-	err := c.Set(ctx, key, value)
+	err := c.Set(ctx, key, []byte(value))
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
@@ -232,7 +232,7 @@ func TestMemoryCache_GetAndDelete(t *testing.T) {
 		t.Fatalf("GetAndDelete failed: %v", err)
 	}
 
-	if retrieved != value {
+	if string(retrieved) != value {
 		t.Errorf("Expected %s, got %s", value, retrieved)
 	}
 
@@ -268,7 +268,7 @@ func TestMemoryCache_Drain(t *testing.T) {
 
 	// Set multiple values
 	for key, value := range items {
-		err := c.Set(ctx, key, value)
+		err := c.Set(ctx, key, []byte(value))
 		if err != nil {
 			t.Fatalf("Set failed for %s: %v", key, err)
 		}
@@ -291,7 +291,7 @@ func TestMemoryCache_Drain(t *testing.T) {
 			t.Errorf("Expected key %s in drained items", key)
 			continue
 		}
-		if actualValue != expectedValue {
+		if string(actualValue) != expectedValue {
 			t.Errorf("Expected %s, got %s for key %s", expectedValue, actualValue, key)
 		}
 	}
@@ -330,7 +330,7 @@ func TestMemoryCache_Cleanup(t *testing.T) {
 	shortTTL := 100 * time.Millisecond
 
 	// Set a value with short TTL
-	err := c.Set(ctx, key, value, cache.WithTTL(shortTTL))
+	err := c.Set(ctx, key, []byte(value), cache.WithTTL(shortTTL))
 	if err != nil {
 		t.Fatalf("Set with TTL failed: %v", err)
 	}
@@ -365,7 +365,7 @@ func TestMemoryCache_CleanupNoExpired(t *testing.T) {
 	value := "test-value"
 
 	// Set a value without TTL
-	err := cache.Set(ctx, key, value)
+	err := cache.Set(ctx, key, []byte(value))
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
@@ -382,7 +382,7 @@ func TestMemoryCache_CleanupNoExpired(t *testing.T) {
 		t.Fatalf("Get failed: %v", err)
 	}
 
-	if retrieved != value {
+	if string(retrieved) != value {
 		t.Errorf("Expected %s, got %s", value, retrieved)
 	}
 }
@@ -396,13 +396,13 @@ func TestMemoryCache_Overwrite(t *testing.T) {
 	value2 := "value2"
 
 	// Set initial value
-	err := cache.Set(ctx, key, value1)
+	err := cache.Set(ctx, key, []byte(value1))
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
 
 	// Overwrite with new value
-	err = cache.Set(ctx, key, value2)
+	err = cache.Set(ctx, key, []byte(value2))
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
@@ -413,7 +413,7 @@ func TestMemoryCache_Overwrite(t *testing.T) {
 		t.Fatalf("Get failed: %v", err)
 	}
 
-	if retrieved != value2 {
+	if string(retrieved) != value2 {
 		t.Errorf("Expected %s, got %s", value2, retrieved)
 	}
 }
@@ -426,7 +426,7 @@ func TestMemoryCache_EmptyValue(t *testing.T) {
 	value := ""
 
 	// Set empty value
-	err := cache.Set(ctx, key, value)
+	err := cache.Set(ctx, key, []byte(value))
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
@@ -437,7 +437,7 @@ func TestMemoryCache_EmptyValue(t *testing.T) {
 		t.Fatalf("Get failed: %v", err)
 	}
 
-	if retrieved != value {
+	if string(retrieved) != value {
 		t.Errorf("Expected empty string, got %s", retrieved)
 	}
 }
@@ -450,7 +450,7 @@ func TestMemoryCache_SpecialCharacters(t *testing.T) {
 	value := "value with special chars: !@#$%^&*()"
 
 	// Set value with special characters
-	err := cache.Set(ctx, key, value)
+	err := cache.Set(ctx, key, []byte(value))
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
@@ -461,7 +461,7 @@ func TestMemoryCache_SpecialCharacters(t *testing.T) {
 		t.Fatalf("Get failed: %v", err)
 	}
 
-	if retrieved != value {
+	if string(retrieved) != value {
 		t.Errorf("Expected %s, got %s", value, retrieved)
 	}
 }
@@ -474,7 +474,7 @@ func TestMemoryCache_LargeValue(t *testing.T) {
 	value := string(make([]byte, 1024*1024)) // 1MB value
 
 	// Set large value
-	err := cache.Set(ctx, key, value)
+	err := cache.Set(ctx, key, []byte(value))
 	if err != nil {
 		t.Fatalf("Set failed: %v", err)
 	}
@@ -485,7 +485,7 @@ func TestMemoryCache_LargeValue(t *testing.T) {
 		t.Fatalf("Get failed: %v", err)
 	}
 
-	if retrieved != value {
+	if string(retrieved) != value {
 		t.Errorf("Large value mismatch")
 	}
 }

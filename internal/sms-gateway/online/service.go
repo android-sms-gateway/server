@@ -60,7 +60,7 @@ func (s *service) SetOnline(ctx context.Context, deviceID string) {
 
 	var err error
 	s.metrics.ObserveCacheLatency(func() {
-		if err = s.cache.Set(ctx, deviceID, dt); err != nil {
+		if err = s.cache.Set(ctx, deviceID, []byte(dt)); err != nil {
 			s.metrics.IncrementCacheOperation(operationSet, statusError)
 			s.logger.Error("Can't set online status", zap.String("device_id", deviceID), zap.Error(err))
 			s.metrics.IncrementStatusSet(false)
@@ -95,10 +95,10 @@ func (s *service) persist(ctx context.Context) error {
 		}
 		s.logger.Debug("Drained cache", zap.Int("count", len(items)))
 
-		timestamps := maps.MapValues(items, func(v string) time.Time {
-			t, err := time.Parse(time.RFC3339, v)
+		timestamps := maps.MapValues(items, func(v []byte) time.Time {
+			t, err := time.Parse(time.RFC3339, string(v))
 			if err != nil {
-				s.logger.Warn("Can't parse last seen", zap.String("last_seen", v), zap.Error(err))
+				s.logger.Warn("Can't parse last seen", zap.String("last_seen", string(v)), zap.Error(err))
 				return time.Now().UTC()
 			}
 
