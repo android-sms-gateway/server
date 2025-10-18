@@ -15,13 +15,14 @@ on:
 permissions:
   contents: read # for actions/checkout
 
-concurrency:
-  group: helm-publish
-  cancel-in-progress: false
-
 jobs:
   publish:
     runs-on: ubuntu-latest
+
+    environment: helm-chart
+    concurrency:
+      group: helm-chart
+      cancel-in-progress: false
 
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
