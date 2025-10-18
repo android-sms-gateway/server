@@ -56,5 +56,5 @@ func NewFactory(config Config) (Factory, error) {
 
 // New implements Factory.
 func (f *factory) New(name string) (Cache, error) {
-	return f.new(keyPrefix + name)
+	return f.new(name)
 }
