@@ -36,3 +36,57 @@ func WithValidUntil(validUntil time.Time) Option {
 		o.validUntil = validUntil
 	}
 }
+
+type getOptions struct {
+	validUntil *time.Time
+	setTTL     *time.Duration
+	updateTTL  *time.Duration
+	defaultTTL bool
+	delete     bool
+}
+
+type GetOption func(*getOptions)
+
+func (o *getOptions) apply(opts ...GetOption) {
+	for _, opt := range opts {
+		opt(o)
+	}
+}
+
+func (o *getOptions) isEmpty() bool {
+	return o.validUntil == nil &&
+		o.setTTL == nil &&
+		o.updateTTL == nil &&
+		!o.defaultTTL &&
+		!o.delete
+}
+
+func AndSetTTL(ttl time.Duration) GetOption {
+	return func(o *getOptions) {
+		o.setTTL = &ttl
+	}
+}
+
+func AndUpdateTTL(ttl time.Duration) GetOption {
+	return func(o *getOptions) {
+		o.updateTTL = &ttl
+	}
+}
+
+func AndSetValidUntil(validUntil time.Time) GetOption {
+	return func(o *getOptions) {
+		o.validUntil = &validUntil
+	}
+}
+
+func AndDefaultTTL() GetOption {
+	return func(o *getOptions) {
+		o.defaultTTL = true
+	}
+}
+
+func AndDelete() GetOption {
+	return func(o *getOptions) {
+		o.delete = true
+	}
+}
