@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/android-sms-gateway/core/redis"
 	"github.com/android-sms-gateway/server/pkg/cache"
 )
 
@@ -40,13 +39,14 @@ func NewFactory(config Config) (Factory, error) {
 			},
 		}, nil
 	case "redis":
-		client, err := redis.New(redis.Config{URL: config.URL})
-		if err != nil {
-			return nil, fmt.Errorf("can't create redis client: %w", err)
-		}
 		return &factory{
 			new: func(name string) (Cache, error) {
-				return cache.NewRedis(client, name, 0), nil
+				return cache.NewRedis(cache.RedisConfig{
+					Client: nil,
+					URL:    config.URL,
+					Prefix: keyPrefix + name,
+					TTL:    0,
+				})
 			},
 		}, nil
 	default:
@@ -56,5 +56,5 @@ func NewFactory(config Config) (Factory, error) {
 
 // New implements Factory.
 func (f *factory) New(name string) (Cache, error) {
-	return f.new(keyPrefix + name)
+	return f.new(name)
 }
