@@ -22,7 +22,7 @@ func BenchmarkMemoryCache_Set(b *testing.B) {
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			cache.Set(ctx, key, value)
+			cache.Set(ctx, key, []byte(value))
 		}
 	})
 }
@@ -35,7 +35,7 @@ func BenchmarkMemoryCache_Get(b *testing.B) {
 	value := "benchmark-value"
 
 	// Pre-populate the cache
-	cache.Set(ctx, key, value)
+	cache.Set(ctx, key, []byte(value))
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
@@ -58,7 +58,7 @@ func BenchmarkMemoryCache_SetAndGet(b *testing.B) {
 			value := "value-" + strconv.Itoa(i)
 			i++
 
-			cache.Set(ctx, key, value)
+			cache.Set(ctx, key, []byte(value))
 			cache.Get(ctx, key)
 		}
 	})
@@ -74,7 +74,7 @@ func BenchmarkMemoryCache_SetOrFail(b *testing.B) {
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			cache.SetOrFail(ctx, key, value)
+			cache.SetOrFail(ctx, key, []byte(value))
 		}
 	})
 }
@@ -92,7 +92,7 @@ func BenchmarkMemoryCache_GetAndDelete(b *testing.B) {
 			value := "value-" + strconv.Itoa(i)
 			i++
 
-			cache.Set(ctx, key, value)
+			cache.Set(ctx, key, []byte(value))
 			cache.GetAndDelete(ctx, key)
 		}
 	})
@@ -111,7 +111,7 @@ func BenchmarkMemoryCache_Delete(b *testing.B) {
 			value := "value-" + strconv.Itoa(i)
 			i++
 
-			cache.Set(ctx, key, value)
+			cache.Set(ctx, key, []byte(value))
 			cache.Delete(ctx, key)
 		}
 	})
@@ -126,7 +126,7 @@ func BenchmarkMemoryCache_Cleanup(b *testing.B) {
 	for i := 0; i < 1000; i++ {
 		key := "item-" + strconv.Itoa(i)
 		value := "value-" + strconv.Itoa(i)
-		cache.Set(ctx, key, value)
+		cache.Set(ctx, key, []byte(value))
 	}
 
 	b.ResetTimer()
@@ -146,7 +146,7 @@ func BenchmarkMemoryCache_Drain(b *testing.B) {
 	for i := 0; i < 1000; i++ {
 		key := "item-" + strconv.Itoa(i)
 		value := "value-" + strconv.Itoa(i)
-		cache.Set(ctx, key, value)
+		cache.Set(ctx, key, []byte(value))
 	}
 
 	b.ResetTimer()
@@ -165,7 +165,7 @@ func BenchmarkMemoryCache_ConcurrentReads(b *testing.B) {
 	value := "benchmark-value"
 
 	// Pre-populate the cache
-	cache.Set(ctx, key, value)
+	cache.Set(ctx, key, []byte(value))
 
 	benchmarks := []struct {
 		name       string
@@ -216,7 +216,7 @@ func BenchmarkMemoryCache_ConcurrentWrites(b *testing.B) {
 					value := "value-" + strconv.Itoa(i)
 					i++
 
-					cache.Set(ctx, key, value)
+					cache.Set(ctx, key, []byte(value))
 				}
 			})
 		})
@@ -257,7 +257,7 @@ func BenchmarkMemoryCache_MixedWorkload(b *testing.B) {
 						value := "value-" + strconv.Itoa(i)
 						i++
 
-						cache.Set(ctx, key, value)
+						cache.Set(ctx, key, []byte(value))
 					}
 				}
 			})
@@ -287,7 +287,7 @@ func BenchmarkMemoryCache_Scaling(b *testing.B) {
 			for i := 0; i < bm.operationsPerGoroutine*bm.goroutines; i++ {
 				key := "key-" + strconv.Itoa(i)
 				value := "value-" + strconv.Itoa(i)
-				cache.Set(ctx, key, value)
+				cache.Set(ctx, key, []byte(value))
 			}
 
 			b.SetParallelism(bm.goroutines)
@@ -327,9 +327,9 @@ func BenchmarkMemoryCache_TTLOverhead(b *testing.B) {
 			b.RunParallel(func(pb *testing.PB) {
 				for pb.Next() {
 					if bm.withTTL {
-						c.Set(ctx, key, value, cache.WithTTL(ttl))
+						c.Set(ctx, key, []byte(value), cache.WithTTL(ttl))
 					} else {
-						c.Set(ctx, key, value)
+						c.Set(ctx, key, []byte(value))
 					}
 				}
 			})
@@ -359,12 +359,11 @@ func BenchmarkMemoryCache_LargeValues(b *testing.B) {
 			for i := range value {
 				value[i] = byte(i % 256)
 			}
-			valueStr := string(value)
 
 			b.ResetTimer()
 			b.RunParallel(func(pb *testing.PB) {
 				for pb.Next() {
-					if err := cache.Set(ctx, key, valueStr); err != nil {
+					if err := cache.Set(ctx, key, value); err != nil {
 						b.Fatal(err)
 					}
 					if _, err := cache.Get(ctx, key); err != nil {
@@ -396,7 +395,7 @@ func BenchmarkMemoryCache_MemoryGrowth(b *testing.B) {
 				for j := range size {
 					key := "key-" + strconv.Itoa(j)
 					value := "value-" + strconv.Itoa(j)
-					cache.Set(ctx, key, value)
+					cache.Set(ctx, key, []byte(value))
 				}
 			}
 		})
@@ -413,7 +412,7 @@ func BenchmarkMemoryCache_RandomAccess(b *testing.B) {
 	for i := 0; i < numKeys; i++ {
 		key := "key-" + strconv.Itoa(i)
 		value := "value-" + strconv.Itoa(i)
-		cache.Set(ctx, key, value)
+		cache.Set(ctx, key, []byte(value))
 	}
 
 	b.ResetTimer()
@@ -435,7 +434,7 @@ func BenchmarkMemoryCache_HotKey(b *testing.B) {
 	value := "hot-value"
 
 	// Pre-populate the hot key
-	cache.Set(ctx, hotKey, value)
+	cache.Set(ctx, hotKey, []byte(value))
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
@@ -455,7 +454,7 @@ func BenchmarkMemoryCache_ColdKey(b *testing.B) {
 	for i := 0; i < numKeys; i++ {
 		key := "key-" + strconv.Itoa(i)
 		value := "value-" + strconv.Itoa(i)
-		cache.Set(ctx, key, value)
+		cache.Set(ctx, key, []byte(value))
 	}
 
 	b.ResetTimer()

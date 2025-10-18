@@ -13,7 +13,7 @@ type memoryCache struct {
 	mux sync.RWMutex
 }
 
-func NewMemory(ttl time.Duration) Cache {
+func NewMemory(ttl time.Duration) *memoryCache {
 	return &memoryCache{
 		items: make(map[string]*memoryItem),
 		ttl:   ttl,
@@ -23,13 +23,13 @@ func NewMemory(ttl time.Duration) Cache {
 }
 
 type memoryItem struct {
-	value      string
+	value      []byte
 	validUntil time.Time
 }
 
-func newItem(value string, opts options) *memoryItem {
+func newItem(value []byte, opts options) *memoryItem {
 	item := &memoryItem{
-		value:      value,
+		value:      append([]byte{}, value...),
 		validUntil: opts.validUntil,
 	}
 
@@ -57,7 +57,7 @@ func (m *memoryCache) Delete(_ context.Context, key string) error {
 }
 
 // Drain implements Cache.
-func (m *memoryCache) Drain(_ context.Context) (map[string]string, error) {
+func (m *memoryCache) Drain(_ context.Context) (map[string][]byte, error) {
 	var cpy map[string]*memoryItem
 
 	m.cleanup(func() {
@@ -65,7 +65,7 @@ func (m *memoryCache) Drain(_ context.Context) (map[string]string, error) {
 		m.items = make(map[string]*memoryItem)
 	})
 
-	items := make(map[string]string, len(cpy))
+	items := make(map[string][]byte, len(cpy))
 	for key, item := range cpy {
 		items[key] = item.value
 	}
@@ -74,30 +74,45 @@ func (m *memoryCache) Drain(_ context.Context) (map[string]string, error) {
 }
 
 // Get implements Cache.
-func (m *memoryCache) Get(_ context.Context, key string) (string, error) {
+func (m *memoryCache) Get(_ context.Context, key string, opts ...GetOption) ([]byte, error) {
 	return m.getValue(func() (*memoryItem, bool) {
-		m.mux.RLock()
-		item, ok := m.items[key]
-		m.mux.RUnlock()
+		if len(opts) == 0 {
+			m.mux.RLock()
+			item, ok := m.items[key]
+			m.mux.RUnlock()
 
-		return item, ok
-	})
-}
+			return item, ok
+		}
 
-// GetAndDelete implements Cache.
-func (m *memoryCache) GetAndDelete(_ context.Context, key string) (string, error) {
-	return m.getValue(func() (*memoryItem, bool) {
+		o := getOptions{}
+		o.apply(opts...)
+
 		m.mux.Lock()
 		item, ok := m.items[key]
-		delete(m.items, key)
+		if o.delete {
+			delete(m.items, key)
+		} else if !item.isExpired(time.Now()) {
+			if o.validUntil != nil {
+				item.validUntil = *o.validUntil
+			} else if o.setTTL != nil {
+				item.validUntil = time.Now().Add(*o.setTTL)
+			} else if o.updateTTL != nil {
+				item.validUntil = item.validUntil.Add(*o.updateTTL)
+			}
+		}
 		m.mux.Unlock()
 
 		return item, ok
 	})
 }
 
+// GetAndDelete implements Cache.
+func (m *memoryCache) GetAndDelete(ctx context.Context, key string) ([]byte, error) {
+	return m.Get(ctx, key, AndDelete())
+}
+
 // Set implements Cache.
-func (m *memoryCache) Set(_ context.Context, key string, value string, opts ...Option) error {
+func (m *memoryCache) Set(_ context.Context, key string, value []byte, opts ...Option) error {
 	m.mux.Lock()
 	m.items[key] = m.newItem(value, opts...)
 	m.mux.Unlock()
@@ -106,7 +121,7 @@ func (m *memoryCache) Set(_ context.Context, key string, value string, opts ...O
 }
 
 // SetOrFail implements Cache.
-func (m *memoryCache) SetOrFail(_ context.Context, key string, value string, opts ...Option) error {
+func (m *memoryCache) SetOrFail(_ context.Context, key string, value []byte, opts ...Option) error {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
@@ -120,7 +135,7 @@ func (m *memoryCache) SetOrFail(_ context.Context, key string, value string, opt
 	return nil
 }
 
-func (m *memoryCache) newItem(value string, opts ...Option) *memoryItem {
+func (m *memoryCache) newItem(value []byte, opts ...Option) *memoryItem {
 	o := options{
 		validUntil: time.Time{},
 	}
@@ -146,13 +161,13 @@ func (m *memoryCache) getItem(getter func() (*memoryItem, bool)) (*memoryItem, e
 	return item, nil
 }
 
-func (m *memoryCache) getValue(getter func() (*memoryItem, bool)) (string, error) {
+func (m *memoryCache) getValue(getter func() (*memoryItem, bool)) ([]byte, error) {
 	item, err := m.getItem(getter)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return item.value, nil
+	return append([]byte{}, item.value...), nil
 }
 
 func (m *memoryCache) cleanup(cb func()) {
@@ -168,3 +183,5 @@ func (m *memoryCache) cleanup(cb func()) {
 	cb()
 	m.mux.Unlock()
 }
+
+var _ Cache = (*memoryCache)(nil)
