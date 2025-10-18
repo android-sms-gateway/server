@@ -15,10 +15,14 @@ func Module() fx.Option {
 			return log.Named("pubsub")
 		}),
 		fx.Provide(New),
-		fx.Invoke(func(pubsub pubsub.PubSub, lc fx.Lifecycle) {
+		fx.Invoke(func(ps pubsub.PubSub, logger *zap.Logger, lc fx.Lifecycle) {
 			lc.Append(fx.Hook{
 				OnStop: func(_ context.Context) error {
-					return pubsub.Close()
+					if err := ps.Close(); err != nil {
+						logger.Error("pubsub close failed", zap.Error(err))
+						return err
+					}
+					return nil
 				},
 			})
 		}),
