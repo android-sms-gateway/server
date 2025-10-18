@@ -26,10 +26,29 @@ end
 	hgetallAndDeleteScript = `
 local items = redis.call('HGETALL', KEYS[1])
 if #items > 0 then
-  local ok = pcall(redis.call, 'UNLINK', KEYS[1])
-  if not ok then redis.call('DEL', KEYS[1]) end
+	 local ok = pcall(redis.call, 'UNLINK', KEYS[1])
+	 if not ok then redis.call('DEL', KEYS[1]) end
 end
 return items
+`
+
+	// getAndUpdateTTLScript atomically gets a hash field and updates its TTL
+	getAndUpdateTTLScript = `
+local value = redis.call('HGET', KEYS[1], ARGV[1])
+if value then
+	if ARGV[2] then
+		redis.call('HDEL', KEYS[1], ARGV[1])
+	elseif ARGV[3] > 0 then
+	 	redis.call('HExpireAt', KEYS[1], ARGV[2], ARGV[1])
+	elseif ARGV[4] > 0 then
+	 	local ttl = redis.call('HPTTL', KEYS[1], ARGV[1])
+	 	redis.call('HExpireAt', KEYS[1], ttl + ARGV[3], ARGV[1])
+	end
+
+	return value
+else
+	return false
+end
 `
 )
 
@@ -92,22 +111,46 @@ func (r *redisCache) Drain(ctx context.Context) (map[string][]byte, error) {
 }
 
 // Get implements Cache.
-func (r *redisCache) Get(ctx context.Context, key string) ([]byte, error) {
-	val, err := r.client.HGet(ctx, r.key, key).Result()
-	if err != nil {
-		if err == redis.Nil {
-			return nil, ErrKeyNotFound
+func (r *redisCache) Get(ctx context.Context, key string, opts ...GetOption) ([]byte, error) {
+	o := getOptions{}
+	o.apply(opts...)
+
+	if o.isEmpty() {
+		// No options, simple get
+		val, err := r.client.HGet(ctx, r.key, key).Result()
+		if err != nil {
+			if err == redis.Nil {
+				return nil, ErrKeyNotFound
+			}
+
+			return nil, fmt.Errorf("can't get cache item: %w", err)
 		}
 
-		return nil, fmt.Errorf("can't get cache item: %w", err)
+		return []byte(val), nil
 	}
 
-	return []byte(val), nil
-}
+	// Handle TTL options atomically using Lua script
+	var ttlTimestamp, ttlDelta int64
+	if o.validUntil != nil {
+		ttlTimestamp = o.validUntil.Unix()
+	} else if o.setTTL != nil {
+		ttlTimestamp = time.Now().Add(*o.setTTL).Unix()
+	} else if o.updateTTL != nil {
+		ttlDelta = int64(o.updateTTL.Seconds())
+	} else {
+		// No TTL options, fallback to simple get
+		val, err := r.client.HGet(ctx, r.key, key).Result()
+		if err != nil {
+			if err == redis.Nil {
+				return nil, ErrKeyNotFound
+			}
+			return nil, fmt.Errorf("can't get cache item: %w", err)
+		}
+		return []byte(val), nil
+	}
 
-// GetAndDelete implements Cache.
-func (r *redisCache) GetAndDelete(ctx context.Context, key string) ([]byte, error) {
-	result, err := r.client.Eval(ctx, getAndDeleteScript, []string{r.key}, key).Result()
+	// Use atomic get and TTL update script
+	result, err := r.client.Eval(ctx, getAndUpdateTTLScript, []string{r.key}, key, o.delete, ttlTimestamp, ttlDelta).Result()
 	if err != nil {
 		return nil, fmt.Errorf("can't get cache item: %w", err)
 	}
@@ -117,6 +160,11 @@ func (r *redisCache) GetAndDelete(ctx context.Context, key string) ([]byte, erro
 	}
 
 	return nil, ErrKeyNotFound
+}
+
+// GetAndDelete implements Cache.
+func (r *redisCache) GetAndDelete(ctx context.Context, key string) ([]byte, error) {
+	return r.Get(ctx, key, AndDelete())
 }
 
 // Set implements Cache.

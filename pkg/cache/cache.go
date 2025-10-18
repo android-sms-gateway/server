@@ -14,7 +14,7 @@ type Cache interface {
 	// If the key is not found, it returns ErrKeyNotFound.
 	// If the key has expired, it returns ErrKeyExpired.
 	// Otherwise, it returns the value and nil.
-	Get(ctx context.Context, key string) ([]byte, error)
+	Get(ctx context.Context, key string, opts ...GetOption) ([]byte, error)
 
 	// GetAndDelete is like Get, but also deletes the key from the cache.
 	GetAndDelete(ctx context.Context, key string) ([]byte, error)
