@@ -29,7 +29,7 @@ type memoryItem struct {
 
 func newItem(value []byte, opts options) *memoryItem {
 	item := &memoryItem{
-		value:      value,
+		value:      append([]byte{}, value...),
 		validUntil: opts.validUntil,
 	}
 
@@ -91,7 +91,7 @@ func (m *memoryCache) Get(_ context.Context, key string, opts ...GetOption) ([]b
 		item, ok := m.items[key]
 		if o.delete {
 			delete(m.items, key)
-		} else {
+		} else if !item.isExpired(time.Now()) {
 			if o.validUntil != nil {
 				item.validUntil = *o.validUntil
 			} else if o.setTTL != nil {
@@ -109,15 +109,6 @@ func (m *memoryCache) Get(_ context.Context, key string, opts ...GetOption) ([]b
 // GetAndDelete implements Cache.
 func (m *memoryCache) GetAndDelete(ctx context.Context, key string) ([]byte, error) {
 	return m.Get(ctx, key, AndDelete())
-
-	// return m.getValue(func() (*memoryItem, bool) {
-	// 	m.mux.Lock()
-	// 	item, ok := m.items[key]
-	// 	delete(m.items, key)
-	// 	m.mux.Unlock()
-
-	// 	return item, ok
-	// })
 }
 
 // Set implements Cache.
@@ -176,7 +167,7 @@ func (m *memoryCache) getValue(getter func() (*memoryItem, bool)) ([]byte, error
 		return nil, err
 	}
 
-	return item.value, nil
+	return append([]byte{}, item.value...), nil
 }
 
 func (m *memoryCache) cleanup(cb func()) {

@@ -12,17 +12,6 @@ import (
 const (
 	redisCacheKey = "cache"
 
-	// getAndDeleteScript atomically gets and deletes a hash field
-	getAndDeleteScript = `
-local value = redis.call('HGET', KEYS[1], ARGV[1])
-if value then
-	redis.call('HDEL', KEYS[1], ARGV[1])
-	return value
-else
-	return false
-end
-`
-
 	hgetallAndDeleteScript = `
 local items = redis.call('HGETALL', KEYS[1])
 if #items > 0 then
@@ -34,21 +23,28 @@ return items
 
 	// getAndUpdateTTLScript atomically gets a hash field and updates its TTL
 	getAndUpdateTTLScript = `
-local value = redis.call('HGET', KEYS[1], ARGV[1])
-if value then
-	if ARGV[2] then
-		redis.call('HDEL', KEYS[1], ARGV[1])
-	elseif ARGV[3] > 0 then
-	 	redis.call('HExpireAt', KEYS[1], ARGV[2], ARGV[1])
-	elseif ARGV[4] > 0 then
-	 	local ttl = redis.call('HPTTL', KEYS[1], ARGV[1])
-	 	redis.call('HExpireAt', KEYS[1], ttl + ARGV[3], ARGV[1])
-	end
+local field = ARGV[1]
+local deleteFlag = (ARGV[2] == "1" or ARGV[2] == "true")
+local ttlTs = tonumber(ARGV[3]) or 0
+local ttlDelta = tonumber(ARGV[4]) or 0
 
-	return value
-else
-	return false
+local value = redis.call('HGET', KEYS[1], field)
+if not value then return false end
+
+if deleteFlag then
+  redis.call('HDEL', KEYS[1], field)
+  return value
 end
+
+if ttlTs > 0 then
+  redis.call('HExpireAt', KEYS[1], ttlTs, field)
+elseif ttlDelta > 0 then
+  local ttl = redis.call('HTTL', KEYS[1], field)
+  local newTtl = ttl + ttlDelta
+  redis.call('HExpire', KEYS[1], exp, field)
+end
+
+return value
 `
 )
 
@@ -149,8 +145,13 @@ func (r *redisCache) Get(ctx context.Context, key string, opts ...GetOption) ([]
 		return []byte(val), nil
 	}
 
+	delArg := "0"
+	if o.delete {
+		delArg = "1"
+	}
+
 	// Use atomic get and TTL update script
-	result, err := r.client.Eval(ctx, getAndUpdateTTLScript, []string{r.key}, key, o.delete, ttlTimestamp, ttlDelta).Result()
+	result, err := r.client.Eval(ctx, getAndUpdateTTLScript, []string{r.key}, key, delArg, ttlTimestamp, ttlDelta).Result()
 	if err != nil {
 		return nil, fmt.Errorf("can't get cache item: %w", err)
 	}
@@ -207,7 +208,7 @@ func (r *redisCache) SetOrFail(ctx context.Context, key string, value []byte, op
 	options.apply(opts...)
 
 	if !options.validUntil.IsZero() {
-		if err := r.client.HExpireAt(ctx, r.key, options.validUntil).Err(); err != nil {
+		if err := r.client.HExpireAt(ctx, r.key, options.validUntil, key).Err(); err != nil {
 			return fmt.Errorf("can't set cache item ttl: %w", err)
 		}
 	}
