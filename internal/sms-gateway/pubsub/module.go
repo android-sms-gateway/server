@@ -3,7 +3,6 @@ package pubsub
 import (
 	"context"
 
-	"github.com/android-sms-gateway/server/pkg/pubsub"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -15,7 +14,7 @@ func Module() fx.Option {
 			return log.Named("pubsub")
 		}),
 		fx.Provide(New),
-		fx.Invoke(func(ps pubsub.PubSub, logger *zap.Logger, lc fx.Lifecycle) {
+		fx.Invoke(func(ps PubSub, logger *zap.Logger, lc fx.Lifecycle) {
 			lc.Append(fx.Hook{
 				OnStop: func(_ context.Context) error {
 					if err := ps.Close(); err != nil {
