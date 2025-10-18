@@ -37,6 +37,10 @@ func newItem(value []byte, opts options) *memoryItem {
 }
 
 func (i *memoryItem) isExpired(now time.Time) bool {
+	if i == nil {
+		return true
+	}
+
 	return !i.validUntil.IsZero() && now.After(i.validUntil)
 }
 
@@ -74,26 +78,45 @@ func (m *memoryCache) Drain(_ context.Context) (map[string][]byte, error) {
 }
 
 // Get implements Cache.
-func (m *memoryCache) Get(_ context.Context, key string) ([]byte, error) {
+func (m *memoryCache) Get(_ context.Context, key string, opts ...GetOption) ([]byte, error) {
 	return m.getValue(func() (*memoryItem, bool) {
-		m.mux.RLock()
+		if len(opts) == 0 {
+			m.mux.RLock()
+			item, ok := m.items[key]
+			m.mux.RUnlock()
+
+			return item, ok
+		}
+
+		o := getOptions{}
+		o.apply(opts...)
+
+		m.mux.Lock()
 		item, ok := m.items[key]
-		m.mux.RUnlock()
+		if !ok {
+			// item not found, nothing to do
+		} else if o.delete {
+			delete(m.items, key)
+		} else if !item.isExpired(time.Now()) {
+			if o.validUntil != nil {
+				item.validUntil = *o.validUntil
+			} else if o.setTTL != nil {
+				item.validUntil = time.Now().Add(*o.setTTL)
+			} else if o.updateTTL != nil {
+				item.validUntil = item.validUntil.Add(*o.updateTTL)
+			} else if o.defaultTTL {
+				item.validUntil = time.Now().Add(m.ttl)
+			}
+		}
+		m.mux.Unlock()
 
 		return item, ok
 	})
 }
 
 // GetAndDelete implements Cache.
-func (m *memoryCache) GetAndDelete(_ context.Context, key string) ([]byte, error) {
-	return m.getValue(func() (*memoryItem, bool) {
-		m.mux.Lock()
-		item, ok := m.items[key]
-		delete(m.items, key)
-		m.mux.Unlock()
-
-		return item, ok
-	})
+func (m *memoryCache) GetAndDelete(ctx context.Context, key string) ([]byte, error) {
+	return m.Get(ctx, key, AndDelete())
 }
 
 // Set implements Cache.
