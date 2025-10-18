@@ -75,17 +75,17 @@ func (m *memoryCache) Drain(_ context.Context) (map[string][]byte, error) {
 
 // Get implements Cache.
 func (m *memoryCache) Get(_ context.Context, key string, opts ...GetOption) ([]byte, error) {
-	o := getOptions{}
-	o.apply(opts...)
-
 	return m.getValue(func() (*memoryItem, bool) {
-		if o.isEmpty() {
+		if len(opts) == 0 {
 			m.mux.RLock()
 			item, ok := m.items[key]
 			m.mux.RUnlock()
 
 			return item, ok
 		}
+
+		o := getOptions{}
+		o.apply(opts...)
 
 		m.mux.Lock()
 		item, ok := m.items[key]
