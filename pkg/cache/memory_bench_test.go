@@ -17,12 +17,12 @@ func BenchmarkMemoryCache_Set(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
 	key := "benchmark-key"
-	value := "benchmark-value"
+	value := []byte("benchmark-value")
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			cache.Set(ctx, key, []byte(value))
+			cache.Set(ctx, key, value)
 		}
 	})
 }
@@ -69,12 +69,12 @@ func BenchmarkMemoryCache_SetOrFail(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
 	key := "benchmark-key"
-	value := "benchmark-value"
+	value := []byte("benchmark-value")
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			cache.SetOrFail(ctx, key, []byte(value))
+			cache.SetOrFail(ctx, key, value)
 		}
 	})
 }
@@ -310,7 +310,7 @@ func BenchmarkMemoryCache_TTLOverhead(b *testing.B) {
 	c := cache.NewMemory(0)
 	ctx := context.Background()
 	key := "benchmark-key"
-	value := "benchmark-value"
+	value := []byte("benchmark-value")
 	ttl := time.Hour
 
 	benchmarks := []struct {
@@ -327,9 +327,9 @@ func BenchmarkMemoryCache_TTLOverhead(b *testing.B) {
 			b.RunParallel(func(pb *testing.PB) {
 				for pb.Next() {
 					if bm.withTTL {
-						c.Set(ctx, key, []byte(value), cache.WithTTL(ttl))
+						c.Set(ctx, key, value, cache.WithTTL(ttl))
 					} else {
-						c.Set(ctx, key, []byte(value))
+						c.Set(ctx, key, value)
 					}
 				}
 			})
