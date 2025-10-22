@@ -6,10 +6,36 @@ ifeq ($(OS),Windows_NT)
 	extension = .exe
 endif
 
-.DEFAULT_GOAL := build
+# Default target
+all: fmt lint test benchmark
 
-init:
+fmt:
+	golangci-lint fmt
+
+# Lint the code using golangci-lint
+lint:
+	golangci-lint run --timeout=5m
+
+# Run tests with coverage
+test:
+	go test -race -shuffle=on -count=1 -covermode=atomic -coverpkg=./... -coverprofile=coverage.out ./...
+
+# Run benchmarks
+benchmark:
+	go test -run=^$$ -bench=. -benchmem ./... | tee benchmark.txt
+
+# Download dependencies
+deps:
 	go mod download
+
+# Clean up generated files
+clean:
+	go clean -cache -testcache
+	rm -f coverage.out benchmark.txt
+
+###
+
+init: deps
 
 init-dev: init
 	go install github.com/air-verse/air@latest \
@@ -31,11 +57,7 @@ db-upgrade-raw:
 run:
 	go run cmd/$(project_name)/main.go
 
-lint:
-	golangci-lint run ./...
-
-test:
-	go test -race -coverprofile=coverage.out -covermode=atomic ./...
+test-e2e: test
 	cd test/e2e && go test -count=1 .
 
 build:
@@ -53,7 +75,7 @@ docker:
 docker-dev:
 	docker compose -f deployments/docker-compose/docker-compose.dev.yml up --build
 
-clean:
+docker-clean:
 	docker compose -f deployments/docker-compose/docker-compose.yml down --volumes
 
-.PHONY: init init-dev air db-upgrade db-upgrade-raw run test build install docker docker-dev api-docs view-docs clean
+.PHONY: all fmt lint test benchmark deps clean init init-dev air ngrok db-upgrade db-upgrade-raw run test-e2e build install docker-build docker docker-dev docker-clean
