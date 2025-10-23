@@ -10,8 +10,8 @@ const (
 	metricsSubsystem = "messages"
 
 	metricMessagesTotal = "total"
-	metricCacheHits   = "cache_hits_total"
-	metricCacheMisses = "cache_misses_total"
+	metricCacheHits     = "cache_hits_total"
+	metricCacheMisses   = "cache_misses_total"
 
 	labelState = "state"
 )

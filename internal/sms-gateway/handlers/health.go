@@ -5,75 +5,102 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/health"
 	"github.com/android-sms-gateway/server/internal/version"
-	"github.com/capcom6/go-helpers/maps"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"go.uber.org/fx"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
-
-type healthHanlderParams struct {
-	fx.In
-
-	HealthSvc *health.Service
-
-	Logger *zap.Logger
-}
 
 type healthHandler struct {
 	base.Handler
 
 	healthSvc *health.Service
-
-	logger *zap.Logger
 }
 
-//	@Summary		Health check
-//	@Description	Checks if service is healthy
+func newHealthHandler(
+	healthSvc *health.Service,
+	logger *zap.Logger,
+	validator *validator.Validate,
+) *healthHandler {
+	return &healthHandler{
+		Handler: base.Handler{
+			Logger:    logger,
+			Validator: validator,
+		},
+		healthSvc: healthSvc,
+	}
+}
+
+//	@Summary		Liveness probe
+//	@Description	Checks if service is running (liveness probe)
 //	@Tags			System
 //	@Produce		json
-//	@Success		200	{object}	smsgateway.HealthResponse	"Health check result"
-//	@Failure		500	{object}	smsgateway.HealthResponse	"Service is unhealthy"
-//	@Router			/3rdparty/v1/health [get]
+//	@Success		200	{object}	smsgateway.HealthResponse	"Service is alive"
+//	@Failure		503	{object}	smsgateway.HealthResponse	"Service is not alive"
+//	@Router			/health/live [get]
 //
-// Health check
-func (h *healthHandler) getHealth(c *fiber.Ctx) error {
-	check, err := h.healthSvc.HealthCheck(c.Context())
-	if err != nil {
-		return err
-	}
+// Liveness probe
+func (h *healthHandler) getLiveness(c *fiber.Ctx) error {
+	return writeProbe(c, h.healthSvc.CheckLiveness(c.Context()))
+}
 
-	res := smsgateway.HealthResponse{
-		Status:    smsgateway.HealthStatus(check.Status),
+// @Summary		Readiness probe
+// @Description	Checks if service is ready to serve traffic (readiness probe)
+// @Tags			System
+// @Produce		json
+// @Success		200	{object}	smsgateway.HealthResponse	"Service is ready"
+// @Failure		503	{object}	smsgateway.HealthResponse	"Service is not ready"
+// @Router			/health/ready [get]
+// @Router			/3rdparty/v1/health [get]
+//
+// Readiness probe
+func (h *healthHandler) getReadiness(c *fiber.Ctx) error {
+	return writeProbe(c, h.healthSvc.CheckReadiness(c.Context()))
+}
+
+// @Summary		Startup probe
+// @Description	Checks if service has completed initialization (startup probe)
+// @Tags			System
+// @Produce		json
+// @Success		200	{object}	smsgateway.HealthResponse	"Service has completed initialization"
+// @Failure		503	{object}	smsgateway.HealthResponse	"Service has not completed initialization"
+// @Router			/health/startup [get]
+//
+// Startup probe
+func (h *healthHandler) getStartup(c *fiber.Ctx) error {
+	return writeProbe(c, h.healthSvc.CheckStartup(c.Context()))
+}
+
+func writeProbe(c *fiber.Ctx, r health.CheckResult) error {
+	status := fiber.StatusOK
+	if r.Status() == health.StatusFail {
+		status = fiber.StatusServiceUnavailable
+	}
+	return c.Status(status).JSON(makeResponse(r))
+}
+
+func makeResponse(result health.CheckResult) smsgateway.HealthResponse {
+	return smsgateway.HealthResponse{
+		Status:    smsgateway.HealthStatus(result.Status()),
 		Version:   version.AppVersion,
 		ReleaseID: version.AppReleaseID(),
-		Checks: maps.MapValues(
-			check.Checks,
-			func(c health.CheckDetail) smsgateway.HealthCheck {
+		Checks: lo.MapValues(
+			result.Checks,
+			func(value health.CheckDetail, key string) smsgateway.HealthCheck {
 				return smsgateway.HealthCheck{
-					Description:   c.Description,
-					ObservedUnit:  c.ObservedUnit,
-					ObservedValue: c.ObservedValue,
-					Status:        smsgateway.HealthStatus(c.Status),
+					Description:   value.Description,
+					ObservedUnit:  value.ObservedUnit,
+					ObservedValue: value.ObservedValue,
+					Status:        smsgateway.HealthStatus(value.Status),
 				}
 			},
 		),
 	}
-
-	if check.Status == health.StatusFail {
-		return c.Status(fiber.StatusInternalServerError).JSON(res)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(res)
 }
 
 func (h *healthHandler) Register(router fiber.Router) {
-	router.Get("/health", h.getHealth)
-}
-
-func newHealthHandler(params healthHanlderParams) *healthHandler {
-	return &healthHandler{
-		Handler:   base.Handler{Logger: params.Logger.Named("HealthHandler"), Validator: nil},
-		healthSvc: params.HealthSvc,
-		logger:    params.Logger,
-	}
+	router.Get("/health", h.getReadiness)
+	router.Get("/health/live", h.getLiveness)
+	router.Get("/health/ready", h.getReadiness)
+	router.Get("/health/startup", h.getStartup)
 }
