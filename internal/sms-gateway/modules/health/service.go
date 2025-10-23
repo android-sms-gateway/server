@@ -29,52 +29,56 @@ func NewService(params ServiceParams) *Service {
 	}
 }
 
-func (s *Service) HealthCheck(ctx context.Context) (Check, error) {
-	check := Check{
-		Status: StatusPass,
+func (s *Service) checkProvider(ctx context.Context, probe func(context.Context, HealthProvider) (Checks, error)) CheckResult {
+	check := CheckResult{
 		Checks: map[string]CheckDetail{},
 	}
 
-	level := levelPass
 	for _, p := range s.healthProviders {
-		healthChecks, err := p.HealthCheck(ctx)
-		if err != nil {
-			s.logger.Error("Error getting health check", zap.String("provider", p.Name()), zap.Error(err))
+		select {
+		case <-ctx.Done():
+			return check
+		default:
 		}
+
+		healthChecks, err := probe(ctx, p)
+		if err != nil {
+			s.logger.Error("Failed check", zap.String("provider", p.Name()), zap.Error(err))
+			check.Checks[p.Name()] = CheckDetail{
+				Description:   "Failed check",
+				ObservedUnit:  "",
+				ObservedValue: 0,
+				Status:        StatusFail,
+			}
+			continue
+		}
+
 		if len(healthChecks) == 0 {
 			continue
 		}
 
 		for name, detail := range healthChecks {
 			check.Checks[p.Name()+":"+name] = detail
-
-			switch detail.Status {
-			case StatusPass:
-			case StatusFail:
-				level = max(level, levelFail)
-			case StatusWarn:
-				level = max(level, levelWarn)
-			default:
-				// Unknown status – log it and fail-safe by escalating to `levelFail`.
-				s.logger.Warn("health check returned unknown status",
-					zap.String("provider", p.Name()),
-					zap.String("check", name),
-					zap.String("status", string(detail.Status)),
-				)
-				level = max(level, levelFail)
-			}
 		}
 	}
 
-	check.Status = statusLevels[level]
-
-	return check, nil
+	return check
 }
 
-func AsHealthProvider(f any) any {
-	return fx.Annotate(
-		f,
-		fx.As(new(HealthProvider)),
-		fx.ResultTags(`group:"health-providers"`),
-	)
+func (s *Service) CheckReadiness(ctx context.Context) CheckResult {
+	return s.checkProvider(ctx, func(ctx context.Context, p HealthProvider) (Checks, error) {
+		return p.ReadyProbe(ctx)
+	})
+}
+
+func (s *Service) CheckLiveness(ctx context.Context) CheckResult {
+	return s.checkProvider(ctx, func(ctx context.Context, p HealthProvider) (Checks, error) {
+		return p.LiveProbe(ctx)
+	})
+}
+
+func (s *Service) CheckStartup(ctx context.Context) CheckResult {
+	return s.checkProvider(ctx, func(ctx context.Context, p HealthProvider) (Checks, error) {
+		return p.StartedProbe(ctx)
+	})
 }
