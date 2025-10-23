@@ -7,7 +7,7 @@ require (
 	github.com/android-sms-gateway/client-go v1.9.5
 	github.com/ansrivas/fiberprometheus/v2 v2.6.1
 	github.com/capcom6/go-helpers v0.3.0
-	github.com/capcom6/go-infra-fx v0.4.0
+	github.com/capcom6/go-infra-fx v0.5.2
 	github.com/go-playground/assert/v2 v2.2.0
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/go-sql-driver/mysql v1.7.1
