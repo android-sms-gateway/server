@@ -1,6 +1,8 @@
 package health
 
-import "context"
+import (
+	"context"
+)
 
 type Status string
 type statusLevel int
@@ -22,12 +24,27 @@ var statusLevels = map[statusLevel]Status{
 }
 
 // Health status of the application.
-type Check struct {
-	// Overall status of the application.
-	// It can be one of the following values: "pass", "warn", or "fail".
-	Status Status
+type CheckResult struct {
 	// A map of check names to their respective details.
 	Checks Checks
+}
+
+// Overall status of the application.
+// It can be one of the following values: "pass", "warn", or "fail".
+func (c CheckResult) Status() Status {
+	// Determine overall status
+	level := levelPass
+	for _, detail := range c.Checks {
+		switch detail.Status {
+		case StatusPass:
+		case StatusFail:
+			level = max(level, levelFail)
+		case StatusWarn:
+			level = max(level, levelWarn)
+		}
+	}
+
+	return statusLevels[level]
 }
 
 // Details of a health check.
@@ -48,5 +65,8 @@ type Checks map[string]CheckDetail
 
 type HealthProvider interface {
 	Name() string
-	HealthCheck(ctx context.Context) (Checks, error)
+
+	StartedProbe(ctx context.Context) (Checks, error)
+	ReadyProbe(ctx context.Context) (Checks, error)
+	LiveProbe(ctx context.Context) (Checks, error)
 }
