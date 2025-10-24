@@ -5,6 +5,6 @@ import (
 )
 
 type Event struct {
-	Type smsgateway.PushEventType
-	Data map[string]string
+	Type smsgateway.PushEventType `json:"type"`
+	Data map[string]string        `json:"data"`
 }
