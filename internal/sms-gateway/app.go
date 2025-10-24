@@ -43,7 +43,7 @@ var Module = fx.Module(
 	openapi.Module(),
 	handlers.Module,
 	auth.Module,
-	push.Module,
+	push.Module(),
 	db.Module,
 	cache.Module(),
 	pubsub.Module(),

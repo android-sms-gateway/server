@@ -2,6 +2,7 @@ package push
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/types"
 )
@@ -17,12 +18,24 @@ type Event = types.Event
 
 type client interface {
 	Open(ctx context.Context) error
-	Send(ctx context.Context, messages map[string]types.Event) (map[string]error, error)
+	Send(ctx context.Context, messages map[string]Event) (map[string]error, error)
 	Close(ctx context.Context) error
 }
 
 type eventWrapper struct {
-	token   string
-	event   *types.Event
-	retries int
+	Token   string `json:"token"`
+	Event   Event  `json:"event"`
+	Retries int    `json:"retries"`
+}
+
+func (e *eventWrapper) key() string {
+	return e.Token + ":" + string(e.Event.Type)
+}
+
+func (e *eventWrapper) serialize() ([]byte, error) {
+	return json.Marshal(e)
+}
+
+func (e *eventWrapper) deserialize(data []byte) error {
+	return json.Unmarshal(data, e)
 }
