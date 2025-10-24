@@ -18,6 +18,7 @@ require (
 	github.com/nyaruka/phonenumbers v1.4.0
 	github.com/prometheus/client_golang v1.19.1
 	github.com/redis/go-redis/v9 v9.9.0
+	github.com/samber/lo v1.52.0
 	github.com/swaggo/swag v1.16.6
 	go.uber.org/fx v1.24.0
 	go.uber.org/zap v1.27.0

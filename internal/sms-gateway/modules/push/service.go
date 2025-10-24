@@ -5,12 +5,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/android-sms-gateway/server/internal/sms-gateway/cache"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/types"
-	"github.com/capcom6/go-helpers/cache"
-	"github.com/capcom6/go-helpers/maps"
+	cacheImpl "github.com/android-sms-gateway/server/pkg/cache"
+	"github.com/samber/lo"
 
-	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+const (
+	cachePrefixEvents    = "events:"
+	cachePrefixBlacklist = "blacklist:"
 )
 
 type Config struct {
@@ -22,53 +27,51 @@ type Config struct {
 	Timeout  time.Duration
 }
 
-type Params struct {
-	fx.In
-
-	Config Config
-
-	Client  client
-	Metrics *metrics
-
-	Logger *zap.Logger
-}
-
 type Service struct {
 	config Config
 
-	client  client
+	client    client
+	events    cache.Cache
+	blacklist cache.Cache
+
 	metrics *metrics
-
-	cache     *cache.Cache[eventWrapper]
-	blacklist *cache.Cache[struct{}]
-
-	logger *zap.Logger
+	logger  *zap.Logger
 }
 
-func New(params Params) *Service {
-	if params.Config.Timeout == 0 {
-		params.Config.Timeout = time.Second
+func New(
+	config Config,
+	client client,
+	cacheFactory cache.Factory,
+	metrics *metrics,
+	logger *zap.Logger,
+) (*Service, error) {
+	events, err := cacheFactory.New(cachePrefixEvents)
+	if err != nil {
+		return nil, fmt.Errorf("can't create events cache: %w", err)
 	}
-	if params.Config.Debounce < 5*time.Second {
-		params.Config.Debounce = 5 * time.Second
+
+	blacklist, err := cacheFactory.New(cachePrefixBlacklist)
+	if err != nil {
+		return nil, fmt.Errorf("can't create blacklist cache: %w", err)
 	}
+
+	config.Timeout = max(config.Timeout, time.Second)
+	config.Debounce = max(config.Debounce, 5*time.Second)
 
 	return &Service{
-		config: params.Config,
+		config: config,
 
-		client:  params.Client,
-		metrics: params.Metrics,
+		client:    client,
+		events:    events,
+		blacklist: blacklist,
 
-		cache: cache.New[eventWrapper](cache.Config{}),
-		blacklist: cache.New[struct{}](cache.Config{
-			TTL: blacklistTimeout,
-		}),
-
-		logger: params.Logger,
-	}
+		metrics: metrics,
+		logger:  logger,
+	}, nil
 }
 
-// Run runs the service with the provided context if a debounce is set.
+// Run starts a ticker that triggers the sendAll function every debounce interval.
+// It runs indefinitely until the provided context is canceled.
 func (s *Service) Run(ctx context.Context) {
 	ticker := time.NewTicker(s.config.Debounce)
 	defer ticker.Stop()
@@ -85,19 +88,28 @@ func (s *Service) Run(ctx context.Context) {
 
 // Enqueue adds the data to the cache and immediately sends all messages if the debounce is 0.
 func (s *Service) Enqueue(token string, event types.Event) error {
-	if _, err := s.blacklist.Get(token); err == nil {
+	ctx, cancel := context.WithTimeout(context.Background(), s.config.Timeout)
+	defer cancel()
+
+	if _, err := s.blacklist.Get(ctx, token); err == nil {
 		s.metrics.IncBlacklist(BlacklistOperationSkipped)
 		s.logger.Debug("Skipping blacklisted token", zap.String("token", token))
 		return nil
 	}
 
 	wrapper := eventWrapper{
-		token:   token,
-		event:   &event,
-		retries: 0,
+		Token:   token,
+		Event:   event,
+		Retries: 0,
+	}
+	wrapperData, err := wrapper.serialize()
+	if err != nil {
+		s.metrics.IncError(1)
+		return fmt.Errorf("can't serialize event wrapper: %w", err)
 	}
 
-	if err := s.cache.Set(token, wrapper); err != nil {
+	if err := s.events.Set(ctx, wrapper.key(), wrapperData); err != nil {
+		s.metrics.IncError(1)
 		return fmt.Errorf("can't add message to cache: %w", err)
 	}
 
@@ -108,20 +120,43 @@ func (s *Service) Enqueue(token string, event types.Event) error {
 
 // sendAll sends messages to all targets from the cache after initializing the service.
 func (s *Service) sendAll(ctx context.Context) {
-	targets := s.cache.Drain()
-	if len(targets) == 0 {
+	rawEvents, err := s.events.Drain(ctx)
+	if err != nil {
+		s.logger.Error("Can't drain cache", zap.Error(err))
 		return
 	}
 
-	messages := maps.MapValues(targets, func(w eventWrapper) types.Event {
-		return *w.event
-	})
+	if len(rawEvents) == 0 {
+		return
+	}
+
+	wrappers := lo.MapEntries(
+		rawEvents,
+		func(key string, value []byte) (string, *eventWrapper) {
+			wrapper := new(eventWrapper)
+			if err := wrapper.deserialize(value); err != nil {
+				s.metrics.IncError(1)
+				s.logger.Error("Failed to deserialize event wrapper", zap.String("key", key), zap.Binary("value", value), zap.Error(err))
+				return "", nil
+			}
+
+			return wrapper.Token, wrapper
+		},
+	)
+	delete(wrappers, "")
+
+	messages := lo.MapValues(
+		wrappers,
+		func(value *eventWrapper, key string) Event {
+			return value.Event
+		},
+	)
 
 	s.logger.Info("Sending messages", zap.Int("count", len(messages)))
-	ctx, cancel := context.WithTimeout(ctx, s.config.Timeout)
+	sendCtx, cancel := context.WithTimeout(ctx, s.config.Timeout)
 	defer cancel()
 
-	errs, err := s.client.Send(ctx, messages)
+	errs, err := s.client.Send(sendCtx, messages)
 	if len(errs) == 0 && err == nil {
 		s.logger.Info("Messages sent successfully", zap.Int("count", len(messages)))
 		return
@@ -138,11 +173,11 @@ func (s *Service) sendAll(ctx context.Context) {
 	for token, sendErr := range errs {
 		s.logger.Error("Can't send message", zap.Error(sendErr), zap.String("token", token))
 
-		wrapper := targets[token]
-		wrapper.retries++
+		wrapper := wrappers[token]
+		wrapper.Retries++
 
-		if wrapper.retries >= maxRetries {
-			if err := s.blacklist.Set(token, struct{}{}); err != nil {
+		if wrapper.Retries >= maxRetries {
+			if err := s.blacklist.Set(ctx, token, []byte{}, cacheImpl.WithTTL(blacklistTimeout)); err != nil {
 				s.logger.Warn("Can't add to blacklist", zap.String("token", token), zap.Error(err))
 			}
 
@@ -154,8 +189,16 @@ func (s *Service) sendAll(ctx context.Context) {
 			continue
 		}
 
-		if setErr := s.cache.SetOrFail(token, wrapper); setErr != nil {
-			s.logger.Info("Can't set message to cache", zap.Error(setErr))
+		wrapperData, err := wrapper.serialize()
+		if err != nil {
+			s.metrics.IncError(1)
+			s.logger.Error("Can't serialize event wrapper", zap.Error(err))
+			continue
+		}
+
+		if setErr := s.events.SetOrFail(ctx, wrapper.key(), wrapperData); setErr != nil {
+			s.logger.Warn("Can't set message to cache", zap.Error(setErr))
+			continue
 		}
 
 		s.metrics.IncRetry(RetryOutcomeRetried)
