@@ -33,4 +33,8 @@ type Cache interface {
 	// The cache is cleared after the call.
 	// The operation is safe for concurrent use.
 	Drain(ctx context.Context) (map[string][]byte, error)
+
+	// Close closes the cache.
+	// The operation is safe for concurrent use.
+	Close() error
 }
