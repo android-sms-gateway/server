@@ -4,10 +4,16 @@
 @phone={{$dotenv PHONE}}
 
 ###
-GET {{baseUrl}}/health HTTP/1.1
+GET {{baseUrl}}/3rdparty/v1/health HTTP/1.1
 
 ###
-GET {{baseUrl}}/3rdparty/v1/health HTTP/1.1
+GET {{baseUrl}}/3rdparty/v1/health/startup HTTP/1.1
+
+###
+GET {{baseUrl}}/3rdparty/v1/health/ready HTTP/1.1
+
+###
+GET {{baseUrl}}/3rdparty/v1/health/live HTTP/1.1
 
 ###
 POST {{baseUrl}}/3rdparty/v1/messages?skipPhoneValidation=false&deviceActiveWithin=240 HTTP/1.1
@@ -188,4 +194,13 @@ Content-Type: application/json
 
 ###
 GET http://localhost:3000/metrics HTTP/1.1
+
+###
+GET http://localhost:3000/health/startup HTTP/1.1
+
+###
+GET http://localhost:3000/health/ready HTTP/1.1
+
+###
+GET http://localhost:3000/health/live HTTP/1.1
 

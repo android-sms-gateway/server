@@ -4,7 +4,7 @@ replicaCount: 1
 
 image:
   repository: ghcr.io/android-sms-gateway/server
-  tag: "1.29.3"
+  tag: "1"
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
