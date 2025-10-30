@@ -1,22 +1,20 @@
 package health
 
 import (
+	"github.com/go-core-fx/logger"
 	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
 func Module() fx.Option {
 	return fx.Module(
 		"health",
-		fx.Decorate(func(log *zap.Logger) *zap.Logger {
-			return log.Named("health")
-		}),
+		logger.WithNamedLogger("health"),
 		fx.Provide(
 			AsHealthProvider(NewHealth),
 			fx.Private,
 		),
 		fx.Provide(
-			NewService,
+			fx.Annotate(NewService, fx.ParamTags(`group:"health-providers"`)),
 		),
 	)
 }

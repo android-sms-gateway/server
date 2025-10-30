@@ -18,7 +18,7 @@ import (
 type ThirdPartyHandlerParams struct {
 	fx.In
 
-	HealthHandler   *healthHandler
+	HealthHandler   *HealthHandler
 	MessagesHandler *messages.ThirdPartyController
 	WebhooksHandler *webhooks.ThirdPartyController
 	DevicesHandler  *devices.ThirdPartyController
@@ -34,7 +34,7 @@ type ThirdPartyHandlerParams struct {
 type thirdPartyHandler struct {
 	base.Handler
 
-	healthHandler   *healthHandler
+	healthHandler   *HealthHandler
 	messagesHandler *messages.ThirdPartyController
 	webhooksHandler *webhooks.ThirdPartyController
 	devicesHandler  *devices.ThirdPartyController
