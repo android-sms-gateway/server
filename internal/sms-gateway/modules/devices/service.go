@@ -2,40 +2,42 @@ package devices
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/db"
-	"github.com/capcom6/go-helpers/cache"
-	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-type ServiceParams struct {
-	fx.In
-
-	Config Config
-
-	Devices *repository
-
-	IDGen db.IDGen
-
-	Logger *zap.Logger
-}
 
 type Service struct {
 	config Config
 
-	devices     *repository
-	tokensCache *cache.Cache[models.Device]
+	devices *Repository
+	cache   *cache
 
 	idGen db.IDGen
 
 	logger *zap.Logger
+}
+
+func NewService(
+	config Config,
+	devices *Repository,
+	idGen db.IDGen,
+	logger *zap.Logger,
+) *Service {
+	return &Service{
+		config: config,
+
+		devices: devices,
+		cache:   newCache(),
+
+		idGen: idGen,
+
+		logger: logger,
+	}
 }
 
 func (s *Service) Insert(userID string, device *models.Device) error {
@@ -79,26 +81,34 @@ func (s *Service) Get(userID string, filter ...SelectFilter) (models.Device, err
 // This method is used to retrieve a device by its auth token. If the device
 // does not exist, it returns ErrNotFound.
 func (s *Service) GetByToken(token string) (models.Device, error) {
-	hash := sha256.Sum256([]byte(token))
-	cacheKey := hex.EncodeToString(hash[:])
-
-	device, err := s.tokensCache.Get(cacheKey)
+	device, err := s.cache.GetByToken(token)
 	if err != nil {
 		device, err = s.devices.Get(WithToken(token))
 		if err != nil {
-			return device, fmt.Errorf("can't get device: %w", err)
+			return device, err
 		}
 
-		if err := s.tokensCache.Set(cacheKey, device); err != nil {
-			s.logger.Error("can't cache device", zap.Error(err))
+		if err := s.cache.Set(device); err != nil {
+			s.logger.Error("can't cache device", zap.String("device_id", device.ID), zap.Error(err))
 		}
 	}
 
 	return device, nil
 }
 
-func (s *Service) UpdatePushToken(deviceId string, token string) error {
-	return s.devices.UpdatePushToken(deviceId, token)
+func (s *Service) UpdatePushToken(id string, token string) error {
+	if err := s.cache.DeleteByID(id); err != nil {
+		s.logger.Error("can't invalidate cache",
+			zap.String("device_id", id),
+			zap.Error(err),
+		)
+	}
+
+	if err := s.devices.UpdatePushToken(id, token); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Service) SetLastSeen(ctx context.Context, batch map[string]time.Time) error {
@@ -128,38 +138,26 @@ func (s *Service) SetLastSeen(ctx context.Context, batch map[string]time.Time) e
 func (s *Service) Remove(userID string, filter ...SelectFilter) error {
 	filter = append(filter, WithUserID(userID))
 
-	device, err := s.Get(userID, filter...)
+	devices, err := s.devices.Select(filter...)
 	if err != nil {
 		return err
 	}
-
-	hash := sha256.Sum256([]byte(device.AuthToken))
-	cacheKey := hex.EncodeToString(hash[:])
-
-	if err := s.tokensCache.Delete(cacheKey); err != nil {
-		s.logger.Error("can't invalidate token cache",
-			zap.String("device_id", device.ID),
-			zap.String("cache_key", cacheKey),
-			zap.Error(err),
-		)
+	if len(devices) == 0 {
+		return nil
 	}
 
-	return s.devices.Remove(filter...)
-}
-
-func (s *Service) Clean(ctx context.Context) error {
-	n, err := s.devices.removeUnused(ctx, time.Now().Add(-s.config.UnusedLifetime))
-
-	s.logger.Info("Cleaned unused devices", zap.Int64("count", n))
-	return err
-}
-
-func NewService(params ServiceParams) *Service {
-	return &Service{
-		config:      params.Config,
-		devices:     params.Devices,
-		tokensCache: cache.New[models.Device](cache.Config{TTL: 10 * time.Minute}),
-		idGen:       params.IDGen,
-		logger:      params.Logger.Named("service"),
+	for _, device := range devices {
+		if err := s.cache.DeleteByID(device.ID); err != nil {
+			s.logger.Error("can't invalidate cache",
+				zap.String("device_id", device.ID),
+				zap.Error(err),
+			)
+		}
 	}
+
+	if err := s.devices.Remove(filter...); err != nil {
+		return err
+	}
+
+	return nil
 }
