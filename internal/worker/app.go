@@ -8,6 +8,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/worker/locker"
 	"github.com/android-sms-gateway/server/internal/worker/server"
 	"github.com/android-sms-gateway/server/internal/worker/tasks"
+	"github.com/android-sms-gateway/server/pkg/health"
 	"github.com/capcom6/go-infra-fx/db"
 	"github.com/go-core-fx/fiberfx"
 	"github.com/go-core-fx/logger"
@@ -32,6 +33,7 @@ func module() fx.Option {
 		locker.Module(),
 		tasks.Module(),
 		executor.Module(),
+		health.Module(),
 		server.Module(),
 		fx.Invoke(func(logger *zap.Logger, lc fx.Lifecycle) {
 			lc.Append(fx.Hook{
