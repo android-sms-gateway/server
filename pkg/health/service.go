@@ -3,29 +3,20 @@ package health
 import (
 	"context"
 
-	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-type ServiceParams struct {
-	fx.In
-
-	HealthProviders []HealthProvider `group:"health-providers"`
-
-	Logger *zap.Logger
-}
-
 type Service struct {
-	healthProviders []HealthProvider
+	providers []HealthProvider
 
 	logger *zap.Logger
 }
 
-func NewService(params ServiceParams) *Service {
+func NewService(providers []HealthProvider, logger *zap.Logger) *Service {
 	return &Service{
-		healthProviders: params.HealthProviders,
+		providers: providers,
 
-		logger: params.Logger,
+		logger: logger,
 	}
 }
 
@@ -34,7 +25,7 @@ func (s *Service) checkProvider(ctx context.Context, probe func(context.Context,
 		Checks: map[string]CheckDetail{},
 	}
 
-	for _, p := range s.healthProviders {
+	for _, p := range s.providers {
 		select {
 		case <-ctx.Done():
 			return check

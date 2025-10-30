@@ -11,7 +11,7 @@ import (
 type rootHandler struct {
 	config Config
 
-	healthHandler  *healthHandler
+	healthHandler  *HealthHandler
 	openapiHandler *openapi.Handler
 }
 
@@ -49,7 +49,7 @@ func (h *rootHandler) registerOpenAPI(router fiber.Router) {
 	h.openapiHandler.Register(router.Group("/api/docs"), h.config.PublicHost, h.config.PublicPath)
 }
 
-func newRootHandler(cfg Config, healthHandler *healthHandler, openapiHandler *openapi.Handler) *rootHandler {
+func newRootHandler(cfg Config, healthHandler *HealthHandler, openapiHandler *openapi.Handler) *rootHandler {
 	return &rootHandler{
 		config: cfg,
 
