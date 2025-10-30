@@ -1,3 +1,18 @@
+## Common Config ##
+
+database: # database
+  host: localhost # database host [DATABASE__HOST]
+  port: 3306 # database port [DATABASE__PORT]
+  user: root # database user [DATABASE__USER]
+  password: root # database password [DATABASE__PASSWORD]
+  database: sms # database name [DATABASE__DATABASE]
+  timezone: UTC # database timezone (important for message TTL calculation) [DATABASE__TIMEZONE]
+  debug: false # database debug mode [DATABASE__DEBUG]
+  max_open_conns: 4 # database max open connections (default: 4 * CPU) [DATABASE__MAX_OPEN_CONNS]
+  max_idle_conns: 2 # database max idle connections (default: 2 * CPU) [DATABASE__MAX_IDLE_CONNS]
+
+## Server Config ##
+
 gateway: # gateway config
   mode: private # gateway mode (public - allow anonymous device registration, private - protected registration) [GATEWAY__MODE]
   private_token: 123456789 # access token for device registration in private mode [GATEWAY__PRIVATE_TOKEN]
@@ -10,24 +25,28 @@ http: # http server config
     path: /api # public API path [HTTP__API__PATH]
   openapi:
     enabled: false # openapi enabled [HTTP__OPENAPI__ENABLED]
-database: # database
-  dialect: mysql # database dialect (only mysql supported at the moment) [DATABASE__DIALECT]
-  host: localhost # database host [DATABASE__HOST]
-  port: 3306 # database port [DATABASE__PORT]
-  user: root # database user [DATABASE__USER]
-  password: root # database password [DATABASE__PASSWORD]
-  database: sms # database name [DATABASE__DATABASE]
-  timezone: UTC # database timezone (important for message TTL calculation) [DATABASE__TIMEZONE]
-  max_open_conns: 4 # database max open connections (default: 4 * CPU) [DATABASE__MAX_OPEN_CONNS]
-  max_idle_conns: 2 # database max idle connections (default: 2 * CPU) [DATABASE__MAX_IDLE_CONNS]
 fcm: # firebase cloud messaging config
   credentials_json: "{}" # firebase credentials json (for public mode only) [FCM__CREDENTIALS_JSON]
   timeout_seconds: 1 # push notification send timeout [FCM__TIMEOUT_SECONDS]
   debounce_seconds: 5 # push notification debounce (>= 5s) [FCM__DEBOUNCE_SECONDS]
-tasks: # tasks config
-  hashing: # hashing task (hashes processed messages for privacy purposes)
-    interval_seconds: 15 # hashing interval in seconds [TASKS__HASHING__INTERVAL_SECONDS]
+sse:
+  keep_alive_period_seconds: 15 # SSE keep alive period in seconds [SSE__KEEP_ALIVE_PERIOD_SECONDS]
+messages:
+  cache_ttl_seconds: 300 # message cache TTL in seconds [MESSAGES__CACHE_TTL_SECONDS]
+  hashing_interval_seconds: 60 # real-time message hashing interval in seconds [MESSAGES__HASHING_INTERVAL_SECONDS]
 cache: # cache config
   url: memory:// # cache url (memory:// or redis://) [CACHE__URL]
 pubsub: # pubsub config
   url: memory:// # pubsub url (memory:// or redis://) [PUBSUB__URL]
+
+## Worker Config ##
+
+tasks: # tasks config
+  messages_hashing:
+    interval: 168h # task execution interval in hours [TASKS__MESSAGES_HASHING__INTERVAL]
+  messages_cleanup:
+    interval: 24h # task execution interval in hours [TASKS__MESSAGES_CLEANUP__INTERVAL]
+    max_age: 720h # messages max age in hours [TASKS__MESSAGES_CLEANUP__MAX_AGE]
+  devices_cleanup:
+    interval: 24h # task execution interval in hours [TASKS__DEVICES_CLEANUP__INTERVAL]
+    max_age: 8760h # inactive devices max age in hours [TASKS__DEVICES_CLEANUP__MAX_AGE]
