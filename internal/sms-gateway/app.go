@@ -52,7 +52,7 @@ var Module = fx.Module(
 	health.Module(),
 	webhooks.Module,
 	settings.Module,
-	devices.Module,
+	devices.Module(),
 	metrics.Module,
 	cleaner.Module,
 	sse.Module,
