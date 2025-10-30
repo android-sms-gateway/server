@@ -30,10 +30,10 @@ type EnqueueOptions struct {
 type Service struct {
 	config Config
 
-	metrics     *metrics
-	cache       *cache
-	messages    *repository
-	hashingTask *hashingTask
+	metrics       *metrics
+	cache         *cache
+	messages      *Repository
+	hashingWorker *hashingWorker
 
 	eventsSvc *events.Service
 
@@ -45,19 +45,19 @@ func NewService(
 	config Config,
 	metrics *metrics,
 	cache *cache,
-	messages *repository,
+	messages *Repository,
 	eventsSvc *events.Service,
-	hashingTask *hashingTask,
+	hashingTask *hashingWorker,
 	logger *zap.Logger,
 	idgen db.IDGen,
 ) *Service {
 	return &Service{
 		config: config,
 
-		metrics:     metrics,
-		cache:       cache,
-		messages:    messages,
-		hashingTask: hashingTask,
+		metrics:       metrics,
+		cache:         cache,
+		messages:      messages,
+		hashingWorker: hashingTask,
 
 		eventsSvc: eventsSvc,
 
@@ -70,7 +70,7 @@ func (s *Service) RunBackgroundTasks(ctx context.Context, wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		s.hashingTask.Run(ctx)
+		s.hashingWorker.Run(ctx)
 	}()
 }
 
@@ -114,7 +114,7 @@ func (s *Service) UpdateState(device *models.Device, message MessageStateIn) err
 	if err := s.cache.Set(context.Background(), device.UserID, existing.ExtID, anys.AsPointer(modelToMessageState(existing))); err != nil {
 		s.logger.Warn("can't cache message", zap.String("id", existing.ExtID), zap.Error(err))
 	}
-	s.hashingTask.Enqueue(existing.ID)
+	s.hashingWorker.Enqueue(existing.ID)
 	s.metrics.IncTotal(string(existing.State))
 
 	return nil
@@ -252,14 +252,6 @@ func (s *Service) ExportInbox(device models.Device, since, until time.Time) erro
 	event := events.NewMessagesExportRequestedEvent(since, until)
 
 	return s.eventsSvc.Notify(device.UserID, &device.ID, event)
-}
-
-func (s *Service) Clean(ctx context.Context) error {
-	//TODO: use delete queue to optimize deletion
-	n, err := s.messages.removeProcessed(ctx, time.Now().Add(-s.config.ProcessedLifetime))
-
-	s.logger.Info("Cleaned processed messages", zap.Int64("count", n))
-	return err
 }
 
 ///////////////////////////////////////////////////////////////////////////////

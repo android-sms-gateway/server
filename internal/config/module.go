@@ -69,11 +69,6 @@ var Module = fx.Module(
 			Timeout:  time.Duration(cfg.FCM.TimeoutSeconds) * time.Second,
 		}
 	}),
-	fx.Provide(func(cfg Config) messages.HashingTaskConfig {
-		return messages.HashingTaskConfig{
-			Interval: time.Duration(cfg.Tasks.Hashing.IntervalSeconds) * time.Second,
-		}
-	}),
 	fx.Provide(func(cfg Config) auth.Config {
 		return auth.Config{
 			Mode:         auth.Mode(cfg.Gateway.Mode),
@@ -104,8 +99,8 @@ var Module = fx.Module(
 	}),
 	fx.Provide(func(cfg Config) messages.Config {
 		return messages.Config{
-			ProcessedLifetime: time.Duration(cfg.Messages.ProcessedLifetimeHours) * time.Hour,
-			CacheTTL:          time.Duration(cfg.Messages.CacheTTLSeconds) * time.Second,
+			CacheTTL:        time.Duration(cfg.Messages.CacheTTLSeconds) * time.Second,
+			HashingInterval: time.Duration(max(cfg.Tasks.Hashing.IntervalSeconds, cfg.Messages.HashingIntervalSeconds)) * time.Second,
 		}
 	}),
 	fx.Provide(func(cfg Config) devices.Config {
