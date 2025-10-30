@@ -1,7 +1,10 @@
 package main
 
 import (
+	"os"
+
 	smsgateway "github.com/android-sms-gateway/server/internal/sms-gateway"
+	"github.com/android-sms-gateway/server/internal/worker"
 )
 
 //	@securitydefinitions.basic	ApiAuth
@@ -22,7 +25,7 @@ import (
 //	@name						Authorization
 //	@description				Private server authentication
 
-//	@title			SMS Gateway for Android™ API
+//	@title			SMSGate API
 //	@version		{APP_VERSION}
 //	@description	This API provides programmatic access to sending SMS messages on Android devices. Features include sending SMS, checking message status, device management, webhook configuration, and system health checks.
 
@@ -33,7 +36,17 @@ import (
 //	@host		api.sms-gate.app
 //	@schemes	https
 //
-// SMS Gateway for Android
+// SMSGate Backend
 func main() {
-	smsgateway.Run()
+	args := os.Args[1:]
+	cmd := "start"
+	if len(args) > 0 && args[0] == "worker" {
+		cmd = "worker"
+	}
+
+	if cmd == "worker" {
+		worker.Run()
+	} else {
+		smsgateway.Run()
+	}
 }
