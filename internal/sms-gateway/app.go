@@ -8,7 +8,6 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/cache"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/cleaner"
 	appdb "github.com/android-sms-gateway/server/internal/sms-gateway/modules/db"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/events"
@@ -54,7 +53,6 @@ var Module = fx.Module(
 	settings.Module,
 	devices.Module(),
 	metrics.Module,
-	cleaner.Module,
 	sse.Module,
 	online.Module(),
 )
@@ -82,7 +80,6 @@ type StartParams struct {
 	Server          *http.Server
 	MessagesService *messages.Service
 	PushService     *push.Service
-	CleanerService  *cleaner.Service
 }
 
 func Start(p StartParams) error {
@@ -105,12 +102,6 @@ func Start(p StartParams) error {
 					p.Logger.Error("Error starting server", zap.Error(err))
 					_ = p.Shut.Shutdown()
 				}
-			}()
-
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				p.CleanerService.Run(ctx)
 			}()
 
 			p.Logger.Info("Service started")
