@@ -42,7 +42,6 @@ type OpenAPI struct {
 }
 
 type Database struct {
-	Dialect  string `yaml:"dialect"  envconfig:"DATABASE__DIALECT"`  // database dialect
 	Host     string `yaml:"host"     envconfig:"DATABASE__HOST"`     // database host
 	Port     int    `yaml:"port"     envconfig:"DATABASE__PORT"`     // database port
 	User     string `yaml:"user"     envconfig:"DATABASE__USER"`     // database user
@@ -62,11 +61,11 @@ type FCMConfig struct {
 }
 
 type Tasks struct {
-	Hashing HashingTask `yaml:"hashing"`
+	Hashing HashingTask `yaml:"hashing"` // deprecated
 }
 
 type HashingTask struct {
-	IntervalSeconds uint16 `yaml:"interval_seconds" envconfig:"TASKS__HASHING__INTERVAL_SECONDS"` // hashing interval in seconds
+	IntervalSeconds uint16 `yaml:"interval_seconds" envconfig:"TASKS__HASHING__INTERVAL_SECONDS"` // deprecated
 }
 
 type SSE struct {
@@ -74,8 +73,8 @@ type SSE struct {
 }
 
 type Messages struct {
-	CacheTTLSeconds        uint16 `yaml:"cache_ttl_seconds" envconfig:"MESSAGES__CACHE_TTL_SECONDS"` // cache ttl in seconds
-	ProcessedLifetimeHours uint16 `yaml:"processed_lifetime_hours" envconfig:"MESSAGES__PROCESSED_LIFETIME_HOURS"`
+	CacheTTLSeconds        uint16 `yaml:"cache_ttl_seconds" envconfig:"MESSAGES__CACHE_TTL_SECONDS"`               // cache ttl in seconds
+	HashingIntervalSeconds uint16 `yaml:"hashing_interval_seconds" envconfig:"MESSAGES__HASHING_INTERVAL_SECONDS"` // hashing interval in seconds
 }
 
 type Cache struct {
@@ -92,28 +91,27 @@ var defaultConfig = Config{
 		Listen: ":3000",
 	},
 	Database: Database{
-		Dialect:  "mysql",
-		Host:     "localhost",
-		Port:     3306,
-		User:     "sms",
-		Password: "sms",
-		Database: "sms",
-		Timezone: "UTC",
+		Host:         "localhost",
+		Port:         3306,
+		User:         "sms",
+		Password:     "sms",
+		Database:     "sms",
+		Timezone:     "UTC",
+		Debug:        false,
+		MaxOpenConns: 0,
+		MaxIdleConns: 0,
 	},
 	FCM: FCMConfig{
 		CredentialsJSON: "",
-	},
-	Tasks: Tasks{
-		Hashing: HashingTask{
-			IntervalSeconds: uint16(15 * 60),
-		},
+		DebounceSeconds: 5,
+		TimeoutSeconds:  1,
 	},
 	SSE: SSE{
 		KeepAlivePeriodSeconds: 15,
 	},
 	Messages: Messages{
 		CacheTTLSeconds:        300, // 5 minutes
-		ProcessedLifetimeHours: 720, // 30 days
+		HashingIntervalSeconds: 60,
 	},
 	Cache: Cache{
 		URL: "memory://",
