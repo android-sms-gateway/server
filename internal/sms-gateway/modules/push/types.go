@@ -18,7 +18,7 @@ type Event = types.Event
 
 type client interface {
 	Open(ctx context.Context) error
-	Send(ctx context.Context, messages map[string]Event) (map[string]error, error)
+	Send(ctx context.Context, messages []types.Message) ([]error, error)
 	Close(ctx context.Context) error
 }
 

@@ -11,7 +11,7 @@ import (
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/types"
-	"github.com/capcom6/go-helpers/maps"
+	"github.com/samber/lo"
 )
 
 const BASE_URL = "https://api.sms-gate.app/upstream/v1"
@@ -42,18 +42,19 @@ func (c *Client) Open(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) Send(ctx context.Context, messages map[string]types.Event) (map[string]error, error) {
-	payload := make(smsgateway.UpstreamPushRequest, 0, len(messages))
+func (c *Client) Send(ctx context.Context, messages []types.Message) ([]error, error) {
+	payload := lo.Map(
+		messages,
+		func(item types.Message, _ int) smsgateway.PushNotification {
+			return smsgateway.PushNotification{
+				Token: item.Token,
+				Event: item.Event.Type,
+				Data:  item.Event.Data,
+			}
+		},
+	)
 
-	for address, data := range messages {
-		payload = append(payload, smsgateway.PushNotification{
-			Token: address,
-			Event: data.Type,
-			Data:  data.Data,
-		})
-	}
-
-	payloadBytes, err := json.Marshal(payload)
+	payloadBytes, err := json.Marshal(smsgateway.UpstreamPushRequest(payload))
 
 	if err != nil {
 		return nil, fmt.Errorf("can't marshal payload: %w", err)
@@ -65,11 +66,11 @@ func (c *Client) Send(ctx context.Context, messages map[string]types.Event) (map
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "android-sms-gateway/1.x (server; golang)")
+	req.Header.Set("User-Agent", "sms-gate/1.x (server; golang)")
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return c.mapErrors(messages, fmt.Errorf("can't send request: %w", err)), nil
+		return nil, fmt.Errorf("can't send request: %w", err)
 	}
 
 	defer func() {
@@ -84,10 +85,13 @@ func (c *Client) Send(ctx context.Context, messages map[string]types.Event) (map
 	return nil, nil
 }
 
-func (c *Client) mapErrors(messages map[string]types.Event, err error) map[string]error {
-	return maps.MapValues(messages, func(e types.Event) error {
-		return err
-	})
+func (c *Client) mapErrors(messages []types.Message, err error) []error {
+	return lo.Map(
+		messages,
+		func(_ types.Message, _ int) error {
+			return err
+		},
+	)
 }
 
 func (c *Client) Close(ctx context.Context) error {
