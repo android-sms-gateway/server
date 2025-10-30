@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"sync/atomic"
 
-	healthmod "github.com/android-sms-gateway/server/internal/sms-gateway/modules/health"
+	healthmod "github.com/android-sms-gateway/server/pkg/health"
 )
 
 type health struct {

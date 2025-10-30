@@ -3,29 +3,27 @@ package handlers
 import (
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/health"
 	"github.com/android-sms-gateway/server/internal/version"
-	"github.com/go-playground/validator/v10"
+	"github.com/android-sms-gateway/server/pkg/health"
 	"github.com/gofiber/fiber/v2"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
-type healthHandler struct {
+type HealthHandler struct {
 	base.Handler
 
 	healthSvc *health.Service
 }
 
-func newHealthHandler(
+func NewHealthHandler(
 	healthSvc *health.Service,
 	logger *zap.Logger,
-	validator *validator.Validate,
-) *healthHandler {
-	return &healthHandler{
+) *HealthHandler {
+	return &HealthHandler{
 		Handler: base.Handler{
 			Logger:    logger,
-			Validator: validator,
+			Validator: nil,
 		},
 		healthSvc: healthSvc,
 	}
@@ -40,7 +38,7 @@ func newHealthHandler(
 //	@Router			/health/live [get]
 //
 // Liveness probe
-func (h *healthHandler) getLiveness(c *fiber.Ctx) error {
+func (h *HealthHandler) getLiveness(c *fiber.Ctx) error {
 	return writeProbe(c, h.healthSvc.CheckLiveness(c.Context()))
 }
 
@@ -54,7 +52,7 @@ func (h *healthHandler) getLiveness(c *fiber.Ctx) error {
 // @Router			/3rdparty/v1/health [get]
 //
 // Readiness probe
-func (h *healthHandler) getReadiness(c *fiber.Ctx) error {
+func (h *HealthHandler) getReadiness(c *fiber.Ctx) error {
 	return writeProbe(c, h.healthSvc.CheckReadiness(c.Context()))
 }
 
@@ -67,7 +65,7 @@ func (h *healthHandler) getReadiness(c *fiber.Ctx) error {
 // @Router			/health/startup [get]
 //
 // Startup probe
-func (h *healthHandler) getStartup(c *fiber.Ctx) error {
+func (h *HealthHandler) getStartup(c *fiber.Ctx) error {
 	return writeProbe(c, h.healthSvc.CheckStartup(c.Context()))
 }
 
@@ -98,7 +96,7 @@ func makeResponse(result health.CheckResult) smsgateway.HealthResponse {
 	}
 }
 
-func (h *healthHandler) Register(router fiber.Router) {
+func (h *HealthHandler) Register(router fiber.Router) {
 	router.Get("/health", h.getReadiness)
 	router.Get("/health/live", h.getLiveness)
 	router.Get("/health/ready", h.getReadiness)
