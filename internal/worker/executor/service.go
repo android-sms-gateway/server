@@ -102,6 +102,12 @@ func (s *Service) execute(ctx context.Context, task PeriodicTask) {
 	logger := s.logger.With(zap.String("name", task.Name()))
 
 	s.metrics.IncActiveTasks()
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Error("task panicked", zap.Any("error", err))
+		}
+		s.metrics.DecActiveTasks()
+	}()
 
 	logger.Info("running task")
 
@@ -113,8 +119,6 @@ func (s *Service) execute(ctx context.Context, task PeriodicTask) {
 		s.metrics.ObserveTaskResult(task.Name(), metricsTaskResultSuccess, time.Since(start))
 		logger.Info("task succeeded", zap.Duration("duration", time.Since(start)))
 	}
-
-	s.metrics.DecActiveTasks()
 }
 
 func (s *Service) Stop() error {
