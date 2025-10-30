@@ -172,18 +172,34 @@ func (s *Service) sendAll(ctx context.Context) {
 	if err != nil {
 		s.metrics.IncError(totalMessages)
 		s.logger.Error("failed to send messages", zap.Int("total", totalMessages), zap.Error(err))
+		s.retry(ctx, wrappers)
 		return
 	}
 
-	totalErrors := lo.CountBy(errs, func(err error) bool { return err != nil })
-	s.metrics.IncError(totalErrors)
+	failed := lo.Filter(
+		wrappers,
+		func(item *eventWrapper, index int) bool {
+			if err := errs[index]; err != nil {
+				s.logger.Error("failed to send message", zap.String("token", item.Token), zap.Error(err))
+				return true
+			}
 
-	for i, err := range errs {
-		if err == nil {
-			continue
-		}
+			return false
+		},
+	)
 
-		wrapper := wrappers[i]
+	if len(failed) == 0 {
+		return
+	}
+
+	s.metrics.IncError(len(failed))
+	s.logger.Error("failed to send messages", zap.Int("total", totalMessages), zap.Int("failed", len(failed)))
+
+	s.retry(ctx, failed)
+}
+
+func (s *Service) retry(ctx context.Context, events []*eventWrapper) {
+	for _, wrapper := range events {
 		token := wrapper.Token
 
 		wrapper.Retries++
