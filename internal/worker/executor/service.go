@@ -18,10 +18,11 @@ type Service struct {
 	stopChan chan struct{}
 	wg       sync.WaitGroup
 
-	logger *zap.Logger
+	metrics *metrics
+	logger  *zap.Logger
 }
 
-func NewService(tasks []PeriodicTask, locker locker.Locker, logger *zap.Logger) *Service {
+func NewService(tasks []PeriodicTask, locker locker.Locker, metrics *metrics, logger *zap.Logger) *Service {
 	return &Service{
 		tasks:  tasks,
 		locker: locker,
@@ -29,7 +30,8 @@ func NewService(tasks []PeriodicTask, locker locker.Locker, logger *zap.Logger) 
 		stopChan: make(chan struct{}),
 		wg:       sync.WaitGroup{},
 
-		logger: logger,
+		metrics: metrics,
+		logger:  logger,
 	}
 }
 
@@ -87,19 +89,32 @@ func (s *Service) runTask(ctx context.Context, task PeriodicTask) {
 				continue
 			}
 
-			start := time.Now()
-			s.logger.Info("running task", zap.String("name", task.Name()))
-			if err := task.Run(ctx); err != nil {
-				s.logger.Error("task failed", zap.String("name", task.Name()), zap.Duration("duration", time.Since(start)), zap.Error(err))
-			} else {
-				s.logger.Info("task succeeded", zap.String("name", task.Name()), zap.Duration("duration", time.Since(start)))
-			}
+			s.execute(ctx, task)
 
 			if err := s.locker.ReleaseLock(ctx, task.Name()); err != nil {
 				s.logger.Error("can't release lock", zap.String("name", task.Name()), zap.Error(err))
 			}
 		}
 	}
+}
+
+func (s *Service) execute(ctx context.Context, task PeriodicTask) {
+	logger := s.logger.With(zap.String("name", task.Name()))
+
+	s.metrics.IncActiveTasks()
+
+	logger.Info("running task")
+
+	start := time.Now()
+	if err := task.Run(ctx); err != nil {
+		s.metrics.ObserveTaskResult(task.Name(), metricsTaskResultError, time.Since(start))
+		logger.Error("task failed", zap.Duration("duration", time.Since(start)), zap.Error(err))
+	} else {
+		s.metrics.ObserveTaskResult(task.Name(), metricsTaskResultSuccess, time.Since(start))
+		logger.Info("task succeeded", zap.Duration("duration", time.Since(start)))
+	}
+
+	s.metrics.DecActiveTasks()
 }
 
 func (s *Service) Stop() error {

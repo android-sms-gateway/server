@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/android-sms-gateway/server/internal/worker/server"
 	"github.com/android-sms-gateway/server/internal/worker/tasks/devices"
 	"github.com/android-sms-gateway/server/internal/worker/tasks/messages"
 	"github.com/capcom6/go-infra-fx/config"
@@ -57,6 +58,12 @@ func Module() fx.Option {
 					Interval: time.Duration(cfg.Tasks.DevicesCleanup.Interval),
 					MaxAge:   time.Duration(cfg.Tasks.DevicesCleanup.MaxAge),
 				},
+			}
+		}),
+		fx.Provide(func(cfg Config) server.Config {
+			return server.Config{
+				Address: cfg.HTTP.Listen,
+				Proxies: cfg.HTTP.Proxies,
 			}
 		}),
 	)

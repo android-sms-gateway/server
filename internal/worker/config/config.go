@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Tasks    Tasks           `yaml:"tasks"`
 	Database config.Database `yaml:"database"`
+	HTTP     config.HTTP     `yaml:"http"`
 }
 
 type Tasks struct {

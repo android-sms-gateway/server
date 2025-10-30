@@ -11,6 +11,7 @@ func Module() fx.Option {
 	return fx.Module(
 		"executor",
 		logger.WithNamedLogger("executor"),
+		fx.Provide(newMetrics, fx.Private),
 		fx.Provide(
 			fx.Annotate(NewService, fx.ParamTags(`group:"worker:tasks"`)),
 		),
