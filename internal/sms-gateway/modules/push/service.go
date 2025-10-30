@@ -130,77 +130,90 @@ func (s *Service) sendAll(ctx context.Context) {
 		return
 	}
 
-	wrappers := lo.MapEntries(
-		rawEvents,
-		func(key string, value []byte) (string, *eventWrapper) {
+	wrappers := lo.FilterMap(
+		lo.Values(rawEvents),
+		func(value []byte, _ int) (*eventWrapper, bool) {
 			wrapper := new(eventWrapper)
 			if err := wrapper.deserialize(value); err != nil {
 				s.metrics.IncError(1)
-				s.logger.Error("Failed to deserialize event wrapper", zap.String("key", key), zap.Binary("value", value), zap.Error(err))
-				return "", nil
+				s.logger.Error("Failed to deserialize event wrapper", zap.Binary("value", value), zap.Error(err))
+				return nil, false
 			}
 
-			return wrapper.Token, wrapper
+			return wrapper, true
 		},
 	)
-	delete(wrappers, "")
 
-	messages := lo.MapValues(
+	messages := lo.Map(
 		wrappers,
-		func(value *eventWrapper, key string) Event {
-			return value.Event
+		func(wrapper *eventWrapper, _ int) types.Message {
+			return types.Message{
+				Token: wrapper.Token,
+				Event: wrapper.Event,
+			}
 		},
 	)
 
-	s.logger.Info("Sending messages", zap.Int("count", len(messages)))
+	totalMessages := len(messages)
+	if totalMessages == 0 {
+		return
+	}
+
+	s.logger.Info("sending messages", zap.Int("total", totalMessages))
+
 	sendCtx, cancel := context.WithTimeout(ctx, s.config.Timeout)
 	defer cancel()
-
 	errs, err := s.client.Send(sendCtx, messages)
 	if len(errs) == 0 && err == nil {
-		s.logger.Info("Messages sent successfully", zap.Int("count", len(messages)))
+		s.logger.Info("messages sent successfully", zap.Int("total", totalMessages))
 		return
 	}
 
 	if err != nil {
-		s.metrics.IncError(len(messages))
-		s.logger.Error("Can't send messages", zap.Error(err))
+		s.metrics.IncError(totalMessages)
+		s.logger.Error("failed to send messages", zap.Int("total", totalMessages), zap.Error(err))
 		return
 	}
 
-	s.metrics.IncError(len(errs))
+	totalErrors := lo.CountBy(errs, func(err error) bool { return err != nil })
+	s.metrics.IncError(totalErrors)
 
-	for token, sendErr := range errs {
-		s.logger.Error("Can't send message", zap.Error(sendErr), zap.String("token", token))
+	for i, err := range errs {
+		if err == nil {
+			continue
+		}
 
-		wrapper := wrappers[token]
+		wrapper := wrappers[i]
+		token := wrapper.Token
+
 		wrapper.Retries++
 
 		if wrapper.Retries >= maxRetries {
 			if err := s.blacklist.Set(ctx, token, []byte{}, cacheImpl.WithTTL(blacklistTimeout)); err != nil {
-				s.logger.Warn("Can't add to blacklist", zap.String("token", token), zap.Error(err))
+				s.logger.Warn("failed to blacklist", zap.String("token", token), zap.Error(err))
+				continue
 			}
 
 			s.metrics.IncBlacklist(BlacklistOperationAdded)
-			s.metrics.IncRetry(RetryOutcomeMaxAttempts)
-			s.logger.Warn("Retries exceeded, blacklisting token",
+			s.logger.Warn("retries exceeded, blacklisting token",
 				zap.String("token", token),
-				zap.Duration("ttl", blacklistTimeout))
+				zap.Duration("ttl", blacklistTimeout),
+			)
 			continue
 		}
 
 		wrapperData, err := wrapper.serialize()
 		if err != nil {
 			s.metrics.IncError(1)
-			s.logger.Error("Can't serialize event wrapper", zap.Error(err))
+			s.logger.Error("failed to serialize event wrapper", zap.Error(err))
 			continue
 		}
 
 		if setErr := s.events.SetOrFail(ctx, wrapper.key(), wrapperData); setErr != nil {
-			s.logger.Warn("Can't set message to cache", zap.Error(setErr))
+			s.logger.Warn("failed to set message to cache", zap.String("key", wrapper.key()), zap.Error(setErr))
 			continue
 		}
 
-		s.metrics.IncRetry(RetryOutcomeRetried)
+		s.metrics.IncRetry()
 	}
 }

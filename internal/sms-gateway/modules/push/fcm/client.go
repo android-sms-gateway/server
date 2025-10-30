@@ -52,25 +52,25 @@ func (c *Client) Open(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) Send(ctx context.Context, messages map[string]types.Event) (map[string]error, error) {
-	errs := make(map[string]error, len(messages))
-	for address, payload := range messages {
-		eventMap, err := eventToMap(payload)
+func (c *Client) Send(ctx context.Context, messages []types.Message) ([]error, error) {
+	errs := make([]error, len(messages))
+
+	for i, message := range messages {
+		data, err := eventToMap(message.Event)
 		if err != nil {
-			errs[address] = fmt.Errorf("can't marshal event: %w", err)
+			errs[i] = fmt.Errorf("can't marshal event: %w", err)
 			continue
 		}
 
 		_, err = c.client.Send(ctx, &messaging.Message{
-			Data: eventMap,
+			Data: data,
 			Android: &messaging.AndroidConfig{
 				Priority: "high",
 			},
-			Token: address,
+			Token: message.Token,
 		})
-
 		if err != nil {
-			errs[address] = fmt.Errorf("can't send message to %s: %w", address, err)
+			errs[i] = fmt.Errorf("can't send message: %w", err)
 		}
 	}
 
