@@ -24,17 +24,15 @@ import (
 	"github.com/capcom6/go-infra-fx/cli"
 	"github.com/capcom6/go-infra-fx/db"
 	"github.com/capcom6/go-infra-fx/http"
-	"github.com/capcom6/go-infra-fx/logger"
 	"github.com/capcom6/go-infra-fx/validator"
+	"github.com/go-core-fx/logger"
 	"go.uber.org/fx"
-	"go.uber.org/fx/fxevent"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 var Module = fx.Module(
 	"server",
-	logger.Module,
+	logger.Module(),
 	appconfig.Module,
 	appdb.Module(),
 	http.Module,
@@ -62,11 +60,7 @@ func Run() {
 	fx.New(
 		cli.GetModule(),
 		Module,
-		fx.WithLogger(func(logger *zap.Logger) fxevent.Logger {
-			logOption := fxevent.ZapLogger{Logger: logger}
-			logOption.UseLogLevel(zapcore.DebugLevel)
-			return &logOption
-		}),
+		logger.WithFxDefaultLogger(),
 	).Run()
 }
 
