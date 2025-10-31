@@ -1,6 +1,7 @@
 package locker
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/go-core-fx/logger"
@@ -15,6 +16,16 @@ func Module() fx.Option {
 		logger.WithNamedLogger("locker"),
 		fx.Provide(func(db *sql.DB) Locker {
 			return NewMySQLLocker(db, "worker:", timeoutSeconds)
+		}),
+		fx.Invoke(func(locker Locker, lc fx.Lifecycle) {
+			lc.Append(fx.Hook{
+				OnStart: func(_ context.Context) error {
+					return nil
+				},
+				OnStop: func(_ context.Context) error {
+					return locker.Close()
+				},
+			})
 		}),
 	)
 }
