@@ -1,3 +1,4 @@
+name: sms-gate-app
 services:
   backend:
     image: capcom6/sms-gateway
@@ -9,7 +10,6 @@ services:
     environment:
       - DEBUG=
       - CONFIG_PATH=config.yml
-      - GOOSE_DBSTRING=sms:sms@tcp(db:3306)/sms
       - HTTP__LISTEN=0.0.0.0:3000
       - DATABASE__HOST=db
       - DATABASE__PORT=3306
@@ -20,7 +20,33 @@ services:
       - "3000:3000"
     volumes:
       - ../../configs/config.yml:/app/config.yml:ro
-    restart: 'unless-stopped'
+    restart: "unless-stopped"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    image: capcom6/sms-gateway
+    build:
+      context: ../..
+      dockerfile: ./build/package/Dockerfile
+      args:
+        - APP=sms-gateway
+    command: ["/app/app", "worker"]
+    environment:
+      - DEBUG=
+      - CONFIG_PATH=config.yml
+      - HTTP__LISTEN=0.0.0.0:3000
+      - DATABASE__HOST=db
+      - DATABASE__PORT=3306
+      - DATABASE__USER=sms
+      - DATABASE__PASSWORD=sms
+      - DATABASE__DATABASE=sms
+    ports:
+      - "3001:3000"
+    volumes:
+      - ../../configs/config.yml:/app/config.yml:ro
+    restart: "unless-stopped"
     depends_on:
       db:
         condition: service_healthy
@@ -35,7 +61,7 @@ services:
       - MARIADB_AUTO_UPGRADE=1
     volumes:
       - mariadb-data:/var/lib/mysql
-    restart: 'unless-stopped'
+    restart: "unless-stopped"
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       start_period: 10s
