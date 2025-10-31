@@ -34,7 +34,7 @@ kubectl create namespace $NAMESPACE || true
 echo "Installing Helm chart..."
 helm upgrade --install sms-gateway-test ./deployments/helm-chart \
   --namespace $NAMESPACE \
-  --set image.pullPolicy=IfNotPresent \
+  --set image.pullPolicy=Always \
   --set database.deployInternal=true \
   --set database.mariadb.rootPassword=root \
   --set database.password=sms \

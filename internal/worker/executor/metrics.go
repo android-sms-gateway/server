@@ -25,7 +25,7 @@ func newMetrics() *metrics {
 		activeTasksCounter: promauto.NewGauge(prometheus.GaugeOpts{
 			Namespace: "worker",
 			Subsystem: "executor",
-			Name:      "active_tasks_total",
+			Name:      "active_tasks",
 		}),
 		taskResult: promauto.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "worker",
