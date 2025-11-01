@@ -30,7 +30,7 @@
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 2,
-    "id": 9,
+    "id": 0,
     "links": [],
     "panels": [
         {
@@ -82,7 +82,7 @@
                 "textMode": "auto",
                 "wideLayout": true
             },
-            "pluginVersion": "12.2.0-16711121739",
+            "pluginVersion": "12.2.0",
             "targets": [
                 {
                     "datasource": {
@@ -90,7 +90,7 @@
                         "uid": "edqp0a73uh2bka"
                     },
                     "editorMode": "code",
-                    "expr": "1 - (sum(rate(sms_push_retries_total{outcome='max_attempts'}[$__rate_interval])) / (sum(rate(sms_push_enqueued_total[$__rate_interval])) OR vector(0)))",
+                    "expr": "1 - (sum(rate(sms_push_retries_total[$__rate_interval])) / (sum(rate(sms_push_enqueued_total[$__rate_interval])) OR vector(0)))",
                     "range": true,
                     "refId": "A",
                     "unit": "percentunit"
@@ -133,6 +133,7 @@
                             "type": "linear"
                         },
                         "showPoints": "auto",
+                        "showValues": false,
                         "spanNulls": false,
                         "stacking": {
                             "group": "A",
@@ -180,15 +181,17 @@
                     "sort": "none"
                 }
             },
-            "pluginVersion": "12.2.0-16711121739",
+            "pluginVersion": "12.2.0",
             "targets": [
                 {
                     "datasource": {
                         "type": "prometheus",
                         "uid": "edqp0a73uh2bka"
                     },
-                    "expr": "rate(sms_push_enqueued_total{event=~\"$event_type\"}[$__rate_interval])",
+                    "editorMode": "code",
+                    "expr": "sum by (event) (rate(sms_push_enqueued_total{event=~\"$event_type\"}[$__rate_interval]))",
                     "legendFormat": "{{event}}",
+                    "range": true,
                     "refId": "A"
                 }
             ],
@@ -229,6 +232,7 @@
                             "type": "linear"
                         },
                         "showPoints": "auto",
+                        "showValues": false,
                         "spanNulls": false,
                         "stacking": {
                             "group": "A",
@@ -276,15 +280,18 @@
                     "sort": "none"
                 }
             },
-            "pluginVersion": "12.2.0-16711121739",
+            "pluginVersion": "12.2.0",
             "targets": [
                 {
                     "datasource": {
                         "type": "prometheus",
                         "uid": "edqp0a73uh2bka"
                     },
+                    "editorMode": "code",
                     "expr": "sum(rate(sms_push_blacklist_total{operation=~\"added|skipped\"}[$__rate_interval])) by (operation)",
                     "legend": "{{operation}}",
+                    "legendFormat": "__auto",
+                    "range": true,
                     "refId": "A"
                 }
             ],
@@ -322,9 +329,12 @@
             "id": 3,
             "options": {
                 "legend": {
-                    "displayMode": "list",
+                    "displayMode": "table",
                     "placement": "bottom",
-                    "showLegend": true
+                    "showLegend": true,
+                    "values": [
+                        "percent"
+                    ]
                 },
                 "pieType": "pie",
                 "reduceOptions": {
@@ -334,13 +344,14 @@
                     "fields": "",
                     "values": false
                 },
+                "sort": "desc",
                 "tooltip": {
                     "hideZeros": false,
                     "mode": "single",
                     "sort": "none"
                 }
             },
-            "pluginVersion": "12.2.0-16711121739",
+            "pluginVersion": "12.2.0",
             "targets": [
                 {
                     "datasource": {
@@ -348,7 +359,10 @@
                         "uid": "edqp0a73uh2bka"
                     },
                     "editorMode": "code",
+                    "exemplar": false,
                     "expr": "sum by (event) (sms_push_enqueued_total)",
+                    "instant": false,
+                    "legendFormat": "__auto",
                     "range": true,
                     "refId": "A"
                 }
@@ -390,6 +404,7 @@
                             "type": "linear"
                         },
                         "showPoints": "auto",
+                        "showValues": false,
                         "spanNulls": false,
                         "stacking": {
                             "group": "A",
@@ -429,7 +444,7 @@
                     "calcs": [],
                     "displayMode": "list",
                     "placement": "bottom",
-                    "showLegend": true
+                    "showLegend": false
                 },
                 "tooltip": {
                     "hideZeros": false,
@@ -437,15 +452,17 @@
                     "sort": "none"
                 }
             },
-            "pluginVersion": "12.2.0-16711121739",
+            "pluginVersion": "12.2.0",
             "targets": [
                 {
                     "datasource": {
                         "type": "prometheus",
                         "uid": "edqp0a73uh2bka"
                     },
-                    "expr": "rate(sms_push_retries_total[$__rate_interval])",
+                    "editorMode": "code",
+                    "expr": "sum(rate(sms_push_retries_total[$__rate_interval]))",
                     "legendFormat": "{{outcome}}",
+                    "range": true,
                     "refId": "A"
                 }
             ],
@@ -486,6 +503,7 @@
                             "type": "linear"
                         },
                         "showPoints": "auto",
+                        "showValues": false,
                         "spanNulls": false,
                         "stacking": {
                             "group": "A",
@@ -525,7 +543,7 @@
                     "calcs": [],
                     "displayMode": "list",
                     "placement": "bottom",
-                    "showLegend": true
+                    "showLegend": false
                 },
                 "tooltip": {
                     "hideZeros": false,
@@ -533,7 +551,7 @@
                     "sort": "none"
                 }
             },
-            "pluginVersion": "12.2.0-16711121739",
+            "pluginVersion": "12.2.0",
             "targets": [
                 {
                     "datasource": {
@@ -541,7 +559,7 @@
                         "uid": "edqp0a73uh2bka"
                     },
                     "editorMode": "code",
-                    "expr": "rate(sms_push_errors_total[$__rate_interval])",
+                    "expr": "sum(rate(sms_push_errors_total[$__rate_interval]))",
                     "legendFormat": "{{error}}",
                     "range": true,
                     "refId": "A"
@@ -553,7 +571,7 @@
     ],
     "preload": false,
     "refresh": "auto",
-    "schemaVersion": 41,
+    "schemaVersion": 42,
     "tags": [
         "sms",
         "push"
@@ -563,9 +581,7 @@
             {
                 "current": {
                     "text": "All",
-                    "value": [
-                        "$__all"
-                    ]
+                    "value": "$__all"
                 },
                 "datasource": {
                     "type": "prometheus",
@@ -582,7 +598,7 @@
                     "query": "label_values(sms_push_enqueued_total, event)",
                     "refId": "PrometheusVariableQueryEditor-VariableQuery"
                 },
-                "refresh": 1,
+                "refresh": 2,
                 "regex": "",
                 "type": "query"
             }
@@ -596,5 +612,5 @@
     "timezone": "",
     "title": "SMS Push Throughput",
     "uid": "17c2b3f3-e85b-4aaf-bba4-8aaa85b46569",
-    "version": 16
+    "version": 22
 }
