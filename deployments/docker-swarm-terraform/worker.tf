@@ -16,21 +16,6 @@ resource "docker_service" "worker" {
         file_uid    = 405
         file_gid    = 100
       }
-
-      #region Prometheus support
-      labels {
-        label = "prometheus.io/scrape"
-        value = "true"
-      }
-      labels {
-        label = "prometheus.io/port"
-        value = "3000"
-      }
-      labels {
-        label = "prometheus.io/job"
-        value = "worker"
-      }
-      #endregion
     }
 
     networks_advanced {
