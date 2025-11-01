@@ -11,7 +11,7 @@ groups:
           description: "Worker task error rate is {{ $value }} errors per minute, exceeding threshold"
           runbook: "Check worker logs for task failures"
       - alert: LongRunningTask
-        expr: histogram_quantile(0.95, sum(rate(worker_executor_task_duration_seconds_bucket[5m]))) > 30
+        expr: histogram_quantile(0.95, sum(rate(worker_executor_task_duration_seconds_bucket[5m])) by (le)) > 30
         for: 10m
         labels:
           severity: warning
@@ -20,7 +20,7 @@ groups:
           description: "95th percentile task duration is {{ $value }}s, above 30s threshold"
           runbook: "Review task performance and optimize if needed"
       - alert: HighActiveTasks
-        expr: worker_executor_active_tasks_total > 10
+        expr: worker_executor_active_tasks > 10
         for: 5m
         labels:
           severity: warning

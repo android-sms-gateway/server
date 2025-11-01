@@ -75,7 +75,7 @@
             },
             "targets": [
                 {
-                    "expr": "worker_executor_active_tasks_total",
+                    "expr": "worker_executor_active_tasks",
                     "refId": "A"
                 }
             ],
