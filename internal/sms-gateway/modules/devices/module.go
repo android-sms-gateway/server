@@ -1,32 +1,18 @@
 package devices
 
 import (
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/cleaner"
+	"github.com/go-core-fx/logger"
 	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
-type FxResult struct {
-	fx.Out
-
-	Service   *Service
-	AsCleaner cleaner.Cleanable `group:"cleaners"`
+func Module() fx.Option {
+	return fx.Module(
+		"devices",
+		logger.WithNamedLogger("devices"),
+		fx.Provide(
+			NewRepository,
+			fx.Private,
+		),
+		fx.Provide(NewService),
+	)
 }
-
-var Module = fx.Module(
-	"devices",
-	fx.Decorate(func(log *zap.Logger) *zap.Logger {
-		return log.Named("devices")
-	}),
-	fx.Provide(
-		newDevicesRepository,
-		fx.Private,
-	),
-	fx.Provide(func(p ServiceParams) FxResult {
-		svc := NewService(p)
-		return FxResult{
-			Service:   svc,
-			AsCleaner: svc,
-		}
-	}),
-)

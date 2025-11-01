@@ -41,7 +41,7 @@ var Module = fx.Module(
 	}),
 	fx.Provide(func(cfg Config) db.Config {
 		return db.Config{
-			Dialect:  db.Dialect(cfg.Database.Dialect),
+			Dialect:  db.DialectMySQL,
 			Host:     cfg.Database.Host,
 			Port:     cfg.Database.Port,
 			User:     cfg.Database.User,
@@ -67,11 +67,6 @@ var Module = fx.Module(
 			},
 			Debounce: time.Duration(cfg.FCM.DebounceSeconds) * time.Second,
 			Timeout:  time.Duration(cfg.FCM.TimeoutSeconds) * time.Second,
-		}
-	}),
-	fx.Provide(func(cfg Config) messages.HashingTaskConfig {
-		return messages.HashingTaskConfig{
-			Interval: time.Duration(cfg.Tasks.Hashing.IntervalSeconds) * time.Second,
 		}
 	}),
 	fx.Provide(func(cfg Config) auth.Config {
@@ -104,8 +99,8 @@ var Module = fx.Module(
 	}),
 	fx.Provide(func(cfg Config) messages.Config {
 		return messages.Config{
-			ProcessedLifetime: time.Duration(cfg.Messages.ProcessedLifetimeHours) * time.Hour,
-			CacheTTL:          time.Duration(cfg.Messages.CacheTTLSeconds) * time.Second,
+			CacheTTL:        time.Duration(cfg.Messages.CacheTTLSeconds) * time.Second,
+			HashingInterval: time.Duration(max(cfg.Tasks.Hashing.IntervalSeconds, cfg.Messages.HashingIntervalSeconds)) * time.Second,
 		}
 	}),
 	fx.Provide(func(cfg Config) devices.Config {

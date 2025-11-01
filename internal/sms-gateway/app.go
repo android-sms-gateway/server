@@ -8,11 +8,9 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/cache"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/cleaner"
 	appdb "github.com/android-sms-gateway/server/internal/sms-gateway/modules/db"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/events"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/health"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/metrics"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push"
@@ -22,20 +20,19 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/online"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/openapi"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/pubsub"
+	"github.com/android-sms-gateway/server/pkg/health"
 	"github.com/capcom6/go-infra-fx/cli"
 	"github.com/capcom6/go-infra-fx/db"
 	"github.com/capcom6/go-infra-fx/http"
-	"github.com/capcom6/go-infra-fx/logger"
 	"github.com/capcom6/go-infra-fx/validator"
+	"github.com/go-core-fx/logger"
 	"go.uber.org/fx"
-	"go.uber.org/fx/fxevent"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 var Module = fx.Module(
 	"server",
-	logger.Module,
+	logger.Module(),
 	appconfig.Module,
 	appdb.Module(),
 	http.Module,
@@ -52,9 +49,8 @@ var Module = fx.Module(
 	health.Module(),
 	webhooks.Module,
 	settings.Module,
-	devices.Module,
+	devices.Module(),
 	metrics.Module,
-	cleaner.Module,
 	sse.Module,
 	online.Module(),
 )
@@ -64,11 +60,7 @@ func Run() {
 	fx.New(
 		cli.GetModule(),
 		Module,
-		fx.WithLogger(func(logger *zap.Logger) fxevent.Logger {
-			logOption := fxevent.ZapLogger{Logger: logger}
-			logOption.UseLogLevel(zapcore.DebugLevel)
-			return &logOption
-		}),
+		logger.WithFxDefaultLogger(),
 	).Run()
 }
 
@@ -82,7 +74,6 @@ type StartParams struct {
 	Server          *http.Server
 	MessagesService *messages.Service
 	PushService     *push.Service
-	CleanerService  *cleaner.Service
 }
 
 func Start(p StartParams) error {
@@ -105,12 +96,6 @@ func Start(p StartParams) error {
 					p.Logger.Error("Error starting server", zap.Error(err))
 					_ = p.Shut.Shutdown()
 				}
-			}()
-
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				p.CleanerService.Run(ctx)
 			}()
 
 			p.Logger.Info("Service started")

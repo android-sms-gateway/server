@@ -2,28 +2,32 @@ package messages
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
-	"github.com/go-sql-driver/mysql"
+	"github.com/android-sms-gateway/server/pkg/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
-const hashingLockName = "36444143-1ace-4dbf-891c-cc505911497e"
 const maxPendingBatch = 100
 
 var ErrMessageNotFound = gorm.ErrRecordNotFound
 var ErrMessageAlreadyExists = errors.New("duplicate id")
 var ErrMultipleMessagesFound = errors.New("multiple messages found")
 
-type repository struct {
+type Repository struct {
 	db *gorm.DB
 }
 
-func (r *repository) Select(filter MessagesSelectFilter, options MessagesSelectOptions) ([]Message, int64, error) {
+func NewRepository(db *gorm.DB) *Repository {
+	return &Repository{
+		db: db,
+	}
+}
+
+func (r *Repository) Select(filter MessagesSelectFilter, options MessagesSelectOptions) ([]Message, int64, error) {
 	query := r.db.Model(&Message{})
 
 	// Apply date range filter
@@ -96,7 +100,7 @@ func (r *repository) Select(filter MessagesSelectFilter, options MessagesSelectO
 	return messages, total, nil
 }
 
-func (r *repository) SelectPending(deviceID string, order MessagesOrder) ([]Message, error) {
+func (r *Repository) SelectPending(deviceID string, order MessagesOrder) ([]Message, error) {
 	messages, _, err := r.Select(MessagesSelectFilter{
 		DeviceID: deviceID,
 		State:    ProcessingStatePending,
@@ -109,7 +113,7 @@ func (r *repository) SelectPending(deviceID string, order MessagesOrder) ([]Mess
 	return messages, err
 }
 
-func (r *repository) Get(filter MessagesSelectFilter, options MessagesSelectOptions) (Message, error) {
+func (r *Repository) Get(filter MessagesSelectFilter, options MessagesSelectOptions) (Message, error) {
 	messages, _, err := r.Select(filter, options)
 	if err != nil {
 		return Message{}, fmt.Errorf("can't get message: %w", err)
@@ -126,19 +130,20 @@ func (r *repository) Get(filter MessagesSelectFilter, options MessagesSelectOpti
 	return messages[0], nil
 }
 
-func (r *repository) Insert(message *Message) error {
+func (r *Repository) Insert(message *Message) error {
 	err := r.db.Omit("Device").Create(message).Error
 	if err == nil {
 		return nil
 	}
 
-	if mysqlErr := err.(*mysql.MySQLError); mysqlErr != nil && mysqlErr.Number == 1062 {
+	if errors.Is(err, gorm.ErrDuplicatedKey) || mysql.IsDuplicateKeyViolation(err) {
 		return ErrMessageAlreadyExists
 	}
-	return err
+
+	return fmt.Errorf("failed to insert message: %w", err)
 }
 
-func (r *repository) UpdateState(message *Message) error {
+func (r *Repository) UpdateState(message *Message) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(message).Select("State").Updates(message).Error; err != nil {
 			return err
@@ -154,7 +159,10 @@ func (r *repository) UpdateState(message *Message) error {
 		}
 
 		for _, v := range message.Recipients {
-			if err := tx.Model(&v).Where("message_id = ?", message.ID).Select("State", "Error").Updates(&v).Error; err != nil {
+			if err := tx.Model(&MessageRecipient{}).
+				Where("message_id = ? AND phone_number = ?", message.ID, v.PhoneNumber).
+				Select("state", "error").
+				Updates(map[string]any{"state": v.State, "error": v.Error}).Error; err != nil {
 				return err
 			}
 		}
@@ -163,49 +171,30 @@ func (r *repository) UpdateState(message *Message) error {
 	})
 }
 
-func (r *repository) HashProcessed(ids []uint64) error {
+func (r *Repository) HashProcessed(ctx context.Context, ids []uint64) (int64, error) {
 	rawSQL := "UPDATE `messages` `m`, `message_recipients` `r`\n" +
 		"SET `m`.`is_hashed` = true, `m`.`content` = SHA2(COALESCE(JSON_VALUE(`content`, '$.text'), JSON_VALUE(`content`, '$.data')), 256), `r`.`phone_number` = LEFT(SHA2(phone_number, 256), 16)\n" +
 		"WHERE `m`.`id` = `r`.`message_id` AND `m`.`is_hashed` = false AND `m`.`is_encrypted` = false AND `m`.`state` <> 'Pending'"
-	params := []interface{}{}
+	params := []any{}
 	if len(ids) > 0 {
 		rawSQL += " AND `m`.`id` IN (?)"
 		params = append(params, ids)
 	}
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
-		hasLock := sql.NullBool{}
-		lockRow := tx.Raw("SELECT GET_LOCK(?, 1)", hashingLockName).Row()
-		err := lockRow.Scan(&hasLock)
-		if err != nil {
-			return err
-		}
+	res := r.db.WithContext(ctx).
+		Exec(rawSQL, params...)
+	if res.Error != nil {
+		return 0, fmt.Errorf("sql error: %w", res.Error)
+	}
 
-		if !hasLock.Valid || !hasLock.Bool {
-			return errors.New("failed to acquire lock")
-		}
-		defer tx.Exec("SELECT RELEASE_LOCK(?)", hashingLockName)
-
-		return tx.Exec(rawSQL, params...).Error
-	})
+	return res.RowsAffected, nil
 }
 
-// removeProcessed removes messages older than the given time that are not in
-// the Pending state.
-//
-// This is useful for periodically cleaning up old messages that are not in the
-// Pending state.
-func (r *repository) removeProcessed(ctx context.Context, until time.Time) (int64, error) {
+func (r *Repository) Cleanup(ctx context.Context, until time.Time) (int64, error) {
 	res := r.db.
 		WithContext(ctx).
 		Where("state <> ?", ProcessingStatePending).
 		Where("created_at < ?", until).
 		Delete(&Message{})
 	return res.RowsAffected, res.Error
-}
-
-func newRepository(db *gorm.DB) *repository {
-	return &repository{
-		db: db,
-	}
 }

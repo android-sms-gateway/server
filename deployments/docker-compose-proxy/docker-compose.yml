@@ -34,19 +34,33 @@ services:
       - STATIC_ENABLED=true
       - STATIC_RULES=${DOMAIN},^/(.*),http://backend:3000/$$1
       - HEADER=
-          X-Frame-Options:SAMEORIGIN,
-          X-XSS-Protection:1; mode=block;,
-          X-Content-Type-Options:nosniff,
-          Strict-Transport-Security:max-age=31536000,
-          Referrer-Policy:no-referrer,
-          Content-Security-Policy:default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com/; font-src self https://fonts.gstatic.com/;
+        X-Frame-Options:SAMEORIGIN,
+        X-XSS-Protection:1; mode=block;,
+        X-Content-Type-Options:nosniff,
+        Strict-Transport-Security:max-age=31536000,
+        Referrer-Policy:no-referrer,
+        Content-Security-Policy:default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com/; font-src self https://fonts.gstatic.com/;
 
   backend:
-    image: capcom6/sms-gateway:latest
+    image: ghcr.io/android-sms-gateway/server:latest
     environment:
       - CONFIG_PATH=config.yml
       - DATABASE__PASSWORD=${MYSQL_PASSWORD}
       - GATEWAY__PRIVATE_TOKEN=${GATEWAY_PRIVATE_TOKEN}
+    configs:
+      - source: config-yml
+        target: /app/config.yml
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    image: ghcr.io/android-sms-gateway/server:latest
+    command: ["/app/app", "worker"]
+    environment:
+      - CONFIG_PATH=config.yml
+      - DATABASE__PASSWORD=${MYSQL_PASSWORD}
     configs:
       - source: config-yml
         target: /app/config.yml
@@ -66,15 +80,7 @@ services:
       - mariadb-data:/var/lib/mysql
     restart: unless-stopped
     healthcheck:
-      test:
-        [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-proot",
-          "-h",
-          "127.0.0.1"
-        ]
+      test: ["CMD", "mysqladmin", "ping", "-proot", "-h", "127.0.0.1"]
       timeout: 5s
       retries: 10
 
@@ -95,9 +101,6 @@ configs:
         credentials_json: "{}"
         timeout_seconds: 1
         debounce_seconds: 5
-      tasks:
-        hashing:
-          interval_seconds: 900
 
 volumes:
   mariadb-data:

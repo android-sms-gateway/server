@@ -1,7 +1,10 @@
 package main
 
 import (
+	"flag"
+
 	smsgateway "github.com/android-sms-gateway/server/internal/sms-gateway"
+	"github.com/android-sms-gateway/server/internal/worker"
 )
 
 //	@securitydefinitions.basic	ApiAuth
@@ -35,5 +38,16 @@ import (
 //
 // SMS Gateway for Android
 func main() {
-	smsgateway.Run()
+	flag.Parse()
+
+	cmd := "start"
+	if len(flag.Args()) > 0 {
+		cmd = flag.Arg(0)
+	}
+
+	if cmd == "worker" {
+		worker.Run()
+	} else {
+		smsgateway.Run()
+	}
 }

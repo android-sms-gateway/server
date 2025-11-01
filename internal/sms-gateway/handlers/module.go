@@ -24,7 +24,7 @@ var Module = fx.Module(
 		http.AsApiHandler(newUpstreamHandler),
 	),
 	fx.Provide(
-		newHealthHandler,
+		NewHealthHandler,
 		messages.NewThirdPartyController,
 		messages.NewMobileController,
 		webhooks.NewThirdPartyController,
