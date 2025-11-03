@@ -26,16 +26,19 @@ func newMetrics() *metrics {
 			Namespace: "worker",
 			Subsystem: "executor",
 			Name:      "active_tasks",
+			Help:      "Number of active tasks",
 		}),
 		taskResult: promauto.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "worker",
 			Subsystem: "executor",
 			Name:      "task_result_total",
+			Help:      "Task result, labeled by task name and result",
 		}, []string{"task", "result"}),
 		taskDuration: promauto.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: "worker",
 			Subsystem: "executor",
 			Name:      "task_duration_seconds",
+			Help:      "Task duration in seconds",
 			Buckets:   []float64{.001, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
 		}, []string{"task"}),
 	}

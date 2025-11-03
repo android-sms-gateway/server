@@ -2,6 +2,7 @@ package cache_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -114,7 +115,7 @@ func TestMemoryCache_GetNotFound(t *testing.T) {
 	key := "non-existent-key"
 
 	_, err := c.Get(ctx, key)
-	if err != cache.ErrKeyNotFound {
+	if !errors.Is(err, cache.ErrKeyNotFound) {
 		t.Errorf("Expected ErrKeyNotFound, got %v", err)
 	}
 }
@@ -159,7 +160,7 @@ func TestMemoryCache_SetOrFailExistingKey(t *testing.T) {
 
 	// Try SetOrFail with existing key
 	err = c.SetOrFail(ctx, key, []byte(value2))
-	if err != cache.ErrKeyExists {
+	if !errors.Is(err, cache.ErrKeyExists) {
 		t.Errorf("Expected ErrKeyExists, got %v", err)
 	}
 
@@ -195,7 +196,7 @@ func TestMemoryCache_Delete(t *testing.T) {
 
 	// Verify the key is gone
 	_, err = c.Get(ctx, key)
-	if err != cache.ErrKeyNotFound {
+	if !errors.Is(err, cache.ErrKeyNotFound) {
 		t.Errorf("Expected ErrKeyNotFound after delete, got %v", err)
 	}
 }
@@ -238,7 +239,7 @@ func TestMemoryCache_GetAndDelete(t *testing.T) {
 
 	// Verify the key is gone
 	_, err = c.Get(ctx, key)
-	if err != cache.ErrKeyNotFound {
+	if !errors.Is(err, cache.ErrKeyNotFound) {
 		t.Errorf("Expected ErrKeyNotFound after GetAndDelete, got %v", err)
 	}
 }
@@ -251,7 +252,7 @@ func TestMemoryCache_GetAndDeleteNonExistent(t *testing.T) {
 
 	// GetAndDelete non-existent key should return ErrKeyNotFound
 	_, err := c.GetAndDelete(ctx, key)
-	if err != cache.ErrKeyNotFound {
+	if !errors.Is(err, cache.ErrKeyNotFound) {
 		t.Errorf("Expected ErrKeyNotFound, got %v", err)
 	}
 }
@@ -298,9 +299,9 @@ func TestMemoryCache_Drain(t *testing.T) {
 
 	// Verify cache is now empty
 	for key := range items {
-		_, err := c.Get(ctx, key)
-		if err != cache.ErrKeyNotFound {
-			t.Errorf("Expected ErrKeyNotFound for key %s after drain, got %v", key, err)
+		_, getErr := c.Get(ctx, key)
+		if !errors.Is(getErr, cache.ErrKeyNotFound) {
+			t.Errorf("Expected ErrKeyNotFound for key %s after drain, got %v", key, getErr)
 		}
 	}
 }
@@ -352,7 +353,7 @@ func TestMemoryCache_Cleanup(t *testing.T) {
 
 	// Verify the expired item is gone
 	_, err = c.Get(ctx, key)
-	if err != cache.ErrKeyNotFound {
+	if !errors.Is(err, cache.ErrKeyNotFound) {
 		t.Errorf("Expected ErrKeyNotFound after cleanup, got %v", err)
 	}
 }

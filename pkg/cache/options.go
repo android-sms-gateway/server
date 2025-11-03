@@ -9,23 +9,24 @@ type options struct {
 	validUntil time.Time
 }
 
-func (o *options) apply(opts ...Option) *options {
+func (o *options) apply(opts ...Option) {
 	for _, opt := range opts {
 		opt(o)
 	}
-
-	return o
 }
 
 // WithTTL is an Option that sets the TTL (time to live) for an item, i.e. the
 // item will expire after the given duration from the time of insertion.
 func WithTTL(ttl time.Duration) Option {
 	return func(o *options) {
-		if ttl <= 0 {
+		switch {
+		case ttl == 0:
 			o.validUntil = time.Time{}
+		case ttl < 0:
+			o.validUntil = time.Now()
+		default:
+			o.validUntil = time.Now().Add(ttl)
 		}
-
-		o.validUntil = time.Now().Add(ttl)
 	}
 }
 

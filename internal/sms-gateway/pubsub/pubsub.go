@@ -1,6 +1,7 @@
 package pubsub
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -13,6 +14,8 @@ const (
 
 type PubSub = pubsub.PubSub
 
+var ErrInvalidScheme = errors.New("invalid scheme")
+
 func New(config Config) (PubSub, error) {
 	if config.URL == "" {
 		config.URL = "memory://"
@@ -20,22 +23,29 @@ func New(config Config) (PubSub, error) {
 
 	u, err := url.Parse(config.URL)
 	if err != nil {
-		return nil, fmt.Errorf("can't parse url: %w", err)
+		return nil, fmt.Errorf("failed to parse url: %w", err)
 	}
 
 	opts := []pubsub.Option{}
 	opts = append(opts, pubsub.WithBufferSize(config.BufferSize))
 
+	var pubSub PubSub
 	switch u.Scheme {
 	case "memory":
-		return pubsub.NewMemory(opts...), nil
+		pubSub, err = pubsub.NewMemory(opts...), nil
 	case "redis":
-		return pubsub.NewRedis(pubsub.RedisConfig{
+		pubSub, err = pubsub.NewRedis(pubsub.RedisConfig{
 			Client: nil,
 			URL:    config.URL,
 			Prefix: topicPrefix,
 		}, opts...)
 	default:
-		return nil, fmt.Errorf("invalid scheme: %s", u.Scheme)
+		return nil, fmt.Errorf("%w: %s", ErrInvalidScheme, u.Scheme)
 	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create pubsub: %w", err)
+	}
+
+	return pubSub, nil
 }

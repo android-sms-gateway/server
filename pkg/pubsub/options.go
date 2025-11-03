@@ -6,12 +6,10 @@ type options struct {
 	bufferSize uint
 }
 
-func (o *options) apply(opts ...Option) *options {
+func (o *options) apply(opts ...Option) {
 	for _, opt := range opts {
 		opt(o)
 	}
-
-	return o
 }
 
 func WithBufferSize(bufferSize uint) Option {

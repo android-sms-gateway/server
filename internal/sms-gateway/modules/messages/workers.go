@@ -67,6 +67,6 @@ func (t *hashingWorker) process(ctx context.Context) {
 
 	t.logger.Debug("Hashing messages...")
 	if _, err := t.messages.HashProcessed(ctx, ids); err != nil {
-		t.logger.Error("Can't hash messages", zap.Error(err))
+		t.logger.Error("failed to hash messages", zap.Error(err))
 	}
 }

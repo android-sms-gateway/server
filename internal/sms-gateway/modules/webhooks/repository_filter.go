@@ -24,7 +24,7 @@ type selectFilter struct {
 }
 
 func newFilter(filters ...SelectFilter) *selectFilter {
-	f := &selectFilter{}
+	f := new(selectFilter)
 	f.merge(filters...)
 	return f
 }

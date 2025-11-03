@@ -27,7 +27,7 @@ func newCache(config Config, storage cacheImpl.Cache) *cache {
 	}
 }
 
-func (c *cache) Set(ctx context.Context, userID, ID string, message *MessageStateOut) error {
+func (c *cache) Set(ctx context.Context, userID, id string, message *MessageStateOut) error {
 	var (
 		err  error
 		data []byte
@@ -36,32 +36,36 @@ func (c *cache) Set(ctx context.Context, userID, ID string, message *MessageStat
 	if message != nil {
 		data, err = json.Marshal(message)
 		if err != nil {
-			return fmt.Errorf("can't marshal message: %w", err)
+			return fmt.Errorf("failed to marshal message: %w", err)
 		}
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, cacheTimeout)
 	defer cancel()
 
-	return c.storage.Set(ctx, userID+":"+ID, data, cacheImpl.WithTTL(c.ttl))
+	if setErr := c.storage.Set(ctx, userID+":"+id, data, cacheImpl.WithTTL(c.ttl)); setErr != nil {
+		return fmt.Errorf("failed to set message in cache: %w", setErr)
+	}
+
+	return nil
 }
 
-func (c *cache) Get(ctx context.Context, userID, ID string) (*MessageStateOut, error) {
+func (c *cache) Get(ctx context.Context, userID, id string) (*MessageStateOut, error) {
 	ctx, cancel := context.WithTimeout(ctx, cacheTimeout)
 	defer cancel()
 
-	data, err := c.storage.Get(ctx, userID+":"+ID, cacheImpl.AndSetTTL(c.ttl))
+	data, err := c.storage.Get(ctx, userID+":"+id, cacheImpl.AndSetTTL(c.ttl))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get message from cache: %w", err)
 	}
 
 	if len(data) == 0 {
-		return nil, nil
+		return nil, nil //nolint:nilnil //empty cached value is used for caching "Not Found"
 	}
 
 	message := new(MessageStateOut)
-	if err := json.Unmarshal(data, message); err != nil {
-		return nil, fmt.Errorf("can't unmarshal message: %w", err)
+	if jsonErr := json.Unmarshal(data, message); jsonErr != nil {
+		return nil, fmt.Errorf("failed to unmarshal message: %w", jsonErr)
 	}
 
 	return message, nil

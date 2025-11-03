@@ -64,7 +64,7 @@ jobs:
 
       # step 4: run test
       - name: Run coverage
-        run: go test -race -shuffle=on -covermode=atomic -coverpkg=./... -coverprofile=coverage.out ./...
+        run: go test -race -shuffle=on -count=1 -covermode=atomic -coverpkg=./... -coverprofile=coverage.out ./...
 
       # step 5: upload coverage
       - name: Upload coverage to Codecov
@@ -93,16 +93,19 @@ jobs:
       - name: Install all Go dependencies
         run: go mod download
 
-      # step 4: run benchmark
-      - name: Run benchmarks
-        run: go test -bench=. -benchmem ./... | tee benchmark.txt
-
-      # step 5: download previous benchmark result from cache (if exists)
-      - name: Download previous benchmark data
-        uses: actions/cache@v4
+      # step 4: restore previous benchmark history (if exists)
+      - name: Restore benchmark history
+        id: benchmark-cache
+        uses: actions/cache/restore@v4
         with:
           path: ./cache
-          key: ${{ runner.os }}-benchmark
+          key: ${{ runner.os }}-benchmark-${{ github.ref_name }}
+          restore-keys: |
+            ${{ runner.os }}-benchmark-
+
+      # step 5: run benchmark
+      - name: Run benchmarks
+        run: go test -run=^$ -bench=. -benchmem ./... | tee benchmark.txt
 
       # step 6: upload benchmark
       - name: Upload benchmark results
@@ -116,3 +119,11 @@ jobs:
           external-data-json-path: ./cache/benchmark-data.json
           # Workflow will fail when an alert happens
           fail-on-alert: true
+
+      # step 7: persist updated benchmark history
+      - name: Save benchmark history
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ./cache
+          key: ${{ runner.os }}-benchmark-${{ github.ref_name }}-${{ github.run_id }}

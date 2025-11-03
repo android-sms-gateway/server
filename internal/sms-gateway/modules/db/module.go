@@ -7,6 +7,10 @@ import (
 	healthmod "github.com/android-sms-gateway/server/pkg/health"
 )
 
+const (
+	idSize = 21
+)
+
 type IDGen func() string
 
 func Module() fx.Option {
@@ -16,7 +20,7 @@ func Module() fx.Option {
 			healthmod.AsHealthProvider(newHealth),
 		),
 		fx.Provide(func() (IDGen, error) {
-			return nanoid.Standard(21)
+			return nanoid.Standard(idSize)
 		}),
 	)
 }

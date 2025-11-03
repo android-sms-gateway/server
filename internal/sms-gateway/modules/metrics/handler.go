@@ -5,16 +5,16 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type HttpHandler struct {
+type HTTPHandler struct {
 }
 
-func (h *HttpHandler) Register(app *fiber.App) {
+func (h *HTTPHandler) Register(app *fiber.App) {
 	promhandler := fiberprometheus.New("")
 	promhandler.RegisterAt(app, "/metrics")
 
 	app.Use(promhandler.Middleware)
 }
 
-func newHttpHandler() *HttpHandler {
-	return &HttpHandler{}
+func newHTTPHandler() *HTTPHandler {
+	return &HTTPHandler{}
 }

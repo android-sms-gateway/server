@@ -1,37 +1,47 @@
 project_name = sms-gateway
-image_name = capcom6/$(project_name):latest
+registry_name = ghcr.io/android-sms-gateway
+image_name = ghcr.io/android-sms-gateway/server:latest
 
 extension=
 ifeq ($(OS),Windows_NT)
 	extension = .exe
 endif
 
-# Default target
-all: fmt lint test benchmark
+.PHONY: \
+	all fmt lint test coverage benchmark deps release clean help \
+	init init-dev ngrok air db-upgrade db-upgrade-raw run test-e2e build install \
+	docker-build docker docker-dev docker-clean
 
-fmt:
+all: fmt lint test benchmark ## Run all tests and checks
+
+fmt: ## Format the code
 	golangci-lint fmt
 
-# Lint the code using golangci-lint
-lint:
+lint: ## Lint the code
 	golangci-lint run --timeout=5m
 
-# Run tests with coverage
-test:
+test: ## Run tests
 	go test -race -shuffle=on -count=1 -covermode=atomic -coverpkg=./... -coverprofile=coverage.out ./...
 
-# Run benchmarks
-benchmark:
+coverage: test ## Generate coverage
+	go tool cover -func=coverage.out
+	go tool cover -html=coverage.out -o coverage.html
+
+benchmark: ## Run benchmarks
 	go test -run=^$$ -bench=. -benchmem ./... | tee benchmark.txt
 
-# Download dependencies
-deps:
+deps: ## Install dependencies
 	go mod download
 
-# Clean up generated files
-clean:
-	go clean -cache -testcache
-	rm -f coverage.out benchmark.txt
+release: ## Create release
+	DOCKER_REGISTRY=$(registry_name) RELEASE_ID=0 goreleaser release --snapshot --clean
+
+clean: ## Remove build artifacts
+	rm -f coverage.* benchmark.txt
+	rm -rf dist
+
+help: ## Show this help
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 ###
 
@@ -77,5 +87,3 @@ docker-dev:
 
 docker-clean:
 	docker compose -f deployments/docker-compose/docker-compose.yml down --volumes
-
-.PHONY: all fmt lint test benchmark deps clean init init-dev air ngrok db-upgrade db-upgrade-raw run test-e2e build install docker-build docker docker-dev docker-clean

@@ -10,7 +10,7 @@ func Module() fx.Option {
 		"health",
 		logger.WithNamedLogger("health"),
 		fx.Provide(
-			AsHealthProvider(NewHealth),
+			AsHealthProvider(newHealth),
 			fx.Private,
 		),
 		fx.Provide(
@@ -22,7 +22,7 @@ func Module() fx.Option {
 func AsHealthProvider(f any) any {
 	return fx.Annotate(
 		f,
-		fx.As(new(HealthProvider)),
+		fx.As(new(Provider)),
 		fx.ResultTags(`group:"health-providers"`),
 	)
 }

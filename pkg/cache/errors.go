@@ -3,6 +3,8 @@ package cache
 import "errors"
 
 var (
+	// ErrInvalidConfig indicates an invalid configuration.
+	ErrInvalidConfig = errors.New("invalid config")
 	// ErrKeyNotFound indicates no value exists for the given key.
 	ErrKeyNotFound = errors.New("key not found")
 	// ErrKeyExpired indicates a value exists but has expired.

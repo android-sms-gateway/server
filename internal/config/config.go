@@ -25,7 +25,7 @@ type Gateway struct {
 }
 
 type HTTP struct {
-	Listen  string   `yaml:"listen" envconfig:"HTTP__LISTEN"`   // listen address
+	Listen  string   `yaml:"listen"  envconfig:"HTTP__LISTEN"`  // listen address
 	Proxies []string `yaml:"proxies" envconfig:"HTTP__PROXIES"` // proxies
 
 	API     API     `yaml:"api"`
@@ -73,7 +73,7 @@ type SSE struct {
 }
 
 type Messages struct {
-	CacheTTLSeconds        uint16 `yaml:"cache_ttl_seconds" envconfig:"MESSAGES__CACHE_TTL_SECONDS"`               // cache ttl in seconds
+	CacheTTLSeconds        uint16 `yaml:"cache_ttl_seconds"        envconfig:"MESSAGES__CACHE_TTL_SECONDS"`        // cache ttl in seconds
 	HashingIntervalSeconds uint16 `yaml:"hashing_interval_seconds" envconfig:"MESSAGES__HASHING_INTERVAL_SECONDS"` // hashing interval in seconds
 }
 
@@ -82,41 +82,46 @@ type Cache struct {
 }
 
 type PubSub struct {
-	URL string `yaml:"url" envconfig:"PUBSUB__URL"`
+	URL        string `yaml:"url"         envconfig:"PUBSUB__URL"`
+	BufferSize uint   `yaml:"buffer_size" envconfig:"PUBSUB__BUFFER_SIZE"`
 }
 
-var defaultConfig = Config{
-	Gateway: Gateway{Mode: GatewayModePublic},
-	HTTP: HTTP{
-		Listen: ":3000",
-	},
-	Database: Database{
-		Host:         "localhost",
-		Port:         3306,
-		User:         "sms",
-		Password:     "sms",
-		Database:     "sms",
-		Timezone:     "UTC",
-		Debug:        false,
-		MaxOpenConns: 0,
-		MaxIdleConns: 0,
-	},
-	FCM: FCMConfig{
-		CredentialsJSON: "",
-		DebounceSeconds: 5,
-		TimeoutSeconds:  1,
-	},
-	SSE: SSE{
-		KeepAlivePeriodSeconds: 15,
-	},
-	Messages: Messages{
-		CacheTTLSeconds:        300, // 5 minutes
-		HashingIntervalSeconds: 60,
-	},
-	Cache: Cache{
-		URL: "memory://",
-	},
-	PubSub: PubSub{
-		URL: "memory://",
-	},
+func Default() Config {
+	//nolint:exhaustruct,mnd // default values
+	return Config{
+		Gateway: Gateway{Mode: GatewayModePublic},
+		HTTP: HTTP{
+			Listen: ":3000",
+		},
+		Database: Database{
+			Host:     "localhost",
+			Port:     3306,
+			User:     "sms",
+			Password: "sms",
+			Database: "sms",
+			Timezone: "UTC",
+		},
+		FCM: FCMConfig{
+			CredentialsJSON: "",
+		},
+		Tasks: Tasks{
+			Hashing: HashingTask{
+				IntervalSeconds: uint16(15 * 60),
+			},
+		},
+		SSE: SSE{
+			KeepAlivePeriodSeconds: 15,
+		},
+		Messages: Messages{
+			CacheTTLSeconds:        300, // 5 minutes
+			HashingIntervalSeconds: 60,
+		},
+		Cache: Cache{
+			URL: "memory://",
+		},
+		PubSub: PubSub{
+			URL:        "memory://",
+			BufferSize: 128,
+		},
+	}
 }

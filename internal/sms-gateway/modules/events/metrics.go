@@ -5,7 +5,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-// Metric constants
+// Metric constants.
 const (
 	MetricEnqueuedTotal = "enqueued_total"
 	MetricSentTotal     = "sent_total"
@@ -26,14 +26,14 @@ const (
 	EventTypeUnknown = "unknown"
 )
 
-// metrics contains all Prometheus metrics for the events module
+// metrics contains all Prometheus metrics for the events module.
 type metrics struct {
 	enqueuedCounter *prometheus.CounterVec
 	sentCounter     *prometheus.CounterVec
 	failedCounter   *prometheus.CounterVec
 }
 
-// newMetrics creates and initializes all events metrics
+// newMetrics creates and initializes all events metrics.
 func newMetrics() *metrics {
 	return &metrics{
 		enqueuedCounter: promauto.NewCounterVec(prometheus.CounterOpts{
@@ -57,17 +57,17 @@ func newMetrics() *metrics {
 	}
 }
 
-// IncrementEnqueued increments the enqueued counter for the given event type
+// IncrementEnqueued increments the enqueued counter for the given event type.
 func (m *metrics) IncrementEnqueued(eventType string) {
 	m.enqueuedCounter.WithLabelValues(eventType).Inc()
 }
 
-// IncrementSent increments the sent counter for the given event type and delivery type
+// IncrementSent increments the sent counter for the given event type and delivery type.
 func (m *metrics) IncrementSent(eventType string, deliveryType string) {
 	m.sentCounter.WithLabelValues(eventType, deliveryType).Inc()
 }
 
-// IncrementFailed increments the failed counter for the given event type, delivery type, and reason
+// IncrementFailed increments the failed counter for the given event type, delivery type, and reason.
 func (m *metrics) IncrementFailed(eventType string, deliveryType string, reason string) {
 	m.failedCounter.WithLabelValues(eventType, deliveryType, reason).Inc()
 }

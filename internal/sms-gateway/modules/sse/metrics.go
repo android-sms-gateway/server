@@ -5,7 +5,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-// Metric constants
+// Metric constants.
 const (
 	MetricActiveConnections = "active_connections"
 	MetricEventsSent        = "events_sent_total"
@@ -22,7 +22,7 @@ const (
 	ErrorTypeMarshalError = "marshal_error"
 )
 
-// metrics contains all Prometheus metrics for the SSE module
+// metrics contains all Prometheus metrics for the SSE module.
 type metrics struct {
 	activeConnections    *prometheus.GaugeVec
 	eventsSent           *prometheus.CounterVec
@@ -31,7 +31,7 @@ type metrics struct {
 	keepalivesSent       *prometheus.CounterVec
 }
 
-// newMetrics creates and initializes all SSE metrics
+// newMetrics creates and initializes all SSE metrics.
 func newMetrics() *metrics {
 	metrics := &metrics{
 		activeConnections: promauto.NewGaugeVec(prometheus.GaugeOpts{

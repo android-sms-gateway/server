@@ -3,7 +3,7 @@ package base_test
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,41 +16,41 @@ import (
 
 type testRequestBody struct {
 	Name string `json:"name" validate:"required"`
-	Age  int    `json:"age" validate:"required"`
+	Age  int    `json:"age"  validate:"required"`
 }
 
 type testRequestBodyNoValidate struct {
 	Name string `json:"name" validate:"required"`
-	Age  int    `json:"age" validate:"required"`
+	Age  int    `json:"age"  validate:"required"`
 }
 
 type testRequestQuery struct {
 	Name string `query:"name" validate:"required"`
-	Age  int    `query:"age" validate:"required"`
+	Age  int    `query:"age"  validate:"required"`
 }
 
 type testRequestParams struct {
-	ID   string `params:"id" validate:"required"`
+	ID   string `params:"id"   validate:"required"`
 	Name string `params:"name" validate:"required"`
 }
 
 func (t *testRequestBody) Validate() error {
 	if t.Age < 18 {
-		return fmt.Errorf("must be at least 18 years old")
+		return errors.New("must be at least 18 years old")
 	}
 	return nil
 }
 
 func (t *testRequestQuery) Validate() error {
 	if t.Age < 18 {
-		return fmt.Errorf("must be at least 18 years old")
+		return errors.New("must be at least 18 years old")
 	}
 	return nil
 }
 
 func (t *testRequestParams) Validate() error {
 	if t.ID == "invalid" {
-		return fmt.Errorf("invalid ID")
+		return errors.New("invalid ID")
 	}
 	return nil
 }
@@ -117,10 +117,10 @@ func TestHandler_BodyParserValidator(t *testing.T) {
 			var req *http.Request
 			if test.payload != nil {
 				bodyBytes, _ := json.Marshal(test.payload)
-				req = httptest.NewRequest("POST", test.path, bytes.NewReader(bodyBytes))
+				req = httptest.NewRequest(http.MethodPost, test.path, bytes.NewReader(bodyBytes))
 				req.Header.Set("Content-Type", "application/json")
 			} else {
-				req = httptest.NewRequest("POST", test.path, nil)
+				req = httptest.NewRequest(http.MethodPost, test.path, nil)
 			}
 
 			resp, err := app.Test(req)
@@ -183,7 +183,7 @@ func TestHandler_QueryParserValidator(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			req := httptest.NewRequest("GET", test.path, nil)
+			req := httptest.NewRequest(http.MethodGet, test.path, nil)
 
 			resp, err := app.Test(req)
 			if err != nil {
@@ -240,7 +240,7 @@ func TestHandler_ParamsParserValidator(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			req := httptest.NewRequest("GET", test.path, nil)
+			req := httptest.NewRequest(http.MethodGet, test.path, nil)
 
 			resp, err := app.Test(req)
 			if err != nil {
