@@ -5,7 +5,7 @@
 set -e
 
 # Execute DB migrations only when the main application is about to run
-if [ "${1:-}" = "/app/app" ]; then
+if [ $# -eq 1 ] && [ "${1:-}" = "/app/app" ]; then
   /app/app db:migrate up
 fi
 
