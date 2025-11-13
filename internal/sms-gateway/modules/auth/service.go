@@ -3,9 +3,7 @@ package auth
 import (
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"crypto/subtle"
-	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -41,7 +39,7 @@ type Service struct {
 
 	users      *repository
 	codesCache *cache.Cache[string]
-	usersCache *cache.Cache[models.User]
+	usersCache *usersCache
 
 	devicesSvc *devices.Service
 	onlineSvc  online.Service
@@ -64,7 +62,7 @@ func New(params Params) *Service {
 		idgen:      idgen,
 
 		codesCache: cache.New[string](cache.Config{TTL: codeTTL}),
-		usersCache: cache.New[models.User](cache.Config{TTL: 1 * time.Hour}),
+		usersCache: newUsersCache(),
 	}
 }
 
@@ -157,10 +155,7 @@ func (s *Service) AuthorizeDevice(token string) (models.Device, error) {
 }
 
 func (s *Service) AuthorizeUser(username, password string) (*models.User, error) {
-	hash := sha256.Sum256([]byte(username + "\x00" + password))
-	cacheKey := hex.EncodeToString(hash[:])
-
-	if user, err := s.usersCache.Get(cacheKey); err == nil {
+	if user, err := s.usersCache.Get(username, password); err == nil {
 		return &user, nil
 	}
 
@@ -173,7 +168,7 @@ func (s *Service) AuthorizeUser(username, password string) (*models.User, error)
 		return nil, fmt.Errorf("password is incorrect: %w", cmpErr)
 	}
 
-	if setErr := s.usersCache.Set(cacheKey, *user); setErr != nil {
+	if setErr := s.usersCache.Set(username, password, *user); setErr != nil {
 		s.logger.Error("failed to cache user", zap.Error(setErr))
 	}
 
@@ -215,9 +210,7 @@ func (s *Service) ChangePassword(userID string, currentPassword string, newPassw
 	}
 
 	// Invalidate cache
-	hash := sha256.Sum256([]byte(userID + currentPassword))
-	cacheKey := hex.EncodeToString(hash[:])
-	if delErr := s.usersCache.Delete(cacheKey); delErr != nil {
+	if delErr := s.usersCache.Delete(userID, currentPassword); delErr != nil {
 		s.logger.Error("failed to invalidate user cache", zap.Error(delErr))
 	}
 
