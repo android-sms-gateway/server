@@ -157,12 +157,12 @@ func TestMemoryCache_ConcurrentSetAndGetAndDelete(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Launch goroutines that perform Set, Get, and Delete operations
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		wg.Add(1)
 		go func(goroutineID int) {
 			defer wg.Done()
 
-			for j := 0; j < numOperations/numGoroutines; j++ {
+			for j := range numOperations / numGoroutines {
 				key := "key-" + strconv.Itoa(goroutineID) + "-" + strconv.Itoa(j)
 				value := "value-" + strconv.Itoa(goroutineID) + "-" + strconv.Itoa(j)
 
@@ -357,7 +357,7 @@ func TestMemoryCache_ConcurrentGetAndDelete(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Pre-populate cache with items
-	for i := 0; i < numGoroutines*attemptsPerGoroutine; i++ {
+	for i := range numGoroutines * attemptsPerGoroutine {
 		key := "item-" + strconv.Itoa(i)
 		value := "value-" + strconv.Itoa(i)
 
@@ -368,12 +368,12 @@ func TestMemoryCache_ConcurrentGetAndDelete(t *testing.T) {
 	}
 
 	// Launch goroutines that perform GetAndDelete operations
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		wg.Add(1)
 		go func(goroutineID int) {
 			defer wg.Done()
 
-			for j := 0; j < attemptsPerGoroutine; j++ {
+			for j := range attemptsPerGoroutine {
 				key := "item-" + strconv.Itoa(goroutineID*attemptsPerGoroutine+j)
 
 				_, err := c.GetAndDelete(ctx, key)

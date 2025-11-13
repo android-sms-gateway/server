@@ -155,7 +155,7 @@ func (r *Repository) UpdateState(message *Message) error {
 		}
 
 		for _, v := range message.Recipients {
-			if err := tx.Model(&MessageRecipient{}).
+			if err := tx.Model((*MessageRecipient)(nil)).
 				Where("message_id = ? AND phone_number = ?", message.ID, v.PhoneNumber).
 				Select("state", "error").
 				Updates(map[string]any{"state": v.State, "error": v.Error}).Error; err != nil {

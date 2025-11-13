@@ -173,15 +173,51 @@ func (s *Service) GetState(user models.User, id string) (*MessageStateOut, error
 	return dto, nil
 }
 
-func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueOptions) (MessageStateOut, error) {
-	state := MessageStateOut{
-		DeviceID: device.ID,
-		MessageStateIn: MessageStateIn{
-			State:      ProcessingStatePending,
-			Recipients: make([]smsgateway.RecipientState, len(message.PhoneNumbers)),
-		},
+func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueOptions) (*MessageStateOut, error) {
+	msg, err := s.prepareMessage(device, message, opts)
+	if err != nil {
+		return nil, err
 	}
 
+	state := &MessageStateOut{
+		DeviceID: device.ID,
+		MessageStateIn: MessageStateIn{
+			ID:    msg.ExtID,
+			State: ProcessingStatePending,
+			Recipients: lo.Map(
+				msg.Recipients,
+				func(item MessageRecipient, _ int) smsgateway.RecipientState { return modelToRecipientState(item) },
+			),
+			States: map[string]time.Time{},
+		},
+		IsHashed:    false,
+		IsEncrypted: msg.IsEncrypted,
+	}
+
+	if insErr := s.messages.Insert(msg); insErr != nil {
+		return state, insErr
+	}
+
+	if cacheErr := s.cache.Set(context.Background(), device.UserID, msg.ExtID, anys.AsPointer(modelToMessageState(*msg))); cacheErr != nil {
+		s.logger.Warn("failed to cache message", zap.String("id", msg.ExtID), zap.Error(cacheErr))
+	}
+	s.metrics.IncTotal(string(msg.State))
+
+	go func(userID, deviceID string) {
+		if ntfErr := s.eventsSvc.Notify(userID, &deviceID, events.NewMessageEnqueuedEvent()); ntfErr != nil {
+			s.logger.Error(
+				"failed to notify device",
+				zap.Error(ntfErr),
+				zap.String("user_id", userID),
+				zap.String("device_id", deviceID),
+			)
+		}
+	}(device.UserID, device.ID)
+
+	return state, nil
+}
+
+func (s *Service) prepareMessage(device models.Device, message MessageIn, opts EnqueueOptions) (*Message, error) {
 	var phone string
 	var err error
 	for i, v := range message.PhoneNumbers {
@@ -189,21 +225,19 @@ func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueO
 			phone = v
 		} else {
 			if phone, err = cleanPhoneNumber(v); err != nil {
-				return state, fmt.Errorf("failed to use phone in row %d: %w", i+1, err)
+				return nil, fmt.Errorf("failed to use phone in row %d: %w", i+1, err)
 			}
 		}
 
 		message.PhoneNumbers[i] = phone
-
-		state.Recipients[i] = smsgateway.RecipientState{
-			PhoneNumber: phone,
-			State:       smsgateway.ProcessingStatePending,
-		}
 	}
 
 	validUntil := message.ValidUntil
 	if message.TTL != nil && *message.TTL > 0 {
-		validUntil = anys.AsPointer(time.Now().Add(time.Duration(*message.TTL) * time.Second))
+		//nolint:gosec // not a problem
+		validUntil = anys.AsPointer(
+			time.Now().Add(time.Duration(*message.TTL) * time.Second),
+		)
 	}
 
 	msg := Message{
@@ -221,43 +255,22 @@ func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueO
 	}
 
 	if message.TextContent != nil {
-		if err := msg.SetTextContent(*message.TextContent); err != nil {
-			return state, fmt.Errorf("failed to set text content: %w", err)
+		if setErr := msg.SetTextContent(*message.TextContent); setErr != nil {
+			return nil, fmt.Errorf("failed to set text content: %w", setErr)
 		}
 	} else if message.DataContent != nil {
-		if err := msg.SetDataContent(*message.DataContent); err != nil {
-			return state, fmt.Errorf("failed to set data content: %w", err)
+		if setErr := msg.SetDataContent(*message.DataContent); setErr != nil {
+			return nil, fmt.Errorf("failed to set data content: %w", setErr)
 		}
 	} else {
-		return state, ErrNoContent
+		return nil, ErrNoContent
 	}
 
 	if msg.ExtID == "" {
 		msg.ExtID = s.idgen()
 	}
-	state.ID = msg.ExtID
 
-	if err := s.messages.Insert(&msg); err != nil {
-		return state, err
-	}
-
-	if err := s.cache.Set(context.Background(), device.UserID, msg.ExtID, anys.AsPointer(modelToMessageState(msg))); err != nil {
-		s.logger.Warn("failed to cache message", zap.String("id", msg.ExtID), zap.Error(err))
-	}
-	s.metrics.IncTotal(string(msg.State))
-
-	go func(userID, deviceID string) {
-		if err := s.eventsSvc.Notify(userID, &deviceID, events.NewMessageEnqueuedEvent()); err != nil {
-			s.logger.Error(
-				"failed to notify device",
-				zap.Error(err),
-				zap.String("user_id", userID),
-				zap.String("device_id", deviceID),
-			)
-		}
-	}(device.UserID, device.ID)
-
-	return state, nil
+	return &msg, nil
 }
 
 func (s *Service) ExportInbox(device models.Device, since, until time.Time) error {

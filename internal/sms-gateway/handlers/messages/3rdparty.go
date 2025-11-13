@@ -2,7 +2,6 @@ package messages
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -144,7 +143,14 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusConflict, err.Error())
 		}
 
-		return fmt.Errorf("failed to enqueue message: %w", err)
+		h.Logger.Error(
+			"failed to enqueue message",
+			zap.Error(err),
+			zap.String("user_id", user.ID),
+			zap.String("device_id", req.DeviceID),
+		)
+
+		return fiber.NewError(fiber.StatusInternalServerError, "Failed to enqueue message. Please contact support")
 	}
 
 	location, err := c.GetRouteURL(route3rdPartyGetMessage, fiber.Map{

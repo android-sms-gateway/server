@@ -96,9 +96,9 @@ func (s *service) persist(ctx context.Context) error {
 		s.logger.Debug("Drained cache", zap.Int("count", len(items)))
 
 		timestamps := maps.MapValues(items, func(v []byte) time.Time {
-			t, err := time.Parse(time.RFC3339, string(v))
-			if err != nil {
-				s.logger.Warn("failed to parse last seen", zap.String("last_seen", string(v)), zap.Error(err))
+			t, parseErr := time.Parse(time.RFC3339, string(v))
+			if parseErr != nil {
+				s.logger.Warn("failed to parse last seen", zap.String("last_seen", string(v)), zap.Error(parseErr))
 				return time.Now().UTC()
 			}
 
@@ -107,8 +107,8 @@ func (s *service) persist(ctx context.Context) error {
 
 		s.logger.Debug("Parsed last seen timestamps", zap.Int("count", len(timestamps)))
 
-		if err := s.devicesSvc.SetLastSeen(ctx, timestamps); err != nil {
-			persistErr = fmt.Errorf("failed to set last seen: %w", err)
+		if seenErr := s.devicesSvc.SetLastSeen(ctx, timestamps); seenErr != nil {
+			persistErr = fmt.Errorf("failed to set last seen: %w", seenErr)
 			s.metrics.IncrementPersistenceError()
 			return
 		}

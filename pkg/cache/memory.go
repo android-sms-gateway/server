@@ -94,11 +94,9 @@ func (m *MemoryCache) Get(_ context.Context, key string, opts ...GetOption) ([]b
 		m.mux.Lock()
 		item, ok := m.items[key]
 
-		if !ok { //nolint:revive,gocritic //simplify code structure
-			// item not found, nothing to do
-		} else if o.delete {
+		if ok && o.delete {
 			delete(m.items, key)
-		} else if !item.isExpired(time.Now()) {
+		} else if ok && !item.isExpired(time.Now()) {
 			switch {
 			case o.validUntil != nil:
 				item.validUntil = *o.validUntil

@@ -73,7 +73,7 @@ func (m *Message) GetTextContent() (*TextMessageContent, error) {
 
 	content := new(TextMessageContent)
 
-	err := json.Unmarshal([]byte(m.Content), &content)
+	err := json.Unmarshal([]byte(m.Content), content)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal text content: %w", err)
 	}
