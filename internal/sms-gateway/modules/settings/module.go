@@ -6,20 +6,23 @@ import (
 	"go.uber.org/zap"
 )
 
-var Module = fx.Module(
-	"settings",
-	fx.Decorate(func(log *zap.Logger) *zap.Logger {
-		return log.Named("settings")
-	}),
-	fx.Provide(
-		newRepository,
-		fx.Private,
-	),
-	fx.Provide(
-		NewService,
-	),
-)
+func Module() fx.Option {
+	return fx.Module(
+		"settings",
+		fx.Decorate(func(log *zap.Logger) *zap.Logger {
+			return log.Named("settings")
+		}),
+		fx.Provide(
+			newRepository,
+			fx.Private,
+		),
+		fx.Provide(
+			NewService,
+		),
+	)
+}
 
+//nolint:gochecknoinits //backward compatibility
 func init() {
 	db.RegisterMigration(Migrate)
 }

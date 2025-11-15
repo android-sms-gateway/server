@@ -87,16 +87,16 @@ func NewCode(authSvc *auth.Service) fiber.Handler {
 // It returns true if the Locals contain a user under the key LocalsUser,
 // otherwise returns false.
 func HasUser(c *fiber.Ctx) bool {
-	return c.Locals(localsUser) != nil
+	return GetUser(c) != nil
 }
 
 // GetUser returns the user stored in the Locals under the key LocalsUser.
-// It is a convenience function that wraps the call to c.Locals(LocalsUser) and
-// casts the result to models.User.
-//
-// It panics if the value stored in Locals is not a models.User.
-func GetUser(c *fiber.Ctx) models.User {
-	return c.Locals(localsUser).(models.User)
+func GetUser(c *fiber.Ctx) *models.User {
+	if user, ok := c.Locals(localsUser).(*models.User); ok {
+		return user
+	}
+
+	return nil
 }
 
 // UserRequired is a middleware that ensures a user is present in the request's Locals.
@@ -113,13 +113,13 @@ func UserRequired() fiber.Handler {
 }
 
 // WithUser is a decorator that provides the current user to the handler.
-// It assumes that the user is stored in the Locals under the key LocalsUser.
-// If the user is not present, it will panic.
-//
-// It is a convenience function that wraps the call to GetUser and calls the
-// handler with the user as the first argument.
 func WithUser(handler func(models.User, *fiber.Ctx) error) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		return handler(GetUser(c), c)
+		user := GetUser(c)
+		if user == nil {
+			return fiber.NewError(fiber.StatusUnauthorized, "Unauthorized")
+		}
+
+		return handler(*user, c)
 	}
 }

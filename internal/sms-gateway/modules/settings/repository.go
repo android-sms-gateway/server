@@ -1,6 +1,8 @@
 package settings
 
 import (
+	"fmt"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -11,12 +13,13 @@ type repository struct {
 
 // GetSettings retrieves the device settings for a user by their userID.
 func (r *repository) GetSettings(userID string) (*DeviceSettings, error) {
-	settings := &DeviceSettings{
-		Settings: map[string]any{},
-	}
+	settings := new(DeviceSettings)
 	err := r.db.Where("user_id = ?", userID).Limit(1).Find(settings).Error
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get settings: %w", err)
+	}
+	if settings.Settings == nil {
+		settings.Settings = map[string]any{}
 	}
 
 	return settings, nil
@@ -26,8 +29,8 @@ func (r *repository) GetSettings(userID string) (*DeviceSettings, error) {
 func (r *repository) UpdateSettings(settings *DeviceSettings) (*DeviceSettings, error) {
 	var updatedSettings *DeviceSettings
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		source := &DeviceSettings{UserID: settings.UserID}
-		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Limit(1).Find(source).Error; err != nil {
+		source := new(DeviceSettings)
+		if err := tx.Clauses(clause.Locking{Strength: clause.LockingStrengthUpdate}).Where("user_id = ?", settings.UserID).Limit(1).Find(source).Error; err != nil {
 			return err
 		}
 
@@ -41,7 +44,8 @@ func (r *repository) UpdateSettings(settings *DeviceSettings) (*DeviceSettings, 
 			return err
 		}
 
-		if err := tx.Clauses(clause.OnConflict{UpdateAll: true}).Create(settings).Error; err != nil {
+		err = tx.Clauses(clause.OnConflict{UpdateAll: true}).Create(settings).Error
+		if err != nil {
 			return err
 		}
 
@@ -49,7 +53,11 @@ func (r *repository) UpdateSettings(settings *DeviceSettings) (*DeviceSettings, 
 		updatedSettings = settings
 		return nil
 	})
-	return updatedSettings, err
+	if err != nil {
+		return updatedSettings, fmt.Errorf("failed to update settings: %w", err)
+	}
+
+	return updatedSettings, nil
 }
 
 // ReplaceSettings replaces the settings for a user.
@@ -59,7 +67,12 @@ func (r *repository) ReplaceSettings(settings *DeviceSettings) (*DeviceSettings,
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		return tx.Save(settings).Error
 	})
-	return settings, err
+
+	if err != nil {
+		return settings, fmt.Errorf("failed to replace settings: %w", err)
+	}
+
+	return settings, nil
 }
 
 func newRepository(db *gorm.DB) *repository {

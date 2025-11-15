@@ -1,29 +1,51 @@
-# workflow name
-name: release
+name: Release
 
-# on events
 on:
-  release:
-    types:
-      - created
+  push:
+    tags:
+      - "v*"
 
 permissions:
-  contents: read
+  contents: write
+  packages: write
 
-# jobs
 jobs:
-  build:
-    name: Build
-    permissions:
-      contents: read
-      packages: write
-    uses: ./.github/workflows/docker-build.yml
-    with:
-      app-name: sms-gateway
-    secrets:
-      username: ${{ secrets.DOCKERHUB_USERNAME }}
-      password: ${{ secrets.DOCKERHUB_PASSWORD }}
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
+      - name: Login to GitHub Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      - name: Set RELEASE_ID env
+        run: echo RELEASE_ID=$(( ($(date +%s) - $(date -d "2022-06-15" +%s)) / 86400 )) >> ${GITHUB_ENV}
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCKER_REGISTRY: ${{ vars.DOCKER_REGISTRY }}
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean
+
+  ###
   deploy:
     runs-on: ubuntu-latest
     permissions:
@@ -31,21 +53,23 @@ jobs:
       deployments: write
     environment: production
     concurrency: production
-    needs:
-      - build
+    needs: goreleaser
 
     env:
       AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
       AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
 
     steps:
+      - name: Set APP_VERSION env
+        run: echo APP_VERSION=${GITHUB_REF#refs/tags/} >> ${GITHUB_ENV}
+
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - name: Install Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.4.6
+          terraform_version: 1.13.5
 
       - name: Initialize Terraform
         working-directory: deployments/docker-swarm-terraform
@@ -61,18 +85,18 @@ jobs:
           terraform apply -auto-approve -input=false \
           -var 'swarm-manager-host=${{ secrets.SWARM_MANAGER_HOST }}' \
           -var 'app-name=${{ vars.APP_NAME }}' \
-          -var "app-version=${{ needs.build.outputs.app-version }}" \
+          -var "app-version=${{ env.APP_VERSION }}" \
           -var 'app-host=${{ secrets.APP_HOST }}' \
           -var "app-config-b64=${{ secrets.APP_CONFIG_B64 }}" \
           -var "app-env-json-b64=${{ secrets.APP_ENV_JSON_B64 }}" \
           -var "memory-limit=${{ vars.MEMORY_LIMIT }}"
 
   deploy-secondary:
-    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: read
       deployments: write
+    needs: goreleaser
     environment: production-secondary
     concurrency: production
     env:

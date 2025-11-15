@@ -1,4 +1,3 @@
-//nolint:errcheck
 package cache_test
 
 import (
@@ -12,7 +11,7 @@ import (
 	"github.com/android-sms-gateway/server/pkg/cache"
 )
 
-// BenchmarkMemoryCache_Set measures the performance of Set operations
+// BenchmarkMemoryCache_Set measures the performance of Set operations.
 func BenchmarkMemoryCache_Set(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
@@ -27,7 +26,7 @@ func BenchmarkMemoryCache_Set(b *testing.B) {
 	})
 }
 
-// BenchmarkMemoryCache_Get measures the performance of Get operations
+// BenchmarkMemoryCache_Get measures the performance of Get operations.
 func BenchmarkMemoryCache_Get(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
@@ -45,7 +44,7 @@ func BenchmarkMemoryCache_Get(b *testing.B) {
 	})
 }
 
-// BenchmarkMemoryCache_SetAndGet measures the performance of Set followed by Get
+// BenchmarkMemoryCache_SetAndGet measures the performance of Set followed by Get.
 func BenchmarkMemoryCache_SetAndGet(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
@@ -64,7 +63,7 @@ func BenchmarkMemoryCache_SetAndGet(b *testing.B) {
 	})
 }
 
-// BenchmarkMemoryCache_SetOrFail measures the performance of SetOrFail operations
+// BenchmarkMemoryCache_SetOrFail measures the performance of SetOrFail operations.
 func BenchmarkMemoryCache_SetOrFail(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
@@ -79,7 +78,7 @@ func BenchmarkMemoryCache_SetOrFail(b *testing.B) {
 	})
 }
 
-// BenchmarkMemoryCache_GetAndDelete measures the performance of GetAndDelete operations
+// BenchmarkMemoryCache_GetAndDelete measures the performance of GetAndDelete operations.
 func BenchmarkMemoryCache_GetAndDelete(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
@@ -98,7 +97,7 @@ func BenchmarkMemoryCache_GetAndDelete(b *testing.B) {
 	})
 }
 
-// BenchmarkMemoryCache_Delete measures the performance of Delete operations
+// BenchmarkMemoryCache_Delete measures the performance of Delete operations.
 func BenchmarkMemoryCache_Delete(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
@@ -117,13 +116,13 @@ func BenchmarkMemoryCache_Delete(b *testing.B) {
 	})
 }
 
-// BenchmarkMemoryCache_Cleanup measures the performance of Cleanup operations
+// BenchmarkMemoryCache_Cleanup measures the performance of Cleanup operations.
 func BenchmarkMemoryCache_Cleanup(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
 
 	// Pre-populate cache with many items
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		key := "item-" + strconv.Itoa(i)
 		value := "value-" + strconv.Itoa(i)
 		cache.Set(ctx, key, []byte(value))
@@ -137,13 +136,13 @@ func BenchmarkMemoryCache_Cleanup(b *testing.B) {
 	})
 }
 
-// BenchmarkMemoryCache_Drain measures the performance of Drain operations
+// BenchmarkMemoryCache_Drain measures the performance of Drain operations.
 func BenchmarkMemoryCache_Drain(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
 
 	// Pre-populate cache with many items
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		key := "item-" + strconv.Itoa(i)
 		value := "value-" + strconv.Itoa(i)
 		cache.Set(ctx, key, []byte(value))
@@ -157,7 +156,7 @@ func BenchmarkMemoryCache_Drain(b *testing.B) {
 	})
 }
 
-// BenchmarkMemoryCache_ConcurrentReads measures performance with different numbers of concurrent readers
+// BenchmarkMemoryCache_ConcurrentReads measures performance with different numbers of concurrent readers.
 func BenchmarkMemoryCache_ConcurrentReads(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
@@ -190,7 +189,7 @@ func BenchmarkMemoryCache_ConcurrentReads(b *testing.B) {
 	}
 }
 
-// BenchmarkMemoryCache_ConcurrentWrites measures performance with different numbers of concurrent writers
+// BenchmarkMemoryCache_ConcurrentWrites measures performance with different numbers of concurrent writers.
 func BenchmarkMemoryCache_ConcurrentWrites(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
@@ -223,7 +222,7 @@ func BenchmarkMemoryCache_ConcurrentWrites(b *testing.B) {
 	}
 }
 
-// BenchmarkMemoryCache_MixedWorkload measures performance with mixed read/write operations
+// BenchmarkMemoryCache_MixedWorkload measures performance with mixed read/write operations.
 func BenchmarkMemoryCache_MixedWorkload(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
@@ -265,7 +264,7 @@ func BenchmarkMemoryCache_MixedWorkload(b *testing.B) {
 	}
 }
 
-// BenchmarkMemoryCache_Scaling measures how performance scales with increasing load
+// BenchmarkMemoryCache_Scaling measures how performance scales with increasing load.
 func BenchmarkMemoryCache_Scaling(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
@@ -284,7 +283,7 @@ func BenchmarkMemoryCache_Scaling(b *testing.B) {
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
 			// Pre-populate cache
-			for i := 0; i < bm.operationsPerGoroutine*bm.goroutines; i++ {
+			for i := range bm.operationsPerGoroutine * bm.goroutines {
 				key := "key-" + strconv.Itoa(i)
 				value := "value-" + strconv.Itoa(i)
 				cache.Set(ctx, key, []byte(value))
@@ -305,7 +304,7 @@ func BenchmarkMemoryCache_Scaling(b *testing.B) {
 	}
 }
 
-// BenchmarkMemoryCache_TTLOverhead measures the performance impact of TTL operations
+// BenchmarkMemoryCache_TTLOverhead measures the performance impact of TTL operations.
 func BenchmarkMemoryCache_TTLOverhead(b *testing.B) {
 	c := cache.NewMemory(0)
 	ctx := context.Background()
@@ -337,7 +336,7 @@ func BenchmarkMemoryCache_TTLOverhead(b *testing.B) {
 	}
 }
 
-// BenchmarkMemoryCache_LargeValues measures performance with large values
+// BenchmarkMemoryCache_LargeValues measures performance with large values.
 func BenchmarkMemoryCache_LargeValues(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
@@ -375,7 +374,7 @@ func BenchmarkMemoryCache_LargeValues(b *testing.B) {
 	}
 }
 
-// BenchmarkMemoryCache_MemoryGrowth measures memory allocation patterns
+// BenchmarkMemoryCache_MemoryGrowth measures memory allocation patterns.
 func BenchmarkMemoryCache_MemoryGrowth(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
@@ -402,14 +401,14 @@ func BenchmarkMemoryCache_MemoryGrowth(b *testing.B) {
 	}
 }
 
-// BenchmarkMemoryCache_RandomAccess measures performance with random key access patterns
+// BenchmarkMemoryCache_RandomAccess measures performance with random key access patterns.
 func BenchmarkMemoryCache_RandomAccess(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
 	const numKeys = 1000
 
 	// Pre-populate cache with many keys
-	for i := 0; i < numKeys; i++ {
+	for i := range numKeys {
 		key := "key-" + strconv.Itoa(i)
 		value := "value-" + strconv.Itoa(i)
 		cache.Set(ctx, key, []byte(value))
@@ -426,7 +425,7 @@ func BenchmarkMemoryCache_RandomAccess(b *testing.B) {
 	})
 }
 
-// BenchmarkMemoryCache_HotKey measures performance with a frequently accessed key
+// BenchmarkMemoryCache_HotKey measures performance with a frequently accessed key.
 func BenchmarkMemoryCache_HotKey(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
@@ -444,14 +443,14 @@ func BenchmarkMemoryCache_HotKey(b *testing.B) {
 	})
 }
 
-// BenchmarkMemoryCache_ColdKey measures performance with rarely accessed keys
+// BenchmarkMemoryCache_ColdKey measures performance with rarely accessed keys.
 func BenchmarkMemoryCache_ColdKey(b *testing.B) {
 	cache := cache.NewMemory(0)
 	ctx := context.Background()
 	const numKeys = 10000
 
 	// Pre-populate cache with many keys
-	for i := 0; i < numKeys; i++ {
+	for i := range numKeys {
 		key := "key-" + strconv.Itoa(i)
 		value := "value-" + strconv.Itoa(i)
 		cache.Set(ctx, key, []byte(value))

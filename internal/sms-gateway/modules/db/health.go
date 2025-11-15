@@ -17,6 +17,8 @@ type health struct {
 func newHealth(db *sql.DB) *health {
 	return &health{
 		db: db,
+
+		failedPings: atomic.Int64{},
 	}
 }
 
@@ -26,8 +28,8 @@ func (h *health) Name() string {
 }
 
 // LiveProbe implements HealthProvider.
-func (h *health) LiveProbe(ctx context.Context) (healthmod.Checks, error) {
-	return nil, nil
+func (h *health) LiveProbe(_ context.Context) (healthmod.Checks, error) {
+	return nil, nil //nolint:nilnil // empty result
 }
 
 // ReadyProbe implements HealthProvider.
@@ -53,8 +55,8 @@ func (h *health) ReadyProbe(ctx context.Context) (healthmod.Checks, error) {
 }
 
 // StartedProbe implements HealthProvider.
-func (h *health) StartedProbe(ctx context.Context) (healthmod.Checks, error) {
-	return nil, nil
+func (h *health) StartedProbe(_ context.Context) (healthmod.Checks, error) {
+	return nil, nil //nolint:nilnil // empty result
 }
 
-var _ healthmod.HealthProvider = (*health)(nil)
+var _ healthmod.Provider = (*health)(nil)

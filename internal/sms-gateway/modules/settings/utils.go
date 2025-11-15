@@ -1,54 +1,65 @@
 package settings
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
-var rules = map[string]any{
-	"encryption": map[string]any{
-		"passphrase": "",
-	},
-	"messages": map[string]any{
-		"send_interval_min":  "",
-		"send_interval_max":  "",
-		"limit_period":       "",
-		"limit_value":        "",
-		"sim_selection_mode": "",
-		"log_lifetime_days":  "",
-	},
-	"ping": map[string]any{
-		"interval_seconds": "",
-	},
-	"logs": map[string]any{
-		"lifetime_days": "",
-	},
-	"webhooks": map[string]any{
-		"internet_required": "",
-		"retry_count":       "",
-		"signing_key":       "",
-	},
-}
+var (
+	ErrInvalidField = errors.New("invalid field")
+)
 
-var rulesPublic = map[string]any{
-	"encryption": map[string]any{},
-	"messages": map[string]any{
-		"send_interval_min":  "",
-		"send_interval_max":  "",
-		"limit_period":       "",
-		"limit_value":        "",
-		"sim_selection_mode": "",
-		"log_lifetime_days":  "",
-	},
-	"ping": map[string]any{
-		"interval_seconds": "",
-	},
-	"logs": map[string]any{
-		"lifetime_days": "",
-	},
-	"webhooks": map[string]any{
-		"internet_required": "",
-		"retry_count":       "",
-	},
-}
+//nolint:gochecknoglobals // private constants
+var (
+	rules = map[string]any{
+		"encryption": map[string]any{
+			"passphrase": "",
+		},
+		"messages": map[string]any{
+			"send_interval_min":  "",
+			"send_interval_max":  "",
+			"limit_period":       "",
+			"limit_value":        "",
+			"sim_selection_mode": "",
+			"log_lifetime_days":  "",
+		},
+		"ping": map[string]any{
+			"interval_seconds": "",
+		},
+		"logs": map[string]any{
+			"lifetime_days": "",
+		},
+		"webhooks": map[string]any{
+			"internet_required": "",
+			"retry_count":       "",
+			"signing_key":       "",
+		},
+	}
 
+	rulesPublic = map[string]any{
+		"encryption": map[string]any{},
+		"messages": map[string]any{
+			"send_interval_min":  "",
+			"send_interval_max":  "",
+			"limit_period":       "",
+			"limit_value":        "",
+			"sim_selection_mode": "",
+			"log_lifetime_days":  "",
+		},
+		"ping": map[string]any{
+			"interval_seconds": "",
+		},
+		"logs": map[string]any{
+			"lifetime_days": "",
+		},
+		"webhooks": map[string]any{
+			"internet_required": "",
+			"retry_count":       "",
+		},
+	}
+)
+
+//nolint:nestif,govet // keep as is
 func filterMap(m map[string]any, r map[string]any) (map[string]any, error) {
 	var err error
 
@@ -63,7 +74,7 @@ func filterMap(m map[string]any, r map[string]any) (map[string]any, error) {
 			} else if m[field] == nil {
 				continue
 			} else {
-				return nil, fmt.Errorf("the field: '%s' is not a map to dive", field)
+				return nil, fmt.Errorf("%w: '%s' is not a map to dive", ErrInvalidField, field)
 			}
 		} else if _, ok := rule.(string); ok {
 			if _, ok := m[field]; !ok {
@@ -76,6 +87,7 @@ func filterMap(m map[string]any, r map[string]any) (map[string]any, error) {
 	return result, nil
 }
 
+//nolint:nestif,gocognit,govet // keep as is
 func appendMap(m1, m2 map[string]any, rules map[string]any) (map[string]any, error) {
 	var err error
 
@@ -98,7 +110,7 @@ func appendMap(m1, m2 map[string]any, rules map[string]any) (map[string]any, err
 			} else if m2[field] == nil {
 				continue
 			} else {
-				return nil, fmt.Errorf("expected field '%s' to be a map, but got %T", field, m2[field])
+				return nil, fmt.Errorf("%w: expected field '%s' to be a map, but got %T", ErrInvalidField, field, m2[field])
 			}
 		} else if _, ok := rule.(string); ok {
 			if _, ok := m2[field]; !ok {

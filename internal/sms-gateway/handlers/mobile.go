@@ -62,10 +62,11 @@ type mobileHandler struct {
 //	@Failure		500	{object}	smsgateway.ErrorResponse		"Internal server error"
 //	@Router			/mobile/v1/device [get]
 //
-// Get device information
+// Get device information.
 func (h *mobileHandler) getDevice(device models.Device, c *fiber.Ctx) error {
 	res := smsgateway.MobileDeviceResponse{
 		ExternalIP: c.IP(),
+		Device:     nil,
 	}
 
 	if !device.IsEmpty() {
@@ -91,16 +92,17 @@ func (h *mobileHandler) getDevice(device models.Device, c *fiber.Ctx) error {
 //	@Failure		500		{object}	smsgateway.ErrorResponse			"Internal server error"
 //	@Router			/mobile/v1/device [post]
 //
-// Register device
-func (h *mobileHandler) postDevice(c *fiber.Ctx) (err error) {
-	req := smsgateway.MobileRegisterRequest{}
+// Register device.
+func (h *mobileHandler) postDevice(c *fiber.Ctx) error {
+	req := new(smsgateway.MobileRegisterRequest)
 
-	if err = h.BodyParserValidator(c, &req); err != nil {
-		return err
+	if err := h.BodyParserValidator(c, req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	var (
-		user     models.User
+		err      error
+		user     *models.User
 		login    string
 		password string
 	)
@@ -115,13 +117,13 @@ func (h *mobileHandler) postDevice(c *fiber.Ctx) (err error) {
 
 		user, err = h.authSvc.RegisterUser(login, password)
 		if err != nil {
-			return fmt.Errorf("can't create user: %w", err)
+			return fmt.Errorf("failed to create user: %w", err)
 		}
 	}
 
 	device, err := h.authSvc.RegisterDevice(user, req.Name, req.PushToken)
 	if err != nil {
-		return fmt.Errorf("can't register device: %w", err)
+		return fmt.Errorf("failed to register device: %w", err)
 	}
 
 	return c.Status(fiber.StatusCreated).
@@ -145,12 +147,12 @@ func (h *mobileHandler) postDevice(c *fiber.Ctx) (err error) {
 //	@Failure		500		{object}	smsgateway.ErrorResponse	"Internal server error"
 //	@Router			/mobile/v1/device [patch]
 //
-// Update device
+// Update device.
 func (h *mobileHandler) patchDevice(device models.Device, c *fiber.Ctx) error {
-	req := smsgateway.MobileUpdateRequest{}
+	req := new(smsgateway.MobileUpdateRequest)
 
-	if err := h.BodyParserValidator(c, &req); err != nil {
-		return err
+	if err := h.BodyParserValidator(c, req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	if req.Id != device.ID {
@@ -158,7 +160,8 @@ func (h *mobileHandler) patchDevice(device models.Device, c *fiber.Ctx) error {
 	}
 
 	if err := h.devicesSvc.UpdatePushToken(req.Id, req.PushToken); err != nil {
-		return err
+		h.Logger.Error("failed to update device", zap.Error(err), zap.String("device_id", req.Id))
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to update device")
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
@@ -174,11 +177,12 @@ func (h *mobileHandler) patchDevice(device models.Device, c *fiber.Ctx) error {
 //	@Failure		500	{object}	smsgateway.ErrorResponse			"Internal server error"
 //	@Router			/mobile/v1/user/code [get]
 //
-// Get user code
+// Get user code.
 func (h *mobileHandler) getUserCode(user models.User, c *fiber.Ctx) error {
 	code, err := h.authSvc.GenerateUserCode(user.ID)
 	if err != nil {
-		return err
+		h.Logger.Error("failed to generate user code", zap.Error(err), zap.String("user_id", user.ID))
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate user code")
 	}
 
 	return c.JSON(smsgateway.MobileUserCodeResponse{
@@ -200,12 +204,12 @@ func (h *mobileHandler) getUserCode(user models.User, c *fiber.Ctx) error {
 //	@Failure		500		{object}	smsgateway.ErrorResponse				"Internal server error"
 //	@Router			/mobile/v1/user/password [patch]
 //
-// Change password
+// Change password.
 func (h *mobileHandler) changePassword(device models.Device, c *fiber.Ctx) error {
-	req := smsgateway.MobileChangePasswordRequest{}
+	req := new(smsgateway.MobileChangePasswordRequest)
 
-	if err := h.BodyParserValidator(c, &req); err != nil {
-		return err
+	if err := h.BodyParserValidator(c, req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	if err := h.authSvc.ChangePassword(device.UserID, req.CurrentPassword, req.NewPassword); err != nil {
@@ -229,9 +233,13 @@ func (h *mobileHandler) Register(router fiber.Router) {
 				// 2. User is already authenticated - allowing device registration for existing users
 				return h.authSvc.IsPublic() || userauth.HasUser(c)
 			},
-			Validator: func(c *fiber.Ctx, token string) (bool, error) {
+			Validator: func(_ *fiber.Ctx, token string) (bool, error) {
 				err := h.authSvc.AuthorizeRegistration(token)
-				return err == nil, err
+				if err != nil {
+					return false, fmt.Errorf("authorization failed: %w", err)
+				}
+
+				return true, nil
 			},
 		}),
 		h.postDevice,
@@ -264,7 +272,8 @@ func (h *mobileHandler) Register(router fiber.Router) {
 }
 
 func newMobileHandler(params mobileHandlerParams) *mobileHandler {
-	idGen, _ := nanoid.Standard(21)
+	const idGenSize = 21
+	idGen, _ := nanoid.Standard(idGenSize)
 
 	return &mobileHandler{
 		Handler: base.Handler{Logger: params.Logger, Validator: params.Validator},

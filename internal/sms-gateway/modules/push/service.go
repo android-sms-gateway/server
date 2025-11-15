@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/cache"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/types"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/client"
 	cacheImpl "github.com/android-sms-gateway/server/pkg/cache"
 	"github.com/samber/lo"
 
@@ -16,6 +16,8 @@ import (
 const (
 	cachePrefixEvents    = "events:"
 	cachePrefixBlacklist = "blacklist:"
+
+	defaultDebounce = 5 * time.Second
 )
 
 type Config struct {
@@ -30,7 +32,7 @@ type Config struct {
 type Service struct {
 	config Config
 
-	client    client
+	client    client.Client
 	events    cache.Cache
 	blacklist cache.Cache
 
@@ -40,23 +42,23 @@ type Service struct {
 
 func New(
 	config Config,
-	client client,
+	client client.Client,
 	cacheFactory cache.Factory,
 	metrics *metrics,
 	logger *zap.Logger,
 ) (*Service, error) {
 	events, err := cacheFactory.New(cachePrefixEvents)
 	if err != nil {
-		return nil, fmt.Errorf("can't create events cache: %w", err)
+		return nil, fmt.Errorf("failed to create events cache: %w", err)
 	}
 
 	blacklist, err := cacheFactory.New(cachePrefixBlacklist)
 	if err != nil {
-		return nil, fmt.Errorf("can't create blacklist cache: %w", err)
+		return nil, fmt.Errorf("failed to create blacklist cache: %w", err)
 	}
 
 	config.Timeout = max(config.Timeout, time.Second)
-	config.Debounce = max(config.Debounce, 5*time.Second)
+	config.Debounce = max(config.Debounce, defaultDebounce)
 
 	return &Service{
 		config: config,
@@ -87,7 +89,7 @@ func (s *Service) Run(ctx context.Context) {
 }
 
 // Enqueue adds the data to the cache and immediately sends all messages if the debounce is 0.
-func (s *Service) Enqueue(token string, event types.Event) error {
+func (s *Service) Enqueue(token string, event Event) error {
 	ctx, cancel := context.WithTimeout(context.Background(), s.config.Timeout)
 	defer cancel()
 
@@ -105,12 +107,12 @@ func (s *Service) Enqueue(token string, event types.Event) error {
 	wrapperData, err := wrapper.serialize()
 	if err != nil {
 		s.metrics.IncError(1)
-		return fmt.Errorf("can't serialize event wrapper: %w", err)
+		return fmt.Errorf("failed to serialize event wrapper: %w", err)
 	}
 
-	if err := s.events.Set(ctx, wrapper.key(), wrapperData); err != nil {
+	if setErr := s.events.Set(ctx, wrapper.key(), wrapperData); setErr != nil {
 		s.metrics.IncError(1)
-		return fmt.Errorf("can't add message to cache: %w", err)
+		return fmt.Errorf("failed to add message to cache: %w", setErr)
 	}
 
 	s.metrics.IncEnqueued(string(event.Type))
@@ -122,7 +124,7 @@ func (s *Service) Enqueue(token string, event types.Event) error {
 func (s *Service) sendAll(ctx context.Context) {
 	rawEvents, err := s.events.Drain(ctx)
 	if err != nil {
-		s.logger.Error("Can't drain cache", zap.Error(err))
+		s.logger.Error("failed to drain cache", zap.Error(err))
 		return
 	}
 
@@ -134,9 +136,9 @@ func (s *Service) sendAll(ctx context.Context) {
 		lo.Values(rawEvents),
 		func(value []byte, _ int) (*eventWrapper, bool) {
 			wrapper := new(eventWrapper)
-			if err := wrapper.deserialize(value); err != nil {
+			if wrapErr := wrapper.deserialize(value); wrapErr != nil {
 				s.metrics.IncError(1)
-				s.logger.Error("Failed to deserialize event wrapper", zap.Binary("value", value), zap.Error(err))
+				s.logger.Error("failed to deserialize event wrapper", zap.Binary("value", value), zap.Error(wrapErr))
 				return nil, false
 			}
 
@@ -146,8 +148,8 @@ func (s *Service) sendAll(ctx context.Context) {
 
 	messages := lo.Map(
 		wrappers,
-		func(wrapper *eventWrapper, _ int) types.Message {
-			return types.Message{
+		func(wrapper *eventWrapper, _ int) client.Message {
+			return client.Message{
 				Token: wrapper.Token,
 				Event: wrapper.Event,
 			}
@@ -179,8 +181,8 @@ func (s *Service) sendAll(ctx context.Context) {
 	failed := lo.Filter(
 		wrappers,
 		func(item *eventWrapper, index int) bool {
-			if err := errs[index]; err != nil {
-				s.logger.Error("failed to send message", zap.String("token", item.Token), zap.Error(err))
+			if sendErr := errs[index]; sendErr != nil {
+				s.logger.Error("failed to send message", zap.String("token", item.Token), zap.Error(sendErr))
 				return true
 			}
 

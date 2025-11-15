@@ -190,7 +190,9 @@ func TestPublicDeviceRegisterWithCredentials(t *testing.T) {
 		{
 			name: "Valid Credentials",
 			headers: map[string]string{
-				"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(firstDevice.Login+":"+firstDevice.Password)),
+				"Authorization": "Basic " + base64.StdEncoding.EncodeToString(
+					[]byte(firstDevice.Login+":"+firstDevice.Password),
+				),
 			},
 			expectedStatusCode: 201,
 			expectedLogin:      "",

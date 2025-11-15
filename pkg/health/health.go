@@ -8,7 +8,7 @@ import (
 type health struct {
 }
 
-func NewHealth() *health {
+func newHealth() *health {
 	return &health{}
 }
 
@@ -18,8 +18,10 @@ func (h *health) Name() string {
 }
 
 // LiveProbe implements HealthProvider.
-func (h *health) LiveProbe(ctx context.Context) (Checks, error) {
-	const oneGiB uint64 = 1 << 30
+func (h *health) LiveProbe(_ context.Context) (Checks, error) {
+	const oneMiB uint64 = 1 << 20
+	const memoryThreshold uint64 = 128 * oneMiB
+	const goroutineThreshold = 100
 
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
@@ -27,25 +29,25 @@ func (h *health) LiveProbe(ctx context.Context) (Checks, error) {
 	// Basic runtime health checks
 	goroutineCheck := CheckDetail{
 		Description:   "Number of goroutines",
-		ObservedValue: int(runtime.NumGoroutine()),
+		ObservedValue: runtime.NumGoroutine(),
 		ObservedUnit:  "goroutines",
 		Status:        StatusPass,
 	}
 
 	memoryCheck := CheckDetail{
 		Description:   "Memory usage",
-		ObservedValue: int(m.Alloc / 1024 / 1024), // MiB
+		ObservedValue: int(m.Alloc / oneMiB), //nolint:gosec // not a security issue
 		ObservedUnit:  "MiB",
 		Status:        StatusPass,
 	}
 
 	// Check for potential memory issues
-	if m.Alloc > oneGiB { // 1GB
+	if m.Alloc > memoryThreshold {
 		memoryCheck.Status = StatusWarn
 	}
 
 	// Check for excessive goroutines
-	if goroutineCheck.ObservedValue > 1000 {
+	if goroutineCheck.ObservedValue > goroutineThreshold {
 		goroutineCheck.Status = StatusWarn
 	}
 
@@ -53,13 +55,13 @@ func (h *health) LiveProbe(ctx context.Context) (Checks, error) {
 }
 
 // ReadyProbe implements HealthProvider.
-func (h *health) ReadyProbe(ctx context.Context) (Checks, error) {
-	return nil, nil
+func (h *health) ReadyProbe(_ context.Context) (Checks, error) {
+	return nil, nil //nolint:nilnil // empty result
 }
 
 // StartedProbe implements HealthProvider.
-func (h *health) StartedProbe(ctx context.Context) (Checks, error) {
-	return nil, nil
+func (h *health) StartedProbe(_ context.Context) (Checks, error) {
+	return nil, nil //nolint:nilnil // empty result
 }
 
-var _ HealthProvider = (*health)(nil)
+var _ Provider = (*health)(nil)

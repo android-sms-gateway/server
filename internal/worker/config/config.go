@@ -32,6 +32,7 @@ type DevicesCleanup struct {
 }
 
 func Default() Config {
+	//nolint:exhaustruct,mnd // default values
 	return Config{
 		Tasks: Tasks{
 			MessagesHashing: MessagesHashing{

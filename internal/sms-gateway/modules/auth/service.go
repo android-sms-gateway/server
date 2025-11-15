@@ -3,9 +3,7 @@ package auth
 import (
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"crypto/subtle"
-	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -41,7 +39,7 @@ type Service struct {
 
 	users      *repository
 	codesCache *cache.Cache[string]
-	usersCache *cache.Cache[models.User]
+	usersCache *usersCache
 
 	devicesSvc *devices.Service
 	onlineSvc  online.Service
@@ -52,7 +50,8 @@ type Service struct {
 }
 
 func New(params Params) *Service {
-	idgen, _ := nanoid.Standard(21)
+	const idLen = 21
+	idgen, _ := nanoid.Standard(idLen)
 
 	return &Service{
 		config:     params.Config,
@@ -62,24 +61,26 @@ func New(params Params) *Service {
 		logger:     params.Logger,
 		idgen:      idgen,
 
-		codesCache: cache.New[string](cache.Config{}),
-		usersCache: cache.New[models.User](cache.Config{TTL: 1 * time.Hour}),
+		codesCache: cache.New[string](cache.Config{TTL: codeTTL}),
+		usersCache: newUsersCache(),
 	}
 }
 
-// GenerateUserCode generates a unique one-time user authorization code
-func (s *Service) GenerateUserCode(userID string) (AuthCode, error) {
+// GenerateUserCode generates a unique one-time user authorization code.
+func (s *Service) GenerateUserCode(userID string) (OneTimeCode, error) {
 	var code string
 	var err error
 
-	b := make([]byte, 3)
+	const bytesLen = 3
+	const maxCode = 1000000
+	b := make([]byte, bytesLen)
 	validUntil := time.Now().Add(codeTTL)
 	for range 3 {
 		if _, err = rand.Read(b); err != nil {
 			continue
 		}
-		num := (int(b[0]) << 16) | (int(b[1]) << 8) | int(b[2])
-		code = fmt.Sprintf("%06d", num%1000000)
+		num := (int(b[0]) << 16) | (int(b[1]) << 8) | int(b[2]) //nolint:mnd //bitshift
+		code = fmt.Sprintf("%06d", num%maxCode)
 
 		if err = s.codesCache.SetOrFail(code, userID, cache.WithValidUntil(validUntil)); err != nil {
 			continue
@@ -89,36 +90,34 @@ func (s *Service) GenerateUserCode(userID string) (AuthCode, error) {
 	}
 
 	if err != nil {
-		return AuthCode{}, fmt.Errorf("can't generate code: %w", err)
+		return OneTimeCode{}, fmt.Errorf("failed to generate code: %w", err)
 	}
 
-	return AuthCode{Code: code, ValidUntil: validUntil}, nil
+	return OneTimeCode{Code: code, ValidUntil: validUntil}, nil
 }
 
-func (s *Service) RegisterUser(login, password string) (models.User, error) {
-	user := models.User{
-		ID: login,
+func (s *Service) RegisterUser(login, password string) (*models.User, error) {
+	passwordHash, err := crypto.MakeBCryptHash(password)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	var err error
-	if user.PasswordHash, err = crypto.MakeBCryptHash(password); err != nil {
-		return user, fmt.Errorf("can't hash password: %w", err)
-	}
-
-	if err = s.users.Insert(&user); err != nil {
-		return user, fmt.Errorf("can't create user")
+	user := models.NewUser(login, passwordHash)
+	if err = s.users.Insert(user); err != nil {
+		return user, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	return user, nil
 }
 
-func (s *Service) RegisterDevice(user models.User, name, pushToken *string) (models.Device, error) {
-	device := models.Device{
-		Name:      name,
-		PushToken: pushToken,
+func (s *Service) RegisterDevice(user *models.User, name, pushToken *string) (*models.Device, error) {
+	device := models.NewDevice(name, pushToken)
+
+	if err := s.devicesSvc.Insert(user.ID, device); err != nil {
+		return device, fmt.Errorf("failed to create device: %w", err)
 	}
 
-	return device, s.devicesSvc.Insert(user.ID, &device)
+	return device, nil
 }
 
 func (s *Service) IsPublic() bool {
@@ -134,17 +133,18 @@ func (s *Service) AuthorizeRegistration(token string) error {
 		return nil
 	}
 
-	return fmt.Errorf("invalid token")
+	return ErrAuthorizationFailed
 }
 
 func (s *Service) AuthorizeDevice(token string) (models.Device, error) {
 	device, err := s.devicesSvc.GetByToken(token)
 	if err != nil {
-		return device, err
+		return device, fmt.Errorf("%w: %w", ErrAuthorizationFailed, err)
 	}
 
 	go func(id string) {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		const timeout = 5 * time.Second
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 		s.onlineSvc.SetOnline(ctx, id)
 	}(device.ID)
@@ -154,41 +154,37 @@ func (s *Service) AuthorizeDevice(token string) (models.Device, error) {
 	return device, nil
 }
 
-func (s *Service) AuthorizeUser(username, password string) (models.User, error) {
-	hash := sha256.Sum256([]byte(username + password))
-	cacheKey := hex.EncodeToString(hash[:])
-
-	user, err := s.usersCache.Get(cacheKey)
-	if err == nil {
-		return user, nil
+func (s *Service) AuthorizeUser(username, password string) (*models.User, error) {
+	if user, err := s.usersCache.Get(username, password); err == nil {
+		return &user, nil
 	}
 
-	user, err = s.users.GetByLogin(username)
+	user, err := s.users.GetByLogin(username)
 	if err != nil {
 		return user, err
 	}
 
-	if err := crypto.CompareBCryptHash(user.PasswordHash, password); err != nil {
-		return models.User{}, err
+	if cmpErr := crypto.CompareBCryptHash(user.PasswordHash, password); cmpErr != nil {
+		return nil, fmt.Errorf("password is incorrect: %w", cmpErr)
 	}
 
-	if err := s.usersCache.Set(cacheKey, user); err != nil {
-		s.logger.Error("can't cache user", zap.Error(err))
+	if setErr := s.usersCache.Set(username, password, *user); setErr != nil {
+		s.logger.Error("failed to cache user", zap.Error(setErr))
 	}
 
 	return user, nil
 }
 
 // AuthorizeUserByCode authorizes a user by one-time code.
-func (s *Service) AuthorizeUserByCode(code string) (models.User, error) {
+func (s *Service) AuthorizeUserByCode(code string) (*models.User, error) {
 	userID, err := s.codesCache.GetAndDelete(code)
 	if err != nil {
-		return models.User{}, err
+		return nil, fmt.Errorf("failed to get user by code: %w", err)
 	}
 
 	user, err := s.users.GetByID(userID)
 	if err != nil {
-		return models.User{}, err
+		return nil, err
 	}
 
 	return user, nil
@@ -200,8 +196,8 @@ func (s *Service) ChangePassword(userID string, currentPassword string, newPassw
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 
-	if err := crypto.CompareBCryptHash(user.PasswordHash, currentPassword); err != nil {
-		return fmt.Errorf("current password is incorrect: %w", err)
+	if hashErr := crypto.CompareBCryptHash(user.PasswordHash, currentPassword); hashErr != nil {
+		return fmt.Errorf("current password is incorrect: %w", hashErr)
 	}
 
 	newHash, err := crypto.MakeBCryptHash(newPassword)
@@ -209,15 +205,13 @@ func (s *Service) ChangePassword(userID string, currentPassword string, newPassw
 		return fmt.Errorf("failed to hash new password: %w", err)
 	}
 
-	if err := s.users.UpdatePassword(userID, newHash); err != nil {
-		return fmt.Errorf("failed to update password: %w", err)
+	if updErr := s.users.UpdatePassword(userID, newHash); updErr != nil {
+		return fmt.Errorf("failed to update password: %w", updErr)
 	}
 
 	// Invalidate cache
-	hash := sha256.Sum256([]byte(userID + currentPassword))
-	cacheKey := hex.EncodeToString(hash[:])
-	if err := s.usersCache.Delete(cacheKey); err != nil {
-		s.logger.Error("can't invalidate user cache", zap.Error(err))
+	if delErr := s.usersCache.Delete(userID, currentPassword); delErr != nil {
+		s.logger.Error("failed to invalidate user cache", zap.Error(delErr))
 	}
 
 	return nil

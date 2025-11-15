@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type memoryPubSub struct {
+type MemoryPubSub struct {
 	bufferSize uint
 
 	wg      sync.WaitGroup
@@ -21,15 +21,17 @@ type subscriber struct {
 	ctx context.Context
 }
 
-func NewMemory(opts ...Option) *memoryPubSub {
+func NewMemory(opts ...Option) *MemoryPubSub {
 	o := options{
 		bufferSize: 0,
 	}
 	o.apply(opts...)
 
-	return &memoryPubSub{
+	return &MemoryPubSub{
 		bufferSize: o.bufferSize,
 
+		wg:      sync.WaitGroup{},
+		mu:      sync.RWMutex{},
 		topics:  make(map[string]map[string]subscriber),
 		closeCh: make(chan struct{}),
 	}
@@ -38,7 +40,7 @@ func NewMemory(opts ...Option) *memoryPubSub {
 // Publish sends a message to all subscribers of the given topic.
 // This method blocks until all subscribers have received the message
 // or until ctx is cancelled or the pubsub instance is closed.
-func (m *memoryPubSub) Publish(ctx context.Context, topic string, data []byte) error {
+func (m *MemoryPubSub) Publish(ctx context.Context, topic string, data []byte) error {
 	select {
 	case <-m.closeCh:
 		return ErrPubSubClosed
@@ -82,7 +84,7 @@ func (m *memoryPubSub) Publish(ctx context.Context, topic string, data []byte) e
 	return nil
 }
 
-func (m *memoryPubSub) Subscribe(ctx context.Context, topic string) (*Subscription, error) {
+func (m *MemoryPubSub) Subscribe(ctx context.Context, topic string) (*Subscription, error) {
 	select {
 	case <-m.closeCh:
 		return nil, ErrPubSubClosed
@@ -116,7 +118,7 @@ func (m *memoryPubSub) Subscribe(ctx context.Context, topic string) (*Subscripti
 	return &Subscription{id: id, ctx: subCtx, cancel: cancel, ch: ch}, nil
 }
 
-func (m *memoryPubSub) subscribe(id, topic string, sub subscriber) {
+func (m *MemoryPubSub) subscribe(id, topic string, sub subscriber) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -128,7 +130,7 @@ func (m *memoryPubSub) subscribe(id, topic string, sub subscriber) {
 	subscriptions[id] = sub
 }
 
-func (m *memoryPubSub) unsubscribe(id, topic string) {
+func (m *MemoryPubSub) unsubscribe(id, topic string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -142,7 +144,7 @@ func (m *memoryPubSub) unsubscribe(id, topic string) {
 	}
 }
 
-func (m *memoryPubSub) Close() error {
+func (m *MemoryPubSub) Close() error {
 	select {
 	case <-m.closeCh:
 		return nil
@@ -155,4 +157,4 @@ func (m *memoryPubSub) Close() error {
 	return nil
 }
 
-var _ PubSub = (*memoryPubSub)(nil)
+var _ PubSub = (*MemoryPubSub)(nil)

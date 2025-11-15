@@ -2,7 +2,6 @@ package messages
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -41,6 +40,17 @@ type ThirdPartyController struct {
 	devicesSvc  *devices.Service
 }
 
+func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyController {
+	return &ThirdPartyController{
+		Handler: base.Handler{
+			Logger:    params.Logger,
+			Validator: params.Validator,
+		},
+		messagesSvc: params.MessagesSvc,
+		devicesSvc:  params.DevicesSvc,
+	}
+}
+
 //	@Summary		Enqueue message
 //	@Description	Enqueues a message for sending. If `deviceId` is set, the specified device is used; otherwise a random registered device is chosen.
 //	@Security		ApiAuth
@@ -58,53 +68,35 @@ type ThirdPartyController struct {
 //	@Header			202					{string}	Location						"Get message state URL"
 //	@Router			/3rdparty/v1/messages [post]
 //
-// Enqueue message
+// Enqueue message.
 func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 	var params thirdPartyPostQueryParams
 	if err := h.QueryParserValidator(c, &params); err != nil {
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	var req smsgateway.Message
 	if err := h.BodyParserValidator(c, &req); err != nil {
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	var device models.Device
-	var err error
-	var filters []devices.SelectFilter
-
-	if params.DeviceActiveWithin > 0 {
-		filters = append(filters, devices.ActiveWithin(time.Duration(params.DeviceActiveWithin)*time.Hour))
-	}
-
-	// Check if device_id is provided
-	if req.DeviceID != "" {
-
-		device, err = h.devicesSvc.Get(user.ID, append(filters, devices.WithID(req.DeviceID))...)
-		if err != nil {
-			if errors.Is(err, devices.ErrNotFound) {
-				return fiber.NewError(fiber.StatusBadRequest, "No active device with such ID found")
-			}
-			h.Logger.Error("Failed to get device", zap.Error(err), zap.String("user_id", user.ID), zap.String("device_id", req.DeviceID))
-			return fiber.NewError(fiber.StatusInternalServerError, "Can't select device. Please contact support")
-		}
-	} else {
-		// Fallback to random selection
-		devices, err := h.devicesSvc.Select(user.ID, filters...)
-		if err != nil {
-			h.Logger.Error("Failed to select devices", zap.Error(err), zap.String("user_id", user.ID))
-			return fiber.NewError(fiber.StatusInternalServerError, "Can't select devices. Please contact support")
+	device, err := h.devicesSvc.GetAny(
+		user.ID,
+		req.DeviceID,
+		time.Duration(params.DeviceActiveWithin)*time.Hour,
+	)
+	if err != nil {
+		if errors.Is(err, devices.ErrNotFound) {
+			return fiber.NewError(fiber.StatusBadRequest, "No active device found for provided filters")
 		}
 
-		if len(devices) < 1 {
-			return fiber.NewError(fiber.StatusBadRequest, "No active devices found")
-		}
-
-		device, err = slices.Random(devices)
-		if err != nil {
-			return fmt.Errorf("can't get random device: %w", err)
-		}
+		h.Logger.Error(
+			"failed to select device",
+			zap.Error(err),
+			zap.String("user_id", user.ID),
+			zap.String("device_id", req.DeviceID),
+		)
+		return fiber.NewError(fiber.StatusInternalServerError, "Failed to select device. Please contact support")
 	}
 
 	var textContent *messages.TextMessageContent
@@ -137,9 +129,13 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 		ValidUntil:         req.ValidUntil,
 		Priority:           req.Priority,
 	}
-	state, err := h.messagesSvc.Enqueue(device, msg, messages.EnqueueOptions{SkipPhoneValidation: params.SkipPhoneValidation})
+	state, err := h.messagesSvc.Enqueue(
+		*device,
+		msg,
+		messages.EnqueueOptions{SkipPhoneValidation: params.SkipPhoneValidation},
+	)
 	if err != nil {
-		var errValidation messages.ErrValidation
+		var errValidation messages.ValidationError
 		if isBadRequest := errors.As(err, &errValidation); isBadRequest {
 			return fiber.NewError(fiber.StatusBadRequest, errValidation.Error())
 		}
@@ -147,7 +143,14 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusConflict, err.Error())
 		}
 
-		return fmt.Errorf("can't enqueue message: %w", err)
+		h.Logger.Error(
+			"failed to enqueue message",
+			zap.Error(err),
+			zap.String("user_id", user.ID),
+			zap.String("device_id", req.DeviceID),
+		)
+
+		return fiber.NewError(fiber.StatusInternalServerError, "Failed to enqueue message. Please contact support")
 	}
 
 	location, err := c.GetRouteURL(route3rdPartyGetMessage, fiber.Map{
@@ -188,11 +191,11 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 //	@Failure		500			{object}	smsgateway.ErrorResponse		"Internal server error"
 //	@Router			/3rdparty/v1/messages [get]
 //
-// Get message history
+// Get message history.
 func (h *ThirdPartyController) list(user models.User, c *fiber.Ctx) error {
-	params := thirdPartyGetQueryParams{}
-	if err := h.QueryParserValidator(c, &params); err != nil {
-		return err
+	params := new(thirdPartyGetQueryParams)
+	if err := h.QueryParserValidator(c, params); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	messages, total, err := h.messagesSvc.SelectStates(user, params.ToFilter(), params.ToOptions())
@@ -219,7 +222,7 @@ func (h *ThirdPartyController) list(user models.User, c *fiber.Ctx) error {
 //	@Failure		500	{object}	smsgateway.ErrorResponse		"Internal server error"
 //	@Router			/3rdparty/v1/messages/{id} [get]
 //
-// Get message state
+// Get message state.
 func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -229,7 +232,8 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusNotFound, err.Error())
 		}
 
-		return err
+		h.Logger.Error("failed to get message state", zap.Error(err), zap.String("user_id", user.ID))
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to get message state")
 	}
 
 	return c.JSON(converters.MessageStateToDTO(*state))
@@ -248,11 +252,11 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 //	@Failure		500		{object}	smsgateway.ErrorResponse			"Internal server error"
 //	@Router			/3rdparty/v1/messages/inbox/export [post]
 //
-// Export inbox
+// Export inbox.
 func (h *ThirdPartyController) postInboxExport(user models.User, c *fiber.Ctx) error {
-	req := smsgateway.MessagesExportRequest{}
-	if err := h.BodyParserValidator(c, &req); err != nil {
-		return err
+	req := new(smsgateway.MessagesExportRequest)
+	if err := h.BodyParserValidator(c, req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	device, err := h.devicesSvc.Get(user.ID, devices.WithID(req.DeviceID))
@@ -261,11 +265,13 @@ func (h *ThirdPartyController) postInboxExport(user models.User, c *fiber.Ctx) e
 			return fiber.NewError(fiber.StatusBadRequest, "Invalid device ID")
 		}
 
-		return err
+		h.Logger.Error("failed to get device", zap.Error(err), zap.String("user_id", user.ID))
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to get device")
 	}
 
-	if err := h.messagesSvc.ExportInbox(device, req.Since, req.Until); err != nil {
-		return err
+	if expErr := h.messagesSvc.ExportInbox(device, req.Since, req.Until); expErr != nil {
+		h.Logger.Error("failed to export inbox", zap.Error(expErr), zap.String("user_id", user.ID))
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to export inbox")
 	}
 
 	return c.SendStatus(fiber.StatusAccepted)
@@ -277,15 +283,4 @@ func (h *ThirdPartyController) Register(router fiber.Router) {
 	router.Get(":id", userauth.WithUser(h.get)).Name(route3rdPartyGetMessage)
 
 	router.Post("inbox/export", userauth.WithUser(h.postInboxExport))
-}
-
-func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyController {
-	return &ThirdPartyController{
-		Handler: base.Handler{
-			Logger:    params.Logger.Named("messages"),
-			Validator: params.Validator,
-		},
-		messagesSvc: params.MessagesSvc,
-		devicesSvc:  params.DevicesSvc,
-	}
 }

@@ -2,6 +2,7 @@ package pubsub
 
 import (
 	"context"
+	"fmt"
 
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -19,7 +20,7 @@ func Module() fx.Option {
 				OnStop: func(_ context.Context) error {
 					if err := ps.Close(); err != nil {
 						logger.Error("pubsub close failed", zap.Error(err))
-						return err
+						return fmt.Errorf("failed to close pubsub: %w", err)
 					}
 					return nil
 				},

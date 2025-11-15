@@ -21,6 +21,15 @@ type ThirdPartyController struct {
 	base.Handler
 }
 
+func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyController {
+	return &ThirdPartyController{
+		Handler: base.Handler{
+			Logger:    params.Logger,
+			Validator: params.Validator,
+		},
+	}
+}
+
 //	@Summary		Get logs
 //	@Description	Retrieve a list of log entries within a specified time range.
 //	@Security		ApiAuth
@@ -34,20 +43,14 @@ type ThirdPartyController struct {
 //	@Failure		501		{object}	smsgateway.ErrorResponse	"Not implemented"
 //	@Router			/3rdparty/v1/logs [get]
 //
-// List webhooks
-func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
-	return fiber.NewError(fiber.StatusNotImplemented, "For privacy reasons, device's logs are not accessible through Cloud server")
+// Get logs.
+func (h *ThirdPartyController) get(_ models.User, _ *fiber.Ctx) error {
+	return fiber.NewError(
+		fiber.StatusNotImplemented,
+		"For privacy reasons, device's logs are not accessible through Cloud server",
+	)
 }
 
 func (h *ThirdPartyController) Register(router fiber.Router) {
 	router.Get("", userauth.WithUser(h.get))
-}
-
-func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyController {
-	return &ThirdPartyController{
-		Handler: base.Handler{
-			Logger:    params.Logger.Named("logs"),
-			Validator: params.Validator,
-		},
-	}
 }

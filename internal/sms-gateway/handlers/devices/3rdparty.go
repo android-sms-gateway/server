@@ -10,23 +10,29 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/capcom6/go-helpers/slices"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-type thirdPartyControllerParams struct {
-	fx.In
-
-	DevicesSvc *devices.Service
-
-	Logger *zap.Logger
-}
 
 type ThirdPartyController struct {
 	base.Handler
 
 	devicesSvc *devices.Service
+}
+
+func NewThirdPartyController(
+	devicesSvc *devices.Service,
+	logger *zap.Logger,
+	validator *validator.Validate,
+) *ThirdPartyController {
+	return &ThirdPartyController{
+		Handler: base.Handler{
+			Logger:    logger,
+			Validator: validator,
+		},
+		devicesSvc: devicesSvc,
+	}
 }
 
 //	@Summary		List devices
@@ -40,11 +46,11 @@ type ThirdPartyController struct {
 //	@Failure		500	{object}	smsgateway.ErrorResponse	"Internal server error"
 //	@Router			/3rdparty/v1/devices [get]
 //
-// List devices
+// List devices.
 func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 	devices, err := h.devicesSvc.Select(user.ID)
 	if err != nil {
-		return fmt.Errorf("can't select devices: %w", err)
+		return fmt.Errorf("failed to select devices: %w", err)
 	}
 
 	response := slices.Map(devices, converters.DeviceToDTO)
@@ -65,7 +71,7 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 //	@Failure		500	{object}	smsgateway.ErrorResponse	"Internal server error"
 //	@Router			/3rdparty/v1/devices/{id} [delete]
 //
-// Remove device
+// Remove device.
 func (h *ThirdPartyController) remove(user models.User, c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -74,7 +80,7 @@ func (h *ThirdPartyController) remove(user models.User, c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusNotFound, err.Error())
 	}
 	if err != nil {
-		return fmt.Errorf("can't remove device: %w", err)
+		return fmt.Errorf("failed to remove device: %w", err)
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
@@ -83,13 +89,4 @@ func (h *ThirdPartyController) remove(user models.User, c *fiber.Ctx) error {
 func (h *ThirdPartyController) Register(router fiber.Router) {
 	router.Get("", userauth.WithUser(h.get))
 	router.Delete(":id", userauth.WithUser(h.remove))
-}
-
-func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyController {
-	return &ThirdPartyController{
-		Handler: base.Handler{
-			Logger: params.Logger.Named("devices"),
-		},
-		devicesSvc: params.DevicesSvc,
-	}
 }
