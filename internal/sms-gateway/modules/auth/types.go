@@ -11,8 +11,8 @@ const (
 	ModePrivate Mode = "private"
 )
 
-// AuthCode is a one-time user authorization code
-type AuthCode struct {
+// OneTimeCode is a one-time user authorization code.
+type OneTimeCode struct {
 	Code       string
 	ValidUntil time.Time
 }
