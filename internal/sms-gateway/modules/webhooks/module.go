@@ -6,17 +6,20 @@ import (
 	"go.uber.org/zap"
 )
 
-var Module = fx.Module(
-	"webhooks",
-	fx.Decorate(func(log *zap.Logger) *zap.Logger {
-		return log.Named("webhooks")
-	}),
-	fx.Provide(NewRepository, fx.Private),
-	fx.Provide(
-		NewService,
-	),
-)
+func Module() fx.Option {
+	return fx.Module(
+		"webhooks",
+		fx.Decorate(func(log *zap.Logger) *zap.Logger {
+			return log.Named("webhooks")
+		}),
+		fx.Provide(NewRepository, fx.Private),
+		fx.Provide(
+			NewService,
+		),
+	)
+}
 
+//nolint:gochecknoinits //framework-specific
 func init() {
 	db.RegisterMigration(Migrate)
 }

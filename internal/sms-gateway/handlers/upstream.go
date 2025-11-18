@@ -51,7 +51,7 @@ func newUpstreamHandler(params upstreamHandlerParams) *upstreamHandler {
 //	@Failure		500		{object}	smsgateway.ErrorResponse	"Internal server error"
 //	@Router			/upstream/v1/push [post]
 //
-// Send push notifications
+// Send push notifications.
 func (h *upstreamHandler) postPush(c *fiber.Ctx) error {
 	req := smsgateway.UpstreamPushRequest{}
 
@@ -65,7 +65,7 @@ func (h *upstreamHandler) postPush(c *fiber.Ctx) error {
 
 	for _, v := range req {
 		if err := h.ValidateStruct(v); err != nil {
-			return err
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 
 		event := push.Event{
@@ -74,7 +74,7 @@ func (h *upstreamHandler) postPush(c *fiber.Ctx) error {
 		}
 
 		if err := h.pushSvc.Enqueue(v.Token, event); err != nil {
-			h.Logger.Error("Can't push message", zap.Error(err))
+			h.Logger.Error("failed to push message", zap.Error(err))
 		}
 	}
 
@@ -94,9 +94,13 @@ func (h *upstreamHandler) Register(router fiber.Router) {
 
 	router = router.Group("/upstream/v1")
 
+	const (
+		rateLimit = 5
+		rateTime  = 60 * time.Second
+	)
 	router.Post("/push", limiter.New(limiter.Config{
-		Max:               5,
-		Expiration:        60 * time.Second,
+		Max:               rateLimit,
+		Expiration:        rateTime,
 		LimiterMiddleware: limiter.SlidingWindow{},
 	}), h.postPush)
 }

@@ -53,7 +53,7 @@ func NewService(params ServiceParams) *Service {
 func (s *Service) _select(filters ...SelectFilter) ([]smsgateway.Webhook, error) {
 	items, err := s.webhooks.Select(filters...)
 	if err != nil {
-		return nil, fmt.Errorf("can't select webhooks: %w", err)
+		return nil, fmt.Errorf("failed to select webhooks: %w", err)
 	}
 
 	return slices.Map(items, webhookToDTO), nil
@@ -69,9 +69,9 @@ func (s *Service) Select(userID string, filters ...SelectFilter) ([]smsgateway.W
 
 // Replace creates or updates a webhook for a given user. After replacing the webhook,
 // it asynchronously notifies all the user's devices. Returns an error if the operation fails.
-func (s *Service) Replace(userID string, webhook smsgateway.Webhook) error {
+func (s *Service) Replace(userID string, webhook *smsgateway.Webhook) error {
 	if !smsgateway.IsValidWebhookEvent(webhook.Event) {
-		return newValidationError("event", string(webhook.Event), fmt.Errorf("enum value expected"))
+		return newValidationError("event", webhook.Event, ErrInvalidEvent)
 	}
 
 	if webhook.ID == "" {
@@ -82,23 +82,23 @@ func (s *Service) Replace(userID string, webhook smsgateway.Webhook) error {
 	if webhook.DeviceID != nil {
 		ok, err := s.devicesSvc.Exists(userID, devices.WithID(*webhook.DeviceID))
 		if err != nil {
-			return fmt.Errorf("failed to select devices: %w", err)
+			return fmt.Errorf("failed to verify device ownership: %w", err)
 		}
 		if !ok {
 			return newValidationError("device_id", *webhook.DeviceID, devices.ErrNotFound)
 		}
 	}
 
-	model := Webhook{
-		ExtID:    webhook.ID,
-		UserID:   userID,
-		DeviceID: webhook.DeviceID,
-		URL:      webhook.URL,
-		Event:    webhook.Event,
-	}
+	model := newWebhook(
+		webhook.ID,
+		webhook.URL,
+		webhook.Event,
+		userID,
+		webhook.DeviceID,
+	)
 
-	if err := s.webhooks.Replace(&model); err != nil {
-		return fmt.Errorf("can't replace webhook: %w", err)
+	if err := s.webhooks.Replace(model); err != nil {
+		return fmt.Errorf("failed to replace webhook: %w", err)
 	}
 
 	s.notifyDevices(userID, webhook.DeviceID)
@@ -111,7 +111,7 @@ func (s *Service) Replace(userID string, webhook smsgateway.Webhook) error {
 func (s *Service) Delete(userID string, filters ...SelectFilter) error {
 	filters = append(filters, WithUserID(userID))
 	if err := s.webhooks.Delete(filters...); err != nil {
-		return fmt.Errorf("can't delete webhooks: %w", err)
+		return fmt.Errorf("failed to delete webhooks: %w", err)
 	}
 
 	s.notifyDevices(userID, nil)
@@ -123,7 +123,7 @@ func (s *Service) Delete(userID string, filters ...SelectFilter) error {
 func (s *Service) notifyDevices(userID string, deviceID *string) {
 	go func(userID string, deviceID *string) {
 		if err := s.eventsSvc.Notify(userID, deviceID, events.NewWebhooksUpdatedEvent()); err != nil {
-			s.logger.Error("can't notify devices", zap.Error(err))
+			s.logger.Error("failed to notify devices", zap.Error(err))
 		}
 	}(userID, deviceID)
 }

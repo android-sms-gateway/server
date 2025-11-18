@@ -7,6 +7,10 @@ import (
 	"github.com/android-sms-gateway/server/internal/worker"
 )
 
+const (
+	cmdWorker = "worker"
+)
+
 //	@securitydefinitions.basic	ApiAuth
 //	@description				User authentication
 
@@ -36,15 +40,15 @@ import (
 //	@host		api.sms-gate.app
 //	@schemes	https
 //
-// SMSGate Backend
+// SMSGate Backend.
 func main() {
 	args := os.Args[1:]
 	cmd := "start"
-	if len(args) > 0 && args[0] == "worker" {
-		cmd = "worker"
+	if len(args) > 0 && args[0] == cmdWorker {
+		cmd = cmdWorker
 	}
 
-	if cmd == "worker" {
+	if cmd == cmdWorker {
 		worker.Run()
 	} else {
 		smsgateway.Run()

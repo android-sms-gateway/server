@@ -32,29 +32,39 @@ type MobileController struct {
 	messagesSvc *messages.Service
 }
 
+func NewMobileController(params mobileControllerParams) *MobileController {
+	return &MobileController{
+		Handler: base.Handler{
+			Logger:    params.Logger,
+			Validator: params.Validator,
+		},
+		messagesSvc: params.MessagesSvc,
+	}
+}
+
 //	@Summary		Get messages for sending
 //	@Description	Returns list of pending messages
 //	@Security		MobileToken
 //	@Tags			Device, Messages
 //	@Accept			json
 //	@Produce		json
-//	@Param			order	query		string									false	"Message processing order: lifo (default) or fifo"	Enums(lifo,fifo) default(lifo)
+//	@Param			order	query		string									false	"Message processing order: lifo (default) or fifo"	Enums(lifo,fifo)	default(lifo)
 //	@Success		200		{object}	smsgateway.MobileGetMessagesResponse	"List of pending messages"
 //	@Failure		400		{object}	smsgateway.ErrorResponse				"Invalid request"
 //	@Failure		500		{object}	smsgateway.ErrorResponse				"Internal server error"
 //	@Router			/mobile/v1/message [get]
 //
-// Get messages for sending
+// Get messages for sending.
 func (h *MobileController) list(device models.Device, c *fiber.Ctx) error {
 	// Get and validate order parameter
-	params := mobileGetQueryParams{}
-	if err := h.QueryParserValidator(c, &params); err != nil {
-		return err
+	params := new(mobileGetQueryParams)
+	if err := h.QueryParserValidator(c, params); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	msgs, err := h.messagesSvc.SelectPending(device.ID, params.OrderOrDefault())
 	if err != nil {
-		return fmt.Errorf("can't get messages: %w", err)
+		return fmt.Errorf("failed to get messages: %w", err)
 	}
 
 	return c.JSON(
@@ -79,11 +89,11 @@ func (h *MobileController) list(device models.Device, c *fiber.Ctx) error {
 //	@Failure		500		{object}	smsgateway.ErrorResponse				"Internal server error"
 //	@Router			/mobile/v1/message [patch]
 //
-// Update message state
+// Update message state.
 func (h *MobileController) patch(device models.Device, c *fiber.Ctx) error {
 	req := smsgateway.MobilePatchMessageRequest{}
 	if err := h.BodyParserValidator(c, &req); err != nil {
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	for _, v := range req {
@@ -96,7 +106,7 @@ func (h *MobileController) patch(device models.Device, c *fiber.Ctx) error {
 
 		err := h.messagesSvc.UpdateState(&device, messageState)
 		if err != nil && !errors.Is(err, messages.ErrMessageNotFound) {
-			h.Logger.Error("Can't update message status",
+			h.Logger.Error("failed to update message status",
 				zap.String("message_id", v.ID),
 				zap.Error(err),
 			)
@@ -109,14 +119,4 @@ func (h *MobileController) patch(device models.Device, c *fiber.Ctx) error {
 func (h *MobileController) Register(router fiber.Router) {
 	router.Get("", deviceauth.WithDevice(h.list))
 	router.Patch("", deviceauth.WithDevice(h.patch))
-}
-
-func NewMobileController(params mobileControllerParams) *MobileController {
-	return &MobileController{
-		Handler: base.Handler{
-			Logger:    params.Logger.Named("messages"),
-			Validator: params.Validator,
-		},
-		messagesSvc: params.MessagesSvc,
-	}
 }

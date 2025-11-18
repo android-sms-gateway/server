@@ -2,7 +2,7 @@ package sse
 
 import "time"
 
-type configOption func(*Config)
+type Option func(*Config)
 
 type Config struct {
 	keepAlivePeriod time.Duration
@@ -10,12 +10,14 @@ type Config struct {
 
 const defaultKeepAlivePeriod = 15 * time.Second
 
-var defaultConfig = Config{
-	keepAlivePeriod: defaultKeepAlivePeriod,
+func DefaultConfig() Config {
+	return Config{
+		keepAlivePeriod: defaultKeepAlivePeriod,
+	}
 }
 
-func NewConfig(opts ...configOption) Config {
-	c := defaultConfig
+func NewConfig(opts ...Option) Config {
+	c := DefaultConfig()
 
 	for _, opt := range opts {
 		opt(&c)
@@ -28,7 +30,7 @@ func (c *Config) KeepAlivePeriod() time.Duration {
 	return c.keepAlivePeriod
 }
 
-func WithKeepAlivePeriod(d time.Duration) configOption {
+func WithKeepAlivePeriod(d time.Duration) Option {
 	if d < 0 {
 		d = defaultKeepAlivePeriod
 	}

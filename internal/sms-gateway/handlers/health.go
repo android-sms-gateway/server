@@ -37,34 +37,34 @@ func NewHealthHandler(
 //	@Failure		503	{object}	smsgateway.HealthResponse	"Service is not alive"
 //	@Router			/health/live [get]
 //
-// Liveness probe
+// Liveness probe.
 func (h *HealthHandler) getLiveness(c *fiber.Ctx) error {
 	return writeProbe(c, h.healthSvc.CheckLiveness(c.Context()))
 }
 
-// @Summary		Readiness probe
-// @Description	Checks if service is ready to serve traffic (readiness probe)
-// @Tags			System
-// @Produce		json
-// @Success		200	{object}	smsgateway.HealthResponse	"Service is ready"
-// @Failure		503	{object}	smsgateway.HealthResponse	"Service is not ready"
-// @Router			/health/ready [get]
-// @Router			/3rdparty/v1/health [get]
+//	@Summary		Readiness probe
+//	@Description	Checks if service is ready to serve traffic (readiness probe)
+//	@Tags			System
+//	@Produce		json
+//	@Success		200	{object}	smsgateway.HealthResponse	"Service is ready"
+//	@Failure		503	{object}	smsgateway.HealthResponse	"Service is not ready"
+//	@Router			/health/ready [get]
+//	@Router			/3rdparty/v1/health [get]
 //
-// Readiness probe
+// Readiness probe.
 func (h *HealthHandler) getReadiness(c *fiber.Ctx) error {
 	return writeProbe(c, h.healthSvc.CheckReadiness(c.Context()))
 }
 
-// @Summary		Startup probe
-// @Description	Checks if service has completed initialization (startup probe)
-// @Tags			System
-// @Produce		json
-// @Success		200	{object}	smsgateway.HealthResponse	"Service has completed initialization"
-// @Failure		503	{object}	smsgateway.HealthResponse	"Service has not completed initialization"
-// @Router			/health/startup [get]
+//	@Summary		Startup probe
+//	@Description	Checks if service has completed initialization (startup probe)
+//	@Tags			System
+//	@Produce		json
+//	@Success		200	{object}	smsgateway.HealthResponse	"Service has completed initialization"
+//	@Failure		503	{object}	smsgateway.HealthResponse	"Service has not completed initialization"
+//	@Router			/health/startup [get]
 //
-// Startup probe
+// Startup probe.
 func (h *HealthHandler) getStartup(c *fiber.Ctx) error {
 	return writeProbe(c, h.healthSvc.CheckStartup(c.Context()))
 }
@@ -84,7 +84,7 @@ func makeResponse(result health.CheckResult) smsgateway.HealthResponse {
 		ReleaseID: version.AppReleaseID(),
 		Checks: lo.MapValues(
 			result.Checks,
-			func(value health.CheckDetail, key string) smsgateway.HealthCheck {
+			func(value health.CheckDetail, _ string) smsgateway.HealthCheck {
 				return smsgateway.HealthCheck{
 					Description:   value.Description,
 					ObservedUnit:  value.ObservedUnit,

@@ -14,6 +14,10 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	eventsBufferSize = 8
+)
+
 type Service struct {
 	config Config
 
@@ -39,6 +43,7 @@ func NewService(config Config, logger *zap.Logger, metrics *metrics) *Service {
 	return &Service{
 		config: config,
 
+		mu:          sync.RWMutex{},
 		connections: make(map[string][]*sseConnection),
 
 		logger:  logger,
@@ -54,14 +59,14 @@ func (s *Service) Send(deviceID string, event Event) error {
 	if !exists {
 		// Increment connection errors metric for no connection
 		s.metrics.IncrementConnectionErrors(ErrorTypeNoConnection)
-		return fmt.Errorf("no connection for device %s", deviceID)
+		return fmt.Errorf("%w: device %s", ErrNoConnection, deviceID)
 	}
 
 	data, err := json.Marshal(event.Data)
 	if err != nil {
 		// Increment connection errors metric for marshaling error
 		s.metrics.IncrementConnectionErrors(ErrorTypeMarshalError)
-		return fmt.Errorf("can't marshal event: %w", err)
+		return fmt.Errorf("failed to marshal event: %w", err)
 	}
 
 	sent := 0
@@ -71,9 +76,17 @@ func (s *Service) Send(deviceID string, event Event) error {
 			// Message sent successfully
 			sent++
 		case <-conn.closeSignal:
-			s.logger.Warn("Connection closed while sending event", zap.String("device_id", deviceID), zap.String("connection_id", conn.id))
+			s.logger.Warn(
+				"Connection closed while sending event",
+				zap.String("device_id", deviceID),
+				zap.String("connection_id", conn.id),
+			)
 		default:
-			s.logger.Warn("Connection buffer full while sending event", zap.String("device_id", deviceID), zap.String("connection_id", conn.id))
+			s.logger.Warn(
+				"Connection buffer full while sending event",
+				zap.String("device_id", deviceID),
+				zap.String("connection_id", conn.id),
+			)
 			// Increment connection errors metric for buffer full
 			s.metrics.IncrementConnectionErrors(ErrorTypeBufferFull)
 		}
@@ -82,7 +95,7 @@ func (s *Service) Send(deviceID string, event Event) error {
 	if sent == 0 {
 		// Increment connection errors metric for no active connection
 		s.metrics.IncrementConnectionErrors(ErrorTypeNoConnection)
-		return fmt.Errorf("no active connection for device %s", deviceID)
+		return fmt.Errorf("%w: device %s", ErrNoConnection, deviceID)
 	}
 
 	// Count events sent
@@ -111,60 +124,71 @@ func (s *Service) Handler(deviceID string, c *fiber.Ctx) error {
 	c.Set("Transfer-Encoding", "chunked")
 
 	c.Status(fiber.StatusOK).Context().SetBodyStreamWriter(func(w *bufio.Writer) {
-		conn := s.registerConnection(deviceID)
-		defer s.removeConnection(deviceID, conn.id)
-
-		// Conditionally create ticker
-		var ticker *time.Ticker
-		if s.config.keepAlivePeriod > 0 {
-			ticker = time.NewTicker(s.config.keepAlivePeriod)
-			defer ticker.Stop()
-		}
-
-		for {
-			select {
-			case event := <-conn.channel:
-				s.metrics.ObserveEventDeliveryLatency(func() {
-					if err := s.writeToStream(w, fmt.Sprintf("event: %s\ndata: %s", event.name, utils.UnsafeString(event.data))); err != nil {
-						s.logger.Warn("Failed to write event data",
-							zap.String("device_id", deviceID),
-							zap.String("connection_id", conn.id),
-							zap.Error(err))
-						return
-					}
-				})
-			// Conditionally handle ticker events
-			case <-func() <-chan time.Time {
-				if ticker != nil {
-					return ticker.C
-				}
-				// Return nil channel that never fires when disabled
-				return make(chan time.Time)
-			}():
-				if err := s.writeToStream(w, ":keepalive"); err != nil {
-					s.logger.Warn("Failed to write keepalive",
-						zap.String("device_id", deviceID),
-						zap.String("connection_id", conn.id),
-						zap.Error(err))
-					return
-				}
-				// Count keepalives sent
-				s.metrics.IncrementKeepalivesSent()
-			case <-conn.closeSignal:
-				return
-			}
-		}
+		s.handleStream(deviceID, w)
 	})
 
 	return nil
 }
 
+func (s *Service) handleStream(deviceID string, w *bufio.Writer) {
+	conn := s.registerConnection(deviceID)
+	defer s.removeConnection(deviceID, conn.id)
+
+	var tickerChan <-chan time.Time
+
+	// Conditionally create ticker
+	if s.config.keepAlivePeriod > 0 {
+		ticker := time.NewTicker(s.config.keepAlivePeriod)
+		defer ticker.Stop()
+
+		tickerChan = ticker.C
+	}
+
+	for {
+		select {
+		case event := <-conn.channel:
+			success := true
+			s.metrics.ObserveEventDeliveryLatency(func() {
+				if err := s.writeToStream(w, fmt.Sprintf("event: %s\ndata: %s", event.name, utils.UnsafeString(event.data))); err != nil {
+					s.logger.Warn("failed to write event data",
+						zap.String("device_id", deviceID),
+						zap.String("connection_id", conn.id),
+						zap.Error(err))
+					success = false
+				}
+			})
+
+			if !success {
+				return
+			}
+		// Conditionally handle ticker events
+		case <-tickerChan:
+			if err := s.writeToStream(w, ":keepalive"); err != nil {
+				s.logger.Warn("failed to write keepalive",
+					zap.String("device_id", deviceID),
+					zap.String("connection_id", conn.id),
+					zap.Error(err))
+				return
+			}
+			// Count keepalives sent
+			s.metrics.IncrementKeepalivesSent()
+		case <-conn.closeSignal:
+			return
+		}
+	}
+}
+
 func (s *Service) writeToStream(w *bufio.Writer, data string) error {
 	if _, err := fmt.Fprintf(w, "%s\n\n", data); err != nil {
 		s.metrics.IncrementConnectionErrors(ErrorTypeWriteFailure)
-		return err
+		return fmt.Errorf("failed to write to stream: %w", err)
 	}
-	return w.Flush()
+	if err := w.Flush(); err != nil {
+		s.metrics.IncrementConnectionErrors(ErrorTypeWriteFailure)
+		return fmt.Errorf("failed to flush stream: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) registerConnection(deviceID string) *sseConnection {
@@ -175,7 +199,7 @@ func (s *Service) registerConnection(deviceID string) *sseConnection {
 
 	conn := &sseConnection{
 		id:          connID,
-		channel:     make(chan eventWrapper, 8),
+		channel:     make(chan eventWrapper, eventsBufferSize),
 		closeSignal: make(chan struct{}),
 	}
 
@@ -202,7 +226,11 @@ func (s *Service) removeConnection(deviceID, connID string) {
 			if conn.id == connID {
 				close(conn.closeSignal)
 				s.connections[deviceID] = append(connections[:i], connections[i+1:]...)
-				s.logger.Info("Removing SSE connection", zap.String("device_id", deviceID), zap.String("connection_id", connID))
+				s.logger.Info(
+					"Removing SSE connection",
+					zap.String("device_id", deviceID),
+					zap.String("connection_id", connID),
+				)
 				break
 			}
 		}

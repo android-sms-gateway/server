@@ -4,17 +4,20 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"sync"
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/types"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/client"
 	"github.com/samber/lo"
 )
 
-const BASE_URL = "https://api.sms-gate.app/upstream/v1"
+const baseURL = "https://api.sms-gate.app/upstream/v1"
+
+var ErrInvalidResponse = errors.New("invalid response")
 
 type Client struct {
 	options map[string]string
@@ -26,10 +29,12 @@ type Client struct {
 func New(options map[string]string) (*Client, error) {
 	return &Client{
 		options: options,
+		client:  nil,
+		mux:     sync.Mutex{},
 	}, nil
 }
 
-func (c *Client) Open(ctx context.Context) error {
+func (c *Client) Open(_ context.Context) error {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
@@ -42,10 +47,10 @@ func (c *Client) Open(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) Send(ctx context.Context, messages []types.Message) ([]error, error) {
+func (c *Client) Send(ctx context.Context, messages []client.Message) ([]error, error) {
 	payload := lo.Map(
 		messages,
-		func(item types.Message, _ int) smsgateway.PushNotification {
+		func(item client.Message, _ int) smsgateway.PushNotification {
 			return smsgateway.PushNotification{
 				Token: item.Token,
 				Event: item.Event.Type,
@@ -54,15 +59,15 @@ func (c *Client) Send(ctx context.Context, messages []types.Message) ([]error, e
 		},
 	)
 
-	payloadBytes, err := json.Marshal(smsgateway.UpstreamPushRequest(payload))
+	payloadBytes, err := json.Marshal(smsgateway.UpstreamPushRequest(payload)) //nolint:unconvert //type checking
 
 	if err != nil {
-		return nil, fmt.Errorf("can't marshal payload: %w", err)
+		return nil, fmt.Errorf("failed to marshal payload: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, BASE_URL+"/push", bytes.NewReader(payloadBytes))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/push", bytes.NewReader(payloadBytes))
 	if err != nil {
-		return nil, fmt.Errorf("can't create request: %w", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -70,7 +75,7 @@ func (c *Client) Send(ctx context.Context, messages []types.Message) ([]error, e
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("can't send request: %w", err)
+		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
 
 	defer func() {
@@ -78,23 +83,26 @@ func (c *Client) Send(ctx context.Context, messages []types.Message) ([]error, e
 		_ = resp.Body.Close()
 	}()
 
-	if resp.StatusCode >= 400 {
-		return c.mapErrors(messages, fmt.Errorf("unexpected status code: %d", resp.StatusCode)), nil
+	if resp.StatusCode >= http.StatusBadRequest {
+		return c.mapErrors(
+			messages,
+			fmt.Errorf("%w: unexpected status code: %d", ErrInvalidResponse, resp.StatusCode),
+		), nil
 	}
 
 	return nil, nil
 }
 
-func (c *Client) mapErrors(messages []types.Message, err error) []error {
+func (c *Client) mapErrors(messages []client.Message, err error) []error {
 	return lo.Map(
 		messages,
-		func(_ types.Message, _ int) error {
+		func(_ client.Message, _ int) error {
 			return err
 		},
 	)
 }
 
-func (c *Client) Close(ctx context.Context) error {
+func (c *Client) Close(_ context.Context) error {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 

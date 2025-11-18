@@ -24,6 +24,7 @@ func Module() fx.Option {
 	)
 }
 
+//nolint:gochecknoinits //backward compatibility
 func init() {
 	db.RegisterMigration(Migrate)
 }

@@ -25,7 +25,7 @@ func (h *rootHandler) Register(app *fiber.App) {
 				c.Set(fiber.HeaderLocation, path.Join(h.config.PublicPath, after))
 			}
 
-			return err
+			return err //nolint:wrapcheck // passed through to fiber's error handler
 		})
 	}
 

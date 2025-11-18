@@ -47,7 +47,7 @@ func (s *service) Run(ctx context.Context) {
 		case <-ticker.C:
 			s.logger.Debug("Persisting online status")
 			if err := s.persist(ctx); err != nil {
-				s.logger.Error("Can't persist online status", zap.Error(err))
+				s.logger.Error("failed to persist online status", zap.Error(err))
 			}
 		}
 	}
@@ -62,7 +62,7 @@ func (s *service) SetOnline(ctx context.Context, deviceID string) {
 	s.metrics.ObserveCacheLatency(func() {
 		if err = s.cache.Set(ctx, deviceID, []byte(dt)); err != nil {
 			s.metrics.IncrementCacheOperation(operationSet, statusError)
-			s.logger.Error("Can't set online status", zap.String("device_id", deviceID), zap.Error(err))
+			s.logger.Error("failed to set online status", zap.String("device_id", deviceID), zap.Error(err))
 			s.metrics.IncrementStatusSet(false)
 		}
 	})
@@ -82,7 +82,7 @@ func (s *service) persist(ctx context.Context) error {
 	s.metrics.ObservePersistenceLatency(func() {
 		items, err := s.cache.Drain(ctx)
 		if err != nil {
-			drainErr = fmt.Errorf("can't drain cache: %w", err)
+			drainErr = fmt.Errorf("failed to drain cache: %w", err)
 			s.metrics.IncrementCacheOperation(operationDrain, statusError)
 			return
 		}
@@ -96,9 +96,9 @@ func (s *service) persist(ctx context.Context) error {
 		s.logger.Debug("Drained cache", zap.Int("count", len(items)))
 
 		timestamps := maps.MapValues(items, func(v []byte) time.Time {
-			t, err := time.Parse(time.RFC3339, string(v))
-			if err != nil {
-				s.logger.Warn("Can't parse last seen", zap.String("last_seen", string(v)), zap.Error(err))
+			t, parseErr := time.Parse(time.RFC3339, string(v))
+			if parseErr != nil {
+				s.logger.Warn("failed to parse last seen", zap.String("last_seen", string(v)), zap.Error(parseErr))
 				return time.Now().UTC()
 			}
 
@@ -107,8 +107,8 @@ func (s *service) persist(ctx context.Context) error {
 
 		s.logger.Debug("Parsed last seen timestamps", zap.Int("count", len(timestamps)))
 
-		if err := s.devicesSvc.SetLastSeen(ctx, timestamps); err != nil {
-			persistErr = fmt.Errorf("can't set last seen: %w", err)
+		if seenErr := s.devicesSvc.SetLastSeen(ctx, timestamps); seenErr != nil {
+			persistErr = fmt.Errorf("failed to set last seen: %w", seenErr)
 			s.metrics.IncrementPersistenceError()
 			return
 		}

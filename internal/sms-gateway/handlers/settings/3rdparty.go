@@ -32,6 +32,17 @@ type ThirdPartyController struct {
 	settingsSvc *settings.Service
 }
 
+func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyController {
+	return &ThirdPartyController{
+		Handler: base.Handler{
+			Logger:    params.Logger,
+			Validator: params.Validator,
+		},
+		devicesSvc:  params.DevicesSvc,
+		settingsSvc: params.SettingsSvc,
+	}
+}
+
 //	@Summary		Get settings
 //	@Description	Returns settings for a specific user
 //	@Security		ApiAuth
@@ -42,11 +53,11 @@ type ThirdPartyController struct {
 //	@Failure		500	{object}	smsgateway.ErrorResponse	"Internal server error"
 //	@Router			/3rdparty/v1/settings [get]
 //
-// Get settings
+// Get settings.
 func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 	settings, err := h.settingsSvc.GetSettings(user.ID, true)
 	if err != nil {
-		return fmt.Errorf("can't get settings: %w", err)
+		return fmt.Errorf("failed to get settings: %w", err)
 	}
 
 	return c.JSON(settings)
@@ -65,22 +76,22 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 //	@Failure		500		{object}	smsgateway.ErrorResponse	"Internal server error"
 //	@Router			/3rdparty/v1/settings [put]
 //
-// Update settings
+// Update settings.
 func (h *ThirdPartyController) put(user models.User, c *fiber.Ctx) error {
-	if err := h.BodyParserValidator(c, &smsgateway.DeviceSettings{}); err != nil {
+	if err := h.BodyParserValidator(c, new(smsgateway.DeviceSettings)); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid settings format: %v", err))
 	}
 
-	settings := make(map[string]any, 8)
+	settings := make(map[string]any)
 
 	if err := c.BodyParser(&settings); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Failed to parse request body: %v", err))
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to parse request body: %v", err))
 	}
 
 	updated, err := h.settingsSvc.ReplaceSettings(user.ID, settings)
 
 	if err != nil {
-		return fmt.Errorf("can't update settings: %w", err)
+		return fmt.Errorf("failed to update settings: %w", err)
 	}
 
 	return c.JSON(updated)
@@ -99,21 +110,21 @@ func (h *ThirdPartyController) put(user models.User, c *fiber.Ctx) error {
 //	@Failure		500		{object}	smsgateway.ErrorResponse	"Internal server error"
 //	@Router			/3rdparty/v1/settings [patch]
 //
-// Partially update settings
+// Partially update settings.
 func (h *ThirdPartyController) patch(user models.User, c *fiber.Ctx) error {
-	if err := h.BodyParserValidator(c, &smsgateway.DeviceSettings{}); err != nil {
+	if err := h.BodyParserValidator(c, new(smsgateway.DeviceSettings)); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid settings format: %v", err))
 	}
 
-	settings := make(map[string]any, 8)
+	settings := make(map[string]any)
 
 	if err := c.BodyParser(&settings); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Failed to parse request body: %v", err))
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to parse request body: %v", err))
 	}
 
 	updated, err := h.settingsSvc.UpdateSettings(user.ID, settings)
 	if err != nil {
-		return fmt.Errorf("can't update settings: %w", err)
+		return fmt.Errorf("failed to update settings: %w", err)
 	}
 
 	return c.JSON(updated)
@@ -123,15 +134,4 @@ func (h *ThirdPartyController) Register(app fiber.Router) {
 	app.Get("", userauth.WithUser(h.get))
 	app.Patch("", userauth.WithUser(h.patch))
 	app.Put("", userauth.WithUser(h.put))
-}
-
-func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyController {
-	return &ThirdPartyController{
-		Handler: base.Handler{
-			Logger:    params.Logger.Named("settings"),
-			Validator: params.Validator,
-		},
-		devicesSvc:  params.DevicesSvc,
-		settingsSvc: params.SettingsSvc,
-	}
 }

@@ -7,23 +7,29 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/deviceauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/webhooks"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-type mobileControllerParams struct {
-	fx.In
-
-	WebhooksServices *webhooks.Service
-
-	Logger *zap.Logger
-}
 
 type MobileController struct {
 	base.Handler
 
 	webhooksSvc *webhooks.Service
+}
+
+func NewMobileController(
+	webhooksSvc *webhooks.Service,
+	logger *zap.Logger,
+	validator *validator.Validate,
+) *MobileController {
+	return &MobileController{
+		Handler: base.Handler{
+			Logger:    logger,
+			Validator: validator,
+		},
+		webhooksSvc: webhooksSvc,
+	}
 }
 
 //	@Summary		List webhooks
@@ -36,11 +42,11 @@ type MobileController struct {
 //	@Failure		500	{object}	smsgateway.ErrorResponse	"Internal server error"
 //	@Router			/mobile/v1/webhooks [get]
 //
-// List webhooks
+// List webhooks.
 func (h *MobileController) get(device models.Device, c *fiber.Ctx) error {
 	items, err := h.webhooksSvc.Select(device.UserID, webhooks.WithDeviceID(device.ID, false))
 	if err != nil {
-		return fmt.Errorf("can't select webhooks: %w", err)
+		return fmt.Errorf("failed to select webhooks: %w", err)
 	}
 
 	return c.JSON(items)
@@ -48,13 +54,4 @@ func (h *MobileController) get(device models.Device, c *fiber.Ctx) error {
 
 func (h *MobileController) Register(router fiber.Router) {
 	router.Get("", deviceauth.WithDevice(h.get))
-}
-
-func NewMobileController(params mobileControllerParams) *MobileController {
-	return &MobileController{
-		Handler: base.Handler{
-			Logger: params.Logger.Named("webhooks"),
-		},
-		webhooksSvc: params.WebhooksServices,
-	}
 }

@@ -9,6 +9,12 @@ type Repository struct {
 	db *gorm.DB
 }
 
+func NewRepository(db *gorm.DB) *Repository {
+	return &Repository{
+		db: db,
+	}
+}
+
 func (r *Repository) Select(filters ...SelectFilter) ([]*Webhook, error) {
 	webhooks := []*Webhook{}
 	if err := newFilter(filters...).apply(r.db).Find(&webhooks).Error; err != nil {
@@ -25,11 +31,5 @@ func (r *Repository) Replace(webhook *Webhook) error {
 }
 
 func (r *Repository) Delete(filters ...SelectFilter) error {
-	return newFilter(filters...).apply(r.db).Delete(&Webhook{}).Error
-}
-
-func NewRepository(db *gorm.DB) *Repository {
-	return &Repository{
-		db: db,
-	}
+	return newFilter(filters...).apply(r.db).Delete(new(Webhook)).Error
 }

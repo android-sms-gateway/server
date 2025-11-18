@@ -25,7 +25,6 @@ require (
 	go.uber.org/fx v1.24.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.45.0
-	golang.org/x/exp v0.0.0-20240525044651-4c93da0ed11d
 	google.golang.org/api v0.148.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/gorm v1.25.7-0.20240204074919-46816ad31dde

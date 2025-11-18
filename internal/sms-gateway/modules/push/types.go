@@ -1,10 +1,10 @@
 package push
 
 import (
-	"context"
 	"encoding/json"
+	"fmt"
 
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/types"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/client"
 )
 
 type Mode string
@@ -14,13 +14,7 @@ const (
 	ModeUpstream Mode = "upstream"
 )
 
-type Event = types.Event
-
-type client interface {
-	Open(ctx context.Context) error
-	Send(ctx context.Context, messages []types.Message) ([]error, error)
-	Close(ctx context.Context) error
-}
+type Event = client.Event
 
 type eventWrapper struct {
 	Token   string `json:"token"`
@@ -33,9 +27,18 @@ func (e *eventWrapper) key() string {
 }
 
 func (e *eventWrapper) serialize() ([]byte, error) {
-	return json.Marshal(e)
+	data, err := json.Marshal(e)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal event: %w", err)
+	}
+
+	return data, nil
 }
 
 func (e *eventWrapper) deserialize(data []byte) error {
-	return json.Unmarshal(data, e)
+	if err := json.Unmarshal(data, e); err != nil {
+		return fmt.Errorf("failed to unmarshal event: %w", err)
+	}
+
+	return nil
 }

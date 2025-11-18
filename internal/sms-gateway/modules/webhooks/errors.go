@@ -1,6 +1,13 @@
 package webhooks
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
+
+var (
+	ErrInvalidEvent = errors.New("invalid event")
+)
 
 type ValidationError struct {
 	Field string
@@ -9,7 +16,7 @@ type ValidationError struct {
 }
 
 func (e ValidationError) Error() string {
-	return fmt.Sprintf("invalid `%s` = `%s`: %s", e.Field, e.Value, e.Err)
+	return fmt.Sprintf("invalid %q = %q: %s", e.Field, e.Value, e.Err)
 }
 
 func (e ValidationError) Unwrap() error {
@@ -25,6 +32,5 @@ func newValidationError(field, value string, err error) ValidationError {
 }
 
 func IsValidationError(err error) bool {
-	_, ok := err.(ValidationError)
-	return ok
+	return errors.As(err, new(ValidationError))
 }

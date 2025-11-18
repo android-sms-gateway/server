@@ -1,7 +1,13 @@
 package messages
 
-type ErrValidation string
+import "errors"
 
-func (e ErrValidation) Error() string {
+var (
+	ErrNoContent = errors.New("no text or data content")
+)
+
+type ValidationError string
+
+func (e ValidationError) Error() string {
 	return string(e)
 }

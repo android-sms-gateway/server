@@ -54,7 +54,12 @@ func (s *Service) Start() error {
 		s.wg.Add(1)
 		go func(index int, task PeriodicTask) {
 			defer s.wg.Done()
-			s.logger.Info("starting task", zap.Int("index", index), zap.String("name", task.Name()), zap.Duration("interval", task.Interval()))
+			s.logger.Info(
+				"starting task",
+				zap.Int("index", index),
+				zap.String("name", task.Name()),
+				zap.Duration("interval", task.Interval()),
+			)
 			s.runTask(ctx, task)
 			s.logger.Info("task stopped", zap.Int("index", index), zap.String("name", task.Name()))
 		}(index, task)
@@ -64,6 +69,7 @@ func (s *Service) Start() error {
 }
 
 func (s *Service) runTask(ctx context.Context, task PeriodicTask) {
+	//nolint:gosec // weak random is acceptable for scheduling jitter
 	initialDelay := time.Duration(math.Floor(rand.Float64()*task.Interval().Seconds())) * time.Second
 
 	s.logger.Info("initial delay", zap.String("name", task.Name()), zap.Duration("delay", initialDelay))
@@ -94,12 +100,12 @@ func (s *Service) execute(ctx context.Context, task PeriodicTask) {
 	logger := s.logger.With(zap.String("name", task.Name()))
 
 	if err := s.locker.AcquireLock(ctx, task.Name()); err != nil {
-		logger.Error("can't acquire lock", zap.String("name", task.Name()), zap.Error(err))
+		logger.Error("failed to acquire lock", zap.String("name", task.Name()), zap.Error(err))
 		return
 	}
 	defer func() {
 		if err := s.locker.ReleaseLock(ctx, task.Name()); err != nil {
-			logger.Error("can't release lock", zap.String("name", task.Name()), zap.Error(err))
+			logger.Error("failed to release lock", zap.String("name", task.Name()), zap.Error(err))
 		}
 	}()
 

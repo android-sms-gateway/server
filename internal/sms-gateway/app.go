@@ -30,36 +30,38 @@ import (
 	"go.uber.org/zap"
 )
 
-var Module = fx.Module(
-	"server",
-	logger.Module(),
-	appconfig.Module,
-	appdb.Module(),
-	http.Module,
-	validator.Module,
-	openapi.Module(),
-	handlers.Module,
-	auth.Module,
-	push.Module(),
-	db.Module,
-	cache.Module(),
-	pubsub.Module(),
-	events.Module,
-	messages.Module(),
-	health.Module(),
-	webhooks.Module,
-	settings.Module,
-	devices.Module(),
-	metrics.Module,
-	sse.Module,
-	online.Module(),
-)
+func Module() fx.Option {
+	return fx.Module(
+		"server",
+		logger.Module(),
+		appconfig.Module(),
+		appdb.Module(),
+		http.Module,
+		validator.Module,
+		openapi.Module(),
+		handlers.Module(),
+		auth.Module(),
+		push.Module(),
+		db.Module,
+		cache.Module(),
+		pubsub.Module(),
+		events.Module(),
+		messages.Module(),
+		health.Module(),
+		webhooks.Module(),
+		settings.Module(),
+		devices.Module(),
+		metrics.Module(),
+		sse.Module(),
+		online.Module(),
+	)
+}
 
 func Run() {
-	cli.DefaultCommand = "start"
+	cli.DefaultCommand = "start" //nolint:reassign //framework specific
 	fx.New(
 		cli.GetModule(),
-		Module,
+		Module(),
 		logger.WithFxDefaultLogger(),
 	).Run()
 }
@@ -116,6 +118,7 @@ func Start(p StartParams) error {
 	return nil
 }
 
+//nolint:gochecknoinits //backward compatibility
 func init() {
 	cli.Register("start", Start)
 }

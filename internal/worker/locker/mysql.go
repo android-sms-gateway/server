@@ -26,6 +26,7 @@ func NewMySQLLocker(db *sql.DB, prefix string, timeout time.Duration) Locker {
 		prefix:  prefix,
 		timeout: timeout,
 
+		mu:    sync.Mutex{},
 		conns: make(map[string]*sql.Conn),
 	}
 }
@@ -41,9 +42,9 @@ func (m *mySQLLocker) AcquireLock(ctx context.Context, key string) error {
 	}
 
 	var res sql.NullInt64
-	if err := conn.QueryRowContext(ctx, "SELECT GET_LOCK(?, ?)", name, m.timeout.Seconds()).Scan(&res); err != nil {
+	if lockErr := conn.QueryRowContext(ctx, "SELECT GET_LOCK(?, ?)", name, m.timeout.Seconds()).Scan(&res); lockErr != nil {
 		_ = conn.Close()
-		return fmt.Errorf("failed to get lock: %w", err)
+		return fmt.Errorf("failed to get lock: %w", lockErr)
 	}
 	if !res.Valid || res.Int64 != 1 {
 		_ = conn.Close()
@@ -70,7 +71,7 @@ func (m *mySQLLocker) ReleaseLock(ctx context.Context, key string) error {
 	delete(m.conns, key)
 	m.mu.Unlock()
 	if conn == nil {
-		return fmt.Errorf("no held connection for key %q", key)
+		return fmt.Errorf("%w: no held connection for key %q", ErrLockNotAcquired, key)
 	}
 
 	var result sql.NullInt64
@@ -81,7 +82,7 @@ func (m *mySQLLocker) ReleaseLock(ctx context.Context, key string) error {
 		return fmt.Errorf("failed to release lock: %w", err)
 	}
 	if !result.Valid || result.Int64 != 1 {
-		return fmt.Errorf("lock was not held or doesn't exist")
+		return fmt.Errorf("%w: lock was not held or doesn't exist", ErrLockNotAcquired)
 	}
 
 	return nil
