@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -21,7 +22,7 @@ end
 return items
 `
 
-	// getAndUpdateTTLScript atomically gets a hash field and updates its TTL
+	// getAndUpdateTTLScript atomically gets a hash field and updates its TTL.
 	getAndUpdateTTLScript = `
 local field = ARGV[1]
 local deleteFlag = (ARGV[2] == "1" or ARGV[2] == "true")
@@ -40,6 +41,9 @@ if ttlTs > 0 then
   redis.call('HExpireAt', KEYS[1], ttlTs, field)
 elseif ttlDelta > 0 then
   local ttl = redis.call('HTTL', KEYS[1], field)
+  if ttl < 0 then
+    ttl = 0
+  end
   local newTtl = ttl + ttlDelta
   redis.call('HExpire', KEYS[1], newTtl, field)
 end
@@ -65,7 +69,7 @@ type RedisConfig struct {
 	TTL time.Duration
 }
 
-type redisCache struct {
+type RedisCache struct {
 	client      *redis.Client
 	ownedClient bool
 
@@ -74,13 +78,13 @@ type redisCache struct {
 	ttl time.Duration
 }
 
-func NewRedis(config RedisConfig) (*redisCache, error) {
+func NewRedis(config RedisConfig) (*RedisCache, error) {
 	if config.Prefix != "" && !strings.HasSuffix(config.Prefix, ":") {
 		config.Prefix += ":"
 	}
 
 	if config.Client == nil && config.URL == "" {
-		return nil, fmt.Errorf("no redis client or url provided")
+		return nil, fmt.Errorf("%w: no redis client or url provided", ErrInvalidConfig)
 	}
 
 	client := config.Client
@@ -93,7 +97,7 @@ func NewRedis(config RedisConfig) (*redisCache, error) {
 		client = redis.NewClient(opt)
 	}
 
-	return &redisCache{
+	return &RedisCache{
 		client:      client,
 		ownedClient: config.Client == nil,
 
@@ -104,24 +108,24 @@ func NewRedis(config RedisConfig) (*redisCache, error) {
 }
 
 // Cleanup implements Cache.
-func (r *redisCache) Cleanup(_ context.Context) error {
+func (r *RedisCache) Cleanup(_ context.Context) error {
 	return nil
 }
 
 // Delete implements Cache.
-func (r *redisCache) Delete(ctx context.Context, key string) error {
+func (r *RedisCache) Delete(ctx context.Context, key string) error {
 	if err := r.client.HDel(ctx, r.key, key).Err(); err != nil {
-		return fmt.Errorf("can't delete cache item: %w", err)
+		return fmt.Errorf("failed to delete cache item: %w", err)
 	}
 
 	return nil
 }
 
 // Drain implements Cache.
-func (r *redisCache) Drain(ctx context.Context) (map[string][]byte, error) {
+func (r *RedisCache) Drain(ctx context.Context) (map[string][]byte, error) {
 	res, err := r.client.Eval(ctx, hgetallAndDeleteScript, []string{r.key}).Result()
 	if err != nil {
-		return nil, fmt.Errorf("can't drain cache: %w", err)
+		return nil, fmt.Errorf("failed to drain cache: %w", err)
 	}
 
 	arr, ok := res.([]any)
@@ -129,7 +133,8 @@ func (r *redisCache) Drain(ctx context.Context) (map[string][]byte, error) {
 		return map[string][]byte{}, nil
 	}
 
-	out := make(map[string][]byte, len(arr)/2)
+	const itemsPerKey = 2
+	out := make(map[string][]byte, len(arr)/itemsPerKey)
 	for i := 0; i < len(arr); i += 2 {
 		f, _ := arr[i].(string)
 		v, _ := arr[i+1].(string)
@@ -140,19 +145,19 @@ func (r *redisCache) Drain(ctx context.Context) (map[string][]byte, error) {
 }
 
 // Get implements Cache.
-func (r *redisCache) Get(ctx context.Context, key string, opts ...GetOption) ([]byte, error) {
-	o := getOptions{}
+func (r *RedisCache) Get(ctx context.Context, key string, opts ...GetOption) ([]byte, error) {
+	o := new(getOptions)
 	o.apply(opts...)
 
 	if o.isEmpty() {
 		// No options, simple get
 		val, err := r.client.HGet(ctx, r.key, key).Result()
 		if err != nil {
-			if err == redis.Nil {
+			if errors.Is(err, redis.Nil) {
 				return nil, ErrKeyNotFound
 			}
 
-			return nil, fmt.Errorf("can't get cache item: %w", err)
+			return nil, fmt.Errorf("failed to get cache item: %w", err)
 		}
 
 		return []byte(val), nil
@@ -160,24 +165,15 @@ func (r *redisCache) Get(ctx context.Context, key string, opts ...GetOption) ([]
 
 	// Handle TTL options atomically using Lua script
 	var ttlTimestamp, ttlDelta int64
-	if o.validUntil != nil {
+	switch {
+	case o.validUntil != nil:
 		ttlTimestamp = o.validUntil.Unix()
-	} else if o.setTTL != nil {
+	case o.setTTL != nil:
 		ttlTimestamp = time.Now().Add(*o.setTTL).Unix()
-	} else if o.updateTTL != nil {
+	case o.updateTTL != nil:
 		ttlDelta = int64(o.updateTTL.Seconds())
-	} else if o.defaultTTL {
+	case o.defaultTTL:
 		ttlTimestamp = time.Now().Add(r.ttl).Unix()
-	} else {
-		// No TTL options, fallback to simple get
-		val, err := r.client.HGet(ctx, r.key, key).Result()
-		if err != nil {
-			if err == redis.Nil {
-				return nil, ErrKeyNotFound
-			}
-			return nil, fmt.Errorf("can't get cache item: %w", err)
-		}
-		return []byte(val), nil
 	}
 
 	delArg := "0"
@@ -186,9 +182,10 @@ func (r *redisCache) Get(ctx context.Context, key string, opts ...GetOption) ([]
 	}
 
 	// Use atomic get and TTL update script
-	result, err := r.client.Eval(ctx, getAndUpdateTTLScript, []string{r.key}, key, delArg, ttlTimestamp, ttlDelta).Result()
+	result, err := r.client.Eval(ctx, getAndUpdateTTLScript, []string{r.key}, key, delArg, ttlTimestamp, ttlDelta).
+		Result()
 	if err != nil {
-		return nil, fmt.Errorf("can't get cache item: %w", err)
+		return nil, fmt.Errorf("failed to get cache item: %w", err)
 	}
 
 	if value, ok := result.(string); ok {
@@ -199,12 +196,12 @@ func (r *redisCache) Get(ctx context.Context, key string, opts ...GetOption) ([]
 }
 
 // GetAndDelete implements Cache.
-func (r *redisCache) GetAndDelete(ctx context.Context, key string) ([]byte, error) {
+func (r *RedisCache) GetAndDelete(ctx context.Context, key string) ([]byte, error) {
 	return r.Get(ctx, key, AndDelete())
 }
 
 // Set implements Cache.
-func (r *redisCache) Set(ctx context.Context, key string, value []byte, opts ...Option) error {
+func (r *RedisCache) Set(ctx context.Context, key string, value []byte, opts ...Option) error {
 	options := new(options)
 	if r.ttl > 0 {
 		options.validUntil = time.Now().Add(r.ttl)
@@ -219,17 +216,17 @@ func (r *redisCache) Set(ctx context.Context, key string, value []byte, opts ...
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("can't set cache item: %w", err)
+		return fmt.Errorf("failed to set cache item: %w", err)
 	}
 
 	return nil
 }
 
 // SetOrFail implements Cache.
-func (r *redisCache) SetOrFail(ctx context.Context, key string, value []byte, opts ...Option) error {
+func (r *RedisCache) SetOrFail(ctx context.Context, key string, value []byte, opts ...Option) error {
 	val, err := r.client.HSetNX(ctx, r.key, key, value).Result()
 	if err != nil {
-		return fmt.Errorf("can't set cache item: %w", err)
+		return fmt.Errorf("failed to set cache item: %w", err)
 	}
 
 	if !val {
@@ -243,20 +240,22 @@ func (r *redisCache) SetOrFail(ctx context.Context, key string, value []byte, op
 	options.apply(opts...)
 
 	if !options.validUntil.IsZero() {
-		if err := r.client.HExpireAt(ctx, r.key, options.validUntil, key).Err(); err != nil {
-			return fmt.Errorf("can't set cache item ttl: %w", err)
+		if expErr := r.client.HExpireAt(ctx, r.key, options.validUntil, key).Err(); expErr != nil {
+			return fmt.Errorf("failed to set cache item ttl: %w", expErr)
 		}
 	}
 
 	return nil
 }
 
-func (r *redisCache) Close() error {
+func (r *RedisCache) Close() error {
 	if r.ownedClient {
-		return r.client.Close()
+		if err := r.client.Close(); err != nil {
+			return fmt.Errorf("failed to close redis client: %w", err)
+		}
 	}
 
 	return nil
 }
 
-var _ Cache = (*redisCache)(nil)
+var _ Cache = (*RedisCache)(nil)

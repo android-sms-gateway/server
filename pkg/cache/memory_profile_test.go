@@ -1,4 +1,3 @@
-//nolint:errcheck
 package cache_test
 
 import (
@@ -121,12 +120,12 @@ func TestMemoryCache_MemoryPressure(t *testing.T) {
 	const numCaches = 100
 	const itemsPerCache = 50
 
-	for i := 0; i < numCaches; i++ {
+	for i := range numCaches {
 		// Create a new cache
 		tempCache := cache.NewMemory(0)
 
 		// Add items to cache
-		for j := 0; j < itemsPerCache; j++ {
+		for j := range itemsPerCache {
 			key := "pressure-key-" + strconv.Itoa(i) + "-" + strconv.Itoa(j)
 			value := "pressure-value-" + strconv.Itoa(i) + "-" + strconv.Itoa(j)
 
@@ -244,7 +243,7 @@ func TestMemoryCache_MemoryLeakDetection(t *testing.T) {
 		tempCache.Drain(ctx)
 
 		// Help GC by clearing reference
-		tempCache = nil
+		tempCache = nil //nolint:wastedassign //GC will clean up
 	}
 
 	// Force GC and measure memory
