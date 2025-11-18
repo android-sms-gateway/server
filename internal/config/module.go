@@ -109,16 +109,12 @@ func Module() fx.Option {
 		}),
 		fx.Provide(func(cfg Config) messages.Config {
 			return messages.Config{
-				CacheTTL: time.Duration(cfg.Messages.CacheTTLSeconds) * time.Second,
-				HashingInterval: time.Duration(
-					max(cfg.Tasks.Hashing.IntervalSeconds, cfg.Messages.HashingIntervalSeconds),
-				) * time.Second,
+				CacheTTL:        time.Duration(cfg.Messages.CacheTTLSeconds) * time.Second,
+				HashingInterval: time.Duration(cfg.Messages.HashingIntervalSeconds) * time.Second,
 			}
 		}),
 		fx.Provide(func(_ Config) devices.Config {
-			return devices.Config{
-				UnusedLifetime: 365 * 24 * time.Hour, //TODO: make it configurable
-			}
+			return devices.Config{}
 		}),
 		fx.Provide(func(cfg Config) sse.Config {
 			return sse.NewConfig(

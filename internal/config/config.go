@@ -12,7 +12,6 @@ type Config struct {
 	HTTP     HTTP      `yaml:"http"`     // http server config
 	Database Database  `yaml:"database"` // database config
 	FCM      FCMConfig `yaml:"fcm"`      // firebase cloud messaging config
-	Tasks    Tasks     `yaml:"tasks"`    // tasks config
 	SSE      SSE       `yaml:"sse"`      // server-sent events config
 	Messages Messages  `yaml:"messages"` // messages config
 	Cache    Cache     `yaml:"cache"`    // cache (memory or redis) config
@@ -60,10 +59,6 @@ type FCMConfig struct {
 	TimeoutSeconds  uint16 `yaml:"timeout_seconds"  envconfig:"FCM__TIMEOUT_SECONDS"`  // push notification send timeout
 }
 
-type Tasks struct {
-	Hashing HashingTask `yaml:"hashing"` // deprecated
-}
-
 type HashingTask struct {
 	IntervalSeconds uint16 `yaml:"interval_seconds" envconfig:"TASKS__HASHING__INTERVAL_SECONDS"` // deprecated
 }
@@ -103,11 +98,6 @@ func Default() Config {
 		},
 		FCM: FCMConfig{
 			CredentialsJSON: "",
-		},
-		Tasks: Tasks{
-			Hashing: HashingTask{
-				IntervalSeconds: uint16(15 * 60),
-			},
 		},
 		SSE: SSE{
 			KeepAlivePeriodSeconds: 15,
