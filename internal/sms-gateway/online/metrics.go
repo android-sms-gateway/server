@@ -5,7 +5,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-// Metric constants
+// Metric constants.
 const (
 	metricStatusSetTotal     = "status_set_total"
 	metricCacheOperations    = "cache_operations_total"
@@ -24,7 +24,7 @@ const (
 	statusError   = "error"
 )
 
-// metrics contains all Prometheus metrics for the online module
+// metrics contains all Prometheus metrics for the online module.
 type metrics struct {
 	statusSetCounter   *prometheus.CounterVec
 	cacheOperations    *prometheus.CounterVec
@@ -34,7 +34,7 @@ type metrics struct {
 	batchSize          prometheus.Gauge
 }
 
-// newMetrics creates and initializes all online metrics
+// newMetrics creates and initializes all online metrics.
 func newMetrics() *metrics {
 	return &metrics{
 		statusSetCounter: promauto.NewCounterVec(prometheus.CounterOpts{
@@ -83,7 +83,7 @@ func newMetrics() *metrics {
 	}
 }
 
-// IncrementStatusSet increments the status set counter
+// IncrementStatusSet increments the status set counter.
 func (m *metrics) IncrementStatusSet(success bool) {
 	status := statusSuccess
 	if !success {
@@ -92,31 +92,31 @@ func (m *metrics) IncrementStatusSet(success bool) {
 	m.statusSetCounter.WithLabelValues(status).Inc()
 }
 
-// IncrementCacheOperation increments cache operation counter
+// IncrementCacheOperation increments cache operation counter.
 func (m *metrics) IncrementCacheOperation(operation, status string) {
 	m.cacheOperations.WithLabelValues(operation, status).Inc()
 }
 
-// ObserveCacheLatency observes cache operation latency
+// ObserveCacheLatency observes cache operation latency.
 func (m *metrics) ObserveCacheLatency(f func()) {
 	timer := prometheus.NewTimer(m.cacheLatency)
 	f()
 	timer.ObserveDuration()
 }
 
-// ObservePersistenceLatency observes persistence operation latency
+// ObservePersistenceLatency observes persistence operation latency.
 func (m *metrics) ObservePersistenceLatency(f func()) {
 	timer := prometheus.NewTimer(m.persistenceLatency)
 	f()
 	timer.ObserveDuration()
 }
 
-// IncrementPersistenceError increments persistence error counter
+// IncrementPersistenceError increments persistence error counter.
 func (m *metrics) IncrementPersistenceError() {
 	m.persistenceErrors.Inc()
 }
 
-// SetBatchSize sets the current batch size
+// SetBatchSize sets the current batch size.
 func (m *metrics) SetBatchSize(size int) {
 	m.batchSize.Set(float64(size))
 }

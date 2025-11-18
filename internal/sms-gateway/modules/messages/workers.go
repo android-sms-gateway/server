@@ -2,11 +2,13 @@ package messages
 
 import (
 	"context"
+	"slices"
 	"sync"
 	"time"
 
+	"maps"
+
 	"go.uber.org/zap"
-	"golang.org/x/exp/maps"
 )
 
 type hashingWorker struct {
@@ -27,6 +29,7 @@ func newHashingWorker(config Config, messages *Repository, logger *zap.Logger) *
 		logger:   logger,
 
 		queue: map[uint64]struct{}{},
+		mux:   sync.Mutex{},
 	}
 }
 
@@ -46,7 +49,7 @@ func (t *hashingWorker) Run(ctx context.Context) {
 	}
 }
 
-// Enqueue adds a message ID to the processing queue to be hashed in the next batch
+// Enqueue adds a message ID to the processing queue to be hashed in the next batch.
 func (t *hashingWorker) Enqueue(id uint64) {
 	t.mux.Lock()
 	t.queue[id] = struct{}{}
@@ -56,8 +59,8 @@ func (t *hashingWorker) Enqueue(id uint64) {
 func (t *hashingWorker) process(ctx context.Context) {
 	t.mux.Lock()
 
-	ids := maps.Keys(t.queue)
-	maps.Clear(t.queue)
+	ids := slices.AppendSeq(make([]uint64, 0, len(t.queue)), maps.Keys(t.queue))
+	clear(t.queue)
 
 	t.mux.Unlock()
 
@@ -67,6 +70,6 @@ func (t *hashingWorker) process(ctx context.Context) {
 
 	t.logger.Debug("Hashing messages...")
 	if _, err := t.messages.HashProcessed(ctx, ids); err != nil {
-		t.logger.Error("Can't hash messages", zap.Error(err))
+		t.logger.Error("failed to hash messages", zap.Error(err))
 	}
 }

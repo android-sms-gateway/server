@@ -28,13 +28,13 @@ func NewFactory(config Config) (Factory, error) {
 
 	u, err := url.Parse(config.URL)
 	if err != nil {
-		return nil, fmt.Errorf("can't parse url: %w", err)
+		return nil, fmt.Errorf("%w: failed to parse url: %w", ErrInvalidConfig, err)
 	}
 
 	switch u.Scheme {
 	case "memory":
 		return &factory{
-			new: func(name string) (Cache, error) {
+			new: func(_ string) (Cache, error) {
 				return cache.NewMemory(0), nil
 			},
 		}, nil
@@ -50,7 +50,7 @@ func NewFactory(config Config) (Factory, error) {
 			},
 		}, nil
 	default:
-		return nil, fmt.Errorf("invalid scheme: %s", u.Scheme)
+		return nil, fmt.Errorf("%w: invalid scheme: %s", ErrInvalidConfig, u.Scheme)
 	}
 }
 

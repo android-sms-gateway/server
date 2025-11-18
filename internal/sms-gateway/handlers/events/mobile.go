@@ -41,9 +41,9 @@ func NewMobileController(sseService *sse.Service, validator *validator.Validate,
 //	@Failure		500	{object}	smsgateway.ErrorResponse	"Internal server error"
 //	@Router			/mobile/v1/events [get]
 //
-// Get events
+// Get events.
 func (h *MobileController) get(device models.Device, c *fiber.Ctx) error {
-	return h.sseSvc.Handler(device.ID, c)
+	return h.sseSvc.Handler(device.ID, c) //nolint:wrapcheck //wrapped internally
 }
 
 func (h *MobileController) Register(router fiber.Router) {

@@ -37,11 +37,11 @@ func module() fx.Option {
 		server.Module(),
 		fx.Invoke(func(logger *zap.Logger, lc fx.Lifecycle) {
 			lc.Append(fx.Hook{
-				OnStart: func(ctx context.Context) error {
+				OnStart: func(_ context.Context) error {
 					logger.Info("worker started")
 					return nil
 				},
-				OnStop: func(ctx context.Context) error {
+				OnStop: func(_ context.Context) error {
 					logger.Info("worker stopped")
 					return nil
 				},

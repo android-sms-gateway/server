@@ -2,6 +2,7 @@ package events
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
 )
@@ -25,9 +26,18 @@ type eventWrapper struct {
 }
 
 func (w *eventWrapper) serialize() ([]byte, error) {
-	return json.Marshal(w)
+	data, err := json.Marshal(w)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal event: %w", err)
+	}
+
+	return data, nil
 }
 
 func (w *eventWrapper) deserialize(data []byte) error {
-	return json.Unmarshal(data, w)
+	if err := json.Unmarshal(data, w); err != nil {
+		return fmt.Errorf("failed to unmarshal event: %w", err)
+	}
+
+	return nil
 }

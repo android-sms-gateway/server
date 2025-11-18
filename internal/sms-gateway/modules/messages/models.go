@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
+	"github.com/samber/lo"
 	"gorm.io/gorm"
 )
 
@@ -33,6 +34,8 @@ type DataMessageContent struct {
 }
 
 type Message struct {
+	models.SoftDeletableModel
+
 	ID                 uint64          `gorm:"primaryKey;type:BIGINT UNSIGNED;autoIncrement"`
 	DeviceID           string          `gorm:"not null;type:char(21);uniqueIndex:unq_messages_id_device,priority:2;index:idx_messages_device_state"`
 	ExtID              string          `gorm:"not null;type:varchar(36);uniqueIndex:unq_messages_id_device,priority:1"`
@@ -50,14 +53,39 @@ type Message struct {
 	Device     models.Device      `gorm:"foreignKey:DeviceID;constraint:OnDelete:CASCADE"`
 	Recipients []MessageRecipient `gorm:"foreignKey:MessageID;constraint:OnDelete:CASCADE"`
 	States     []MessageState     `gorm:"foreignKey:MessageID;constraint:OnDelete:CASCADE"`
+}
 
-	models.SoftDeletableModel
+func NewMessage(
+	extID string,
+	deviceID string,
+	phoneNumbers []string,
+	priority int8,
+	simNumber *uint8,
+	validUntil *time.Time,
+	withDeliveryReport bool,
+	isEncrypted bool,
+) *Message {
+	//nolint:exhaustruct // partial constructor
+	return &Message{
+		ExtID:    extID,
+		DeviceID: deviceID,
+		Recipients: lo.Map(phoneNumbers, func(item string, _ int) MessageRecipient {
+			return newMessageRecipient(item, ProcessingStatePending, nil)
+		}),
+		Priority:           priority,
+		SimNumber:          simNumber,
+		ValidUntil:         validUntil,
+		WithDeliveryReport: withDeliveryReport,
+		IsEncrypted:        isEncrypted,
+
+		State: ProcessingStatePending,
+	}
 }
 
 func (m *Message) SetTextContent(content TextMessageContent) error {
 	contentJSON, err := json.Marshal(content)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal: %w", err)
 	}
 
 	m.Type = MessageTypeText
@@ -68,23 +96,23 @@ func (m *Message) SetTextContent(content TextMessageContent) error {
 
 func (m *Message) GetTextContent() (*TextMessageContent, error) {
 	if m.Type != MessageTypeText {
-		return nil, nil
+		return nil, nil //nolint:nilnil // special meaning
 	}
 
-	content := TextMessageContent{}
+	content := new(TextMessageContent)
 
-	err := json.Unmarshal([]byte(m.Content), &content)
+	err := json.Unmarshal([]byte(m.Content), content)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal text content: %w", err)
 	}
 
-	return &content, nil
+	return content, nil
 }
 
 func (m *Message) SetDataContent(content DataMessageContent) error {
 	contentJSON, err := json.Marshal(content)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal: %w", err)
 	}
 
 	m.Type = MessageTypeData
@@ -95,17 +123,17 @@ func (m *Message) SetDataContent(content DataMessageContent) error {
 
 func (m *Message) GetDataContent() (*DataMessageContent, error) {
 	if m.Type != MessageTypeData {
-		return nil, nil
+		return nil, nil //nolint:nilnil // special meaning
 	}
 
-	content := DataMessageContent{}
+	content := new(DataMessageContent)
 
-	err := json.Unmarshal([]byte(m.Content), &content)
+	err := json.Unmarshal([]byte(m.Content), content)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal data content: %w", err)
 	}
 
-	return &content, nil
+	return content, nil
 }
 
 type MessageRecipient struct {
@@ -116,6 +144,16 @@ type MessageRecipient struct {
 	Error       *string         `gorm:"type:varchar(256)"`
 }
 
+func newMessageRecipient(phoneNumber string, state ProcessingState, err *string) MessageRecipient {
+	return MessageRecipient{
+		ID:          0,
+		MessageID:   0,
+		PhoneNumber: phoneNumber,
+		State:       state,
+		Error:       err,
+	}
+}
+
 type MessageState struct {
 	ID        uint64          `gorm:"primaryKey;type:BIGINT UNSIGNED;autoIncrement"`
 	MessageID uint64          `gorm:"not null;type:BIGINT UNSIGNED;uniqueIndex:unq_message_states_message_id_state,priority:1"`
@@ -124,5 +162,8 @@ type MessageState struct {
 }
 
 func Migrate(db *gorm.DB) error {
-	return db.AutoMigrate(&Message{}, &MessageRecipient{}, &MessageState{})
+	if err := db.AutoMigrate(new(Message), new(MessageRecipient), new(MessageState)); err != nil {
+		return fmt.Errorf("messages migration failed: %w", err)
+	}
+	return nil
 }

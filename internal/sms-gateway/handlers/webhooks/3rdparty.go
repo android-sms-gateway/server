@@ -29,6 +29,16 @@ type ThirdPartyController struct {
 	webhooksSvc *webhooks.Service
 }
 
+func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyController {
+	return &ThirdPartyController{
+		Handler: base.Handler{
+			Logger:    params.Logger,
+			Validator: params.Validator,
+		},
+		webhooksSvc: params.WebhooksSvc,
+	}
+}
+
 //	@Summary		List webhooks
 //	@Description	Returns list of registered webhooks
 //	@Security		ApiAuth
@@ -39,11 +49,11 @@ type ThirdPartyController struct {
 //	@Failure		500	{object}	smsgateway.ErrorResponse	"Internal server error"
 //	@Router			/3rdparty/v1/webhooks [get]
 //
-// List webhooks
+// List webhooks.
 func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 	items, err := h.webhooksSvc.Select(user.ID)
 	if err != nil {
-		return fmt.Errorf("can't select webhooks: %w", err)
+		return fmt.Errorf("failed to select webhooks: %w", err)
 	}
 
 	return c.JSON(items)
@@ -62,12 +72,12 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 //	@Failure		500		{object}	smsgateway.ErrorResponse	"Internal server error"
 //	@Router			/3rdparty/v1/webhooks [post]
 //
-// Register webhook
+// Register webhook.
 func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
-	dto := smsgateway.Webhook{}
+	dto := new(smsgateway.Webhook)
 
-	if err := h.BodyParserValidator(c, &dto); err != nil {
-		return err
+	if err := h.BodyParserValidator(c, dto); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	if err := h.webhooksSvc.Replace(user.ID, dto); err != nil {
@@ -75,7 +85,7 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 
-		return fmt.Errorf("can't write webhook: %w", err)
+		return fmt.Errorf("failed to write webhook: %w", err)
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(dto)
@@ -92,12 +102,12 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 //	@Failure		500	{object}	smsgateway.ErrorResponse	"Internal server error"
 //	@Router			/3rdparty/v1/webhooks/{id} [delete]
 //
-// Delete webhook
+// Delete webhook.
 func (h *ThirdPartyController) delete(user models.User, c *fiber.Ctx) error {
 	id := c.Params("id")
 
 	if err := h.webhooksSvc.Delete(user.ID, webhooks.WithExtID(id)); err != nil {
-		return fmt.Errorf("can't delete webhook: %w", err)
+		return fmt.Errorf("failed to delete webhook: %w", err)
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
@@ -107,14 +117,4 @@ func (h *ThirdPartyController) Register(router fiber.Router) {
 	router.Get("", userauth.WithUser(h.get))
 	router.Post("", userauth.WithUser(h.post))
 	router.Delete("/:id", userauth.WithUser(h.delete))
-}
-
-func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyController {
-	return &ThirdPartyController{
-		Handler: base.Handler{
-			Logger:    params.Logger.Named("webhooks"),
-			Validator: params.Validator,
-		},
-		webhooksSvc: params.WebhooksSvc,
-	}
 }

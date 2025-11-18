@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand/v2"
 	"time"
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
@@ -76,6 +77,35 @@ func (s *Service) Get(userID string, filter ...SelectFilter) (models.Device, err
 	return s.devices.Get(filter...)
 }
 
+func (s *Service) GetAny(userID string, deviceID string, duration time.Duration) (*models.Device, error) {
+	filter := []SelectFilter{
+		WithUserID(userID),
+	}
+	if deviceID != "" {
+		filter = append(filter, WithID(deviceID))
+	}
+	if duration > 0 {
+		filter = append(filter, ActiveWithin(duration))
+	}
+
+	devices, err := s.devices.Select(filter...)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(devices) == 0 {
+		return nil, ErrNotFound
+	}
+
+	if len(devices) == 1 {
+		return &devices[0], nil
+	}
+
+	idx := rand.IntN(len(devices)) //nolint:gosec //not critical
+
+	return &devices[idx], nil
+}
+
 // GetByToken returns a device by token.
 //
 // This method is used to retrieve a device by its auth token. If the device
@@ -88,8 +118,8 @@ func (s *Service) GetByToken(token string) (models.Device, error) {
 			return device, err
 		}
 
-		if err := s.cache.Set(device); err != nil {
-			s.logger.Error("can't cache device", zap.String("device_id", device.ID), zap.Error(err))
+		if setErr := s.cache.Set(device); setErr != nil {
+			s.logger.Error("failed to cache device", zap.String("device_id", device.ID), zap.Error(setErr))
 		}
 	}
 
@@ -98,7 +128,7 @@ func (s *Service) GetByToken(token string) (models.Device, error) {
 
 func (s *Service) UpdatePushToken(id string, token string) error {
 	if err := s.cache.DeleteByID(id); err != nil {
-		s.logger.Error("can't invalidate cache",
+		s.logger.Error("failed to invalidate cache",
 			zap.String("device_id", id),
 			zap.Error(err),
 		)
@@ -123,7 +153,7 @@ func (s *Service) SetLastSeen(ctx context.Context, batch map[string]time.Time) e
 		}
 		if err := s.devices.SetLastSeen(ctx, deviceID, lastSeen); err != nil {
 			multiErr = errors.Join(multiErr, fmt.Errorf("device %s: %w", deviceID, err))
-			s.logger.Error("can't set last seen",
+			s.logger.Error("failed to set last seen",
 				zap.String("device_id", deviceID),
 				zap.Time("last_seen", lastSeen),
 				zap.Error(err),
@@ -147,16 +177,16 @@ func (s *Service) Remove(userID string, filter ...SelectFilter) error {
 	}
 
 	for _, device := range devices {
-		if err := s.cache.DeleteByID(device.ID); err != nil {
-			s.logger.Error("can't invalidate cache",
+		if cacheErr := s.cache.DeleteByID(device.ID); cacheErr != nil {
+			s.logger.Error("failed to invalidate cache",
 				zap.String("device_id", device.ID),
-				zap.Error(err),
+				zap.Error(cacheErr),
 			)
 		}
 	}
 
-	if err := s.devices.Remove(filter...); err != nil {
-		return err
+	if rmErr := s.devices.Remove(filter...); rmErr != nil {
+		return rmErr
 	}
 
 	return nil

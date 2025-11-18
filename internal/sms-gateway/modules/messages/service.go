@@ -15,12 +15,8 @@ import (
 	"github.com/capcom6/go-helpers/anys"
 	"github.com/capcom6/go-helpers/slices"
 	"github.com/nyaruka/phonenumbers"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
-	"golang.org/x/exp/maps"
-)
-
-const (
-	ErrorTTLExpired = "TTL expired"
 )
 
 type EnqueueOptions struct {
@@ -74,7 +70,7 @@ func (s *Service) RunBackgroundTasks(ctx context.Context, wg *sync.WaitGroup) {
 	}()
 }
 
-func (s *Service) SelectPending(deviceID string, order MessagesOrder) ([]MessageOut, error) {
+func (s *Service) SelectPending(deviceID string, order Order) ([]MessageOut, error) {
 	if order == "" {
 		order = MessagesOrderLIFO
 	}
@@ -84,11 +80,14 @@ func (s *Service) SelectPending(deviceID string, order MessagesOrder) ([]Message
 		return nil, err
 	}
 
-	return slices.MapOrError(messages, messageToDomain)
+	return slices.MapOrError(messages, messageToDomain) //nolint:wrapcheck // already wrapped
 }
 
 func (s *Service) UpdateState(device *models.Device, message MessageStateIn) error {
-	existing, err := s.messages.Get(MessagesSelectFilter{ExtID: message.ID, DeviceID: device.ID}, MessagesSelectOptions{})
+	existing, err := s.messages.Get(
+		*new(SelectFilter).WithExtID(message.ID).WithDeviceID(device.ID),
+		SelectOptions{}, //nolint:exhaustruct // not needed
+	)
 	if err != nil {
 		return err
 	}
@@ -98,21 +97,25 @@ func (s *Service) UpdateState(device *models.Device, message MessageStateIn) err
 	}
 
 	existing.State = message.State
-	existing.States = slices.Map(maps.Keys(message.States), func(key string) MessageState {
-		return MessageState{
-			MessageID: existing.ID,
-			State:     ProcessingState(key),
-			UpdatedAt: message.States[key],
-		}
-	})
+	existing.States = lo.MapToSlice(
+		message.States,
+		func(key string, value time.Time) MessageState {
+			return MessageState{
+				ID:        0,
+				MessageID: existing.ID,
+				State:     ProcessingState(key),
+				UpdatedAt: value,
+			}
+		},
+	)
 	existing.Recipients = s.recipientsStateToModel(message.Recipients, existing.IsHashed)
 
-	if err := s.messages.UpdateState(&existing); err != nil {
-		return err
+	if updErr := s.messages.UpdateState(&existing); updErr != nil {
+		return updErr
 	}
 
-	if err := s.cache.Set(context.Background(), device.UserID, existing.ExtID, anys.AsPointer(modelToMessageState(existing))); err != nil {
-		s.logger.Warn("can't cache message", zap.String("id", existing.ExtID), zap.Error(err))
+	if cacheErr := s.cache.Set(context.Background(), device.UserID, existing.ExtID, anys.AsPointer(modelToMessageState(existing))); cacheErr != nil {
+		s.logger.Warn("failed to cache message", zap.String("id", existing.ExtID), zap.Error(cacheErr))
 	}
 	s.hashingWorker.Enqueue(existing.ID)
 	s.metrics.IncTotal(string(existing.State))
@@ -120,19 +123,23 @@ func (s *Service) UpdateState(device *models.Device, message MessageStateIn) err
 	return nil
 }
 
-func (s *Service) SelectStates(user models.User, filter MessagesSelectFilter, options MessagesSelectOptions) ([]MessageStateOut, int64, error) {
+func (s *Service) SelectStates(
+	user models.User,
+	filter SelectFilter,
+	options SelectOptions,
+) ([]MessageStateOut, int64, error) {
 	filter.UserID = user.ID
 
 	messages, total, err := s.messages.Select(filter, options)
 	if err != nil {
-		return nil, 0, fmt.Errorf("can't select messages: %w", err)
+		return nil, 0, fmt.Errorf("failed to select messages: %w", err)
 	}
 
 	return slices.Map(messages, modelToMessageState), total, nil
 }
 
-func (s *Service) GetState(user models.User, ID string) (*MessageStateOut, error) {
-	dto, err := s.cache.Get(context.Background(), user.ID, ID)
+func (s *Service) GetState(user models.User, id string) (*MessageStateOut, error) {
+	dto, err := s.cache.Get(context.Background(), user.ID, id)
 	if err == nil {
 		s.metrics.IncCache(true)
 
@@ -145,13 +152,13 @@ func (s *Service) GetState(user models.User, ID string) (*MessageStateOut, error
 	s.metrics.IncCache(false)
 
 	message, err := s.messages.Get(
-		MessagesSelectFilter{ExtID: ID, UserID: user.ID},
-		MessagesSelectOptions{WithRecipients: true, WithDevice: true, WithStates: true},
+		*new(SelectFilter).WithExtID(id).WithUserID(user.ID),
+		*new(SelectOptions).IncludeRecipients().IncludeDevice().IncludeStates(),
 	)
 	if err != nil {
 		if errors.Is(err, ErrMessageNotFound) {
-			if err := s.cache.Set(context.Background(), user.ID, ID, nil); err != nil {
-				s.logger.Warn("can't cache message", zap.String("id", ID), zap.Error(err))
+			if cacheErr := s.cache.Set(context.Background(), user.ID, id, nil); cacheErr != nil {
+				s.logger.Warn("failed to cache message", zap.String("id", id), zap.Error(cacheErr))
 			}
 		}
 
@@ -159,22 +166,58 @@ func (s *Service) GetState(user models.User, ID string) (*MessageStateOut, error
 	}
 
 	dto = anys.AsPointer(modelToMessageState(message))
-	if err := s.cache.Set(context.Background(), user.ID, ID, dto); err != nil {
-		s.logger.Warn("can't cache message", zap.String("id", ID), zap.Error(err))
+	if cacheErr := s.cache.Set(context.Background(), user.ID, id, dto); cacheErr != nil {
+		s.logger.Warn("failed to cache message", zap.String("id", id), zap.Error(cacheErr))
 	}
 
 	return dto, nil
 }
 
-func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueOptions) (MessageStateOut, error) {
-	state := MessageStateOut{
-		DeviceID: device.ID,
-		MessageStateIn: MessageStateIn{
-			State:      ProcessingStatePending,
-			Recipients: make([]smsgateway.RecipientState, len(message.PhoneNumbers)),
-		},
+func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueOptions) (*MessageStateOut, error) {
+	msg, err := s.prepareMessage(device, message, opts)
+	if err != nil {
+		return nil, err
 	}
 
+	state := &MessageStateOut{
+		DeviceID: device.ID,
+		MessageStateIn: MessageStateIn{
+			ID:    msg.ExtID,
+			State: ProcessingStatePending,
+			Recipients: lo.Map(
+				msg.Recipients,
+				func(item MessageRecipient, _ int) smsgateway.RecipientState { return modelToRecipientState(item) },
+			),
+			States: map[string]time.Time{},
+		},
+		IsHashed:    false,
+		IsEncrypted: msg.IsEncrypted,
+	}
+
+	if insErr := s.messages.Insert(msg); insErr != nil {
+		return state, insErr
+	}
+
+	if cacheErr := s.cache.Set(context.Background(), device.UserID, msg.ExtID, anys.AsPointer(modelToMessageState(*msg))); cacheErr != nil {
+		s.logger.Warn("failed to cache message", zap.String("id", msg.ExtID), zap.Error(cacheErr))
+	}
+	s.metrics.IncTotal(string(msg.State))
+
+	go func(userID, deviceID string) {
+		if ntfErr := s.eventsSvc.Notify(userID, &deviceID, events.NewMessageEnqueuedEvent()); ntfErr != nil {
+			s.logger.Error(
+				"failed to notify device",
+				zap.Error(ntfErr),
+				zap.String("user_id", userID),
+				zap.String("device_id", deviceID),
+			)
+		}
+	}(device.UserID, device.ID)
+
+	return state, nil
+}
+
+func (s *Service) prepareMessage(device models.Device, message MessageIn, opts EnqueueOptions) (*Message, error) {
 	var phone string
 	var err error
 	for i, v := range message.PhoneNumbers {
@@ -182,91 +225,63 @@ func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueO
 			phone = v
 		} else {
 			if phone, err = cleanPhoneNumber(v); err != nil {
-				return state, fmt.Errorf("can't use phone in row %d: %w", i+1, err)
+				return nil, fmt.Errorf("failed to use phone in row %d: %w", i+1, err)
 			}
 		}
 
 		message.PhoneNumbers[i] = phone
-
-		state.Recipients[i] = smsgateway.RecipientState{
-			PhoneNumber: phone,
-			State:       smsgateway.ProcessingStatePending,
-		}
 	}
 
 	validUntil := message.ValidUntil
 	if message.TTL != nil && *message.TTL > 0 {
-		validUntil = anys.AsPointer(time.Now().Add(time.Duration(*message.TTL) * time.Second))
+		//nolint:gosec // not a problem
+		validUntil = anys.AsPointer(
+			time.Now().Add(time.Duration(*message.TTL) * time.Second),
+		)
 	}
 
-	msg := Message{
-		ExtID:       message.ID,
-		Recipients:  s.recipientsToModel(message.PhoneNumbers),
-		IsEncrypted: message.IsEncrypted,
+	msg := NewMessage(
+		message.ID,
+		device.ID,
+		message.PhoneNumbers,
+		int8(message.Priority),
+		message.SimNumber,
+		validUntil,
+		anys.OrDefault(message.WithDeliveryReport, true),
+		message.IsEncrypted,
+	)
 
-		DeviceID: device.ID,
-
-		SimNumber:          message.SimNumber,
-		WithDeliveryReport: anys.OrDefault(message.WithDeliveryReport, true),
-
-		Priority:   int8(message.Priority),
-		ValidUntil: validUntil,
-	}
-
-	if message.TextContent != nil {
-		if err := msg.SetTextContent(*message.TextContent); err != nil {
-			return state, fmt.Errorf("can't set text content: %w", err)
+	switch {
+	case message.TextContent != nil:
+		if setErr := msg.SetTextContent(*message.TextContent); setErr != nil {
+			return nil, fmt.Errorf("failed to set text content: %w", setErr)
 		}
-	} else if message.DataContent != nil {
-		if err := msg.SetDataContent(*message.DataContent); err != nil {
-			return state, fmt.Errorf("can't set data content: %w", err)
+	case message.DataContent != nil:
+		if setErr := msg.SetDataContent(*message.DataContent); setErr != nil {
+			return nil, fmt.Errorf("failed to set data content: %w", setErr)
 		}
-	} else {
-		return state, errors.New("no text or data content")
+	default:
+		return nil, ErrNoContent
 	}
 
 	if msg.ExtID == "" {
 		msg.ExtID = s.idgen()
 	}
-	state.ID = msg.ExtID
 
-	if err := s.messages.Insert(&msg); err != nil {
-		return state, err
-	}
-
-	if err := s.cache.Set(context.Background(), device.UserID, message.ID, anys.AsPointer(modelToMessageState(msg))); err != nil {
-		s.logger.Warn("can't cache message", zap.String("id", msg.ExtID), zap.Error(err))
-	}
-	s.metrics.IncTotal(string(msg.State))
-
-	go func(userID, deviceID string) {
-		if err := s.eventsSvc.Notify(userID, &deviceID, events.NewMessageEnqueuedEvent()); err != nil {
-			s.logger.Error("can't notify device", zap.Error(err), zap.String("user_id", userID), zap.String("device_id", deviceID))
-		}
-	}(device.UserID, device.ID)
-
-	return state, nil
+	return msg, nil
 }
 
 func (s *Service) ExportInbox(device models.Device, since, until time.Time) error {
 	event := events.NewMessagesExportRequestedEvent(since, until)
 
-	return s.eventsSvc.Notify(device.UserID, &device.ID, event)
+	if err := s.eventsSvc.Notify(device.UserID, &device.ID, event); err != nil {
+		return fmt.Errorf("failed to notify device: %w", err)
+	}
+
+	return nil
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
-func (s *Service) recipientsToModel(input []string) []MessageRecipient {
-	output := make([]MessageRecipient, len(input))
-
-	for i, v := range input {
-		output[i] = MessageRecipient{
-			PhoneNumber: v,
-		}
-	}
-
-	return output
-}
 
 func (s *Service) recipientsStateToModel(input []smsgateway.RecipientState, hash bool) []MessageRecipient {
 	output := make([]MessageRecipient, len(input))
@@ -286,11 +301,11 @@ func (s *Service) recipientsStateToModel(input []smsgateway.RecipientState, hash
 			phoneNumber = fmt.Sprintf("%x", sha256.Sum256([]byte(phoneNumber)))[:16]
 		}
 
-		output[i] = MessageRecipient{
-			PhoneNumber: phoneNumber,
-			State:       ProcessingState(v.State),
-			Error:       v.Error,
-		}
+		output[i] = newMessageRecipient(
+			phoneNumber,
+			ProcessingState(v.State),
+			v.Error,
+		)
 	}
 
 	return output
@@ -326,16 +341,16 @@ func modelToRecipientState(input MessageRecipient) smsgateway.RecipientState {
 func cleanPhoneNumber(input string) (string, error) {
 	phone, err := phonenumbers.Parse(input, "RU")
 	if err != nil {
-		return input, ErrValidation(fmt.Sprintf("can't parse phone number: %s", err.Error()))
+		return input, ValidationError(fmt.Sprintf("failed to parse phone number: %s", err.Error()))
 	}
 
 	if !phonenumbers.IsValidNumber(phone) {
-		return input, ErrValidation("invalid phone number")
+		return input, ValidationError("invalid phone number")
 	}
 
 	phoneNumberType := phonenumbers.GetNumberType(phone)
 	if phoneNumberType != phonenumbers.MOBILE && phoneNumberType != phonenumbers.FIXED_LINE_OR_MOBILE {
-		return input, ErrValidation("not mobile phone number")
+		return input, ValidationError("not mobile phone number")
 	}
 
 	return phonenumbers.Format(phone, phonenumbers.E164), nil

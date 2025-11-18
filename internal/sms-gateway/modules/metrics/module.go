@@ -6,12 +6,14 @@ import (
 	"go.uber.org/zap"
 )
 
-var Module = fx.Module(
-	"metrics",
-	fx.Decorate(func(log *zap.Logger) *zap.Logger {
-		return log.Named("metrics")
-	}),
-	fx.Provide(
-		http.AsRootHandler(newHttpHandler),
-	),
-)
+func Module() fx.Option {
+	return fx.Module(
+		"metrics",
+		fx.Decorate(func(log *zap.Logger) *zap.Logger {
+			return log.Named("metrics")
+		}),
+		fx.Provide(
+			http.AsRootHandler(newHTTPHandler),
+		),
+	)
+}

@@ -13,7 +13,7 @@ import (
 
 const maxPendingBatch = 100
 
-var ErrMessageNotFound = gorm.ErrRecordNotFound
+var ErrMessageNotFound = errors.New("message not found")
 var ErrMessageAlreadyExists = errors.New("duplicate id")
 var ErrMultipleMessagesFound = errors.New("multiple messages found")
 
@@ -27,8 +27,8 @@ func NewRepository(db *gorm.DB) *Repository {
 	}
 }
 
-func (r *Repository) Select(filter MessagesSelectFilter, options MessagesSelectOptions) ([]Message, int64, error) {
-	query := r.db.Model(&Message{})
+func (r *Repository) Select(filter SelectFilter, options SelectOptions) ([]Message, int64, error) {
+	query := r.db.Model((*Message)(nil))
 
 	// Apply date range filter
 	if !filter.StartDate.IsZero() {
@@ -94,29 +94,25 @@ func (r *Repository) Select(filter MessagesSelectFilter, options MessagesSelectO
 
 	messages := make([]Message, 0, min(options.Limit, int(total)))
 	if err := query.Find(&messages).Error; err != nil {
-		return nil, 0, fmt.Errorf("can't select messages: %w", err)
+		return nil, 0, fmt.Errorf("failed to select messages: %w", err)
 	}
 
 	return messages, total, nil
 }
 
-func (r *Repository) SelectPending(deviceID string, order MessagesOrder) ([]Message, error) {
-	messages, _, err := r.Select(MessagesSelectFilter{
-		DeviceID: deviceID,
-		State:    ProcessingStatePending,
-	}, MessagesSelectOptions{
-		WithRecipients: true,
-		Limit:          maxPendingBatch,
-		OrderBy:        order,
-	})
+func (r *Repository) SelectPending(deviceID string, order Order) ([]Message, error) {
+	messages, _, err := r.Select(
+		*new(SelectFilter).WithDeviceID(deviceID).WithState(ProcessingStatePending),
+		*new(SelectOptions).IncludeRecipients().WithLimit(maxPendingBatch).WithOrderBy(order),
+	)
 
 	return messages, err
 }
 
-func (r *Repository) Get(filter MessagesSelectFilter, options MessagesSelectOptions) (Message, error) {
+func (r *Repository) Get(filter SelectFilter, options SelectOptions) (Message, error) {
 	messages, _, err := r.Select(filter, options)
 	if err != nil {
-		return Message{}, fmt.Errorf("can't get message: %w", err)
+		return Message{}, fmt.Errorf("failed to get message: %w", err)
 	}
 
 	if len(messages) == 0 {
@@ -144,7 +140,7 @@ func (r *Repository) Insert(message *Message) error {
 }
 
 func (r *Repository) UpdateState(message *Message) error {
-	return r.db.Transaction(func(tx *gorm.DB) error {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(message).Select("State").Updates(message).Error; err != nil {
 			return err
 		}
@@ -159,7 +155,7 @@ func (r *Repository) UpdateState(message *Message) error {
 		}
 
 		for _, v := range message.Recipients {
-			if err := tx.Model(&MessageRecipient{}).
+			if err := tx.Model((*MessageRecipient)(nil)).
 				Where("message_id = ? AND phone_number = ?", message.ID, v.PhoneNumber).
 				Select("state", "error").
 				Updates(map[string]any{"state": v.State, "error": v.Error}).Error; err != nil {
@@ -169,6 +165,12 @@ func (r *Repository) UpdateState(message *Message) error {
 
 		return nil
 	})
+
+	if err != nil {
+		return fmt.Errorf("failed to update message state: %w", err)
+	}
+
+	return nil
 }
 
 func (r *Repository) HashProcessed(ctx context.Context, ids []uint64) (int64, error) {
@@ -195,6 +197,6 @@ func (r *Repository) Cleanup(ctx context.Context, until time.Time) (int64, error
 		WithContext(ctx).
 		Where("state <> ?", ProcessingStatePending).
 		Where("created_at < ?", until).
-		Delete(&Message{})
+		Delete(new(Message))
 	return res.RowsAffected, res.Error
 }

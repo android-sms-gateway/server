@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	ErrNotFound      = gorm.ErrRecordNotFound
+	ErrNotFound      = errors.New("record not found")
 	ErrInvalidFilter = errors.New("invalid filter")
 	ErrMoreThanOne   = errors.New("more than one record")
 )
@@ -43,7 +43,7 @@ func (r *Repository) Select(filter ...SelectFilter) ([]models.Device, error) {
 // error during the query, it returns false and the error. Otherwise, it returns
 // true and nil error.
 func (r *Repository) Exists(filters ...SelectFilter) (bool, error) {
-	err := newFilter(filters...).apply(r.db).Take(&models.Device{}).Error
+	err := newFilter(filters...).apply(r.db).Take(new(models.Device)).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, nil
 	}
@@ -75,7 +75,7 @@ func (r *Repository) Insert(device *models.Device) error {
 }
 
 func (r *Repository) UpdatePushToken(id, token string) error {
-	res := r.db.Model(&models.Device{}).Where("id = ?", id).Update("push_token", token)
+	res := r.db.Model((*models.Device)(nil)).Where("id = ?", id).Update("push_token", token)
 	if res.Error != nil {
 		return fmt.Errorf("failed to update device: %w", res.Error)
 	}
@@ -88,7 +88,7 @@ func (r *Repository) SetLastSeen(ctx context.Context, id string, lastSeen time.T
 		return nil // ignore zero timestamps
 	}
 	res := r.db.WithContext(ctx).
-		Model(&models.Device{}).
+		Model((*models.Device)(nil)).
 		Where("id = ? AND last_seen < ?", id, lastSeen).
 		UpdateColumn("last_seen", lastSeen)
 	if res.Error != nil {
@@ -105,14 +105,14 @@ func (r *Repository) Remove(filter ...SelectFilter) error {
 	}
 
 	f := newFilter(filter...)
-	return f.apply(r.db).Delete(&models.Device{}).Error
+	return f.apply(r.db).Delete(new(models.Device)).Error
 }
 
 func (r *Repository) Cleanup(ctx context.Context, until time.Time) (int64, error) {
 	res := r.db.
 		WithContext(ctx).
 		Where("last_seen < ?", until).
-		Delete(&models.Device{})
+		Delete(new(models.Device))
 
 	return res.RowsAffected, res.Error
 }

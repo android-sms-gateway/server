@@ -4,7 +4,9 @@ import "strconv"
 
 const notSet string = "not set"
 
-// these information will be collected when build, by `-ldflags "-X main.appVersion=0.1"`
+// This information will be collected when build, by `-ldflags "-X main.appVersion=0.1"`.
+//
+//nolint:gochecknoglobals // build-time constant
 var (
 	AppVersion = notSet
 	AppRelease = notSet

@@ -24,7 +24,8 @@ func MessageToMobileDTO(m messages.MessageOut) smsgateway.MobileMessage {
 
 	return smsgateway.MobileMessage{
 		Message: smsgateway.Message{
-			ID: m.ID,
+			ID:       m.ID,
+			DeviceID: "",
 
 			Message:     message,
 			TextMessage: textMessage,

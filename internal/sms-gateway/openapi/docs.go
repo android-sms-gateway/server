@@ -123,23 +123,23 @@ const docTemplate = `{
         },
         "/3rdparty/v1/health": {
             "get": {
-                "description": "Checks if service is healthy",
+                "description": "Checks if service is ready to serve traffic (readiness probe)",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "System"
                 ],
-                "summary": "Health check",
+                "summary": "Readiness probe",
                 "responses": {
                     "200": {
-                        "description": "Health check result",
+                        "description": "Service is ready",
                         "schema": {
                             "$ref": "#/definitions/smsgateway.HealthResponse"
                         }
                     },
-                    "500": {
-                        "description": "Service is unhealthy",
+                    "503": {
+                        "description": "Service is not ready",
                         "schema": {
                             "$ref": "#/definitions/smsgateway.HealthResponse"
                         }
@@ -785,6 +785,84 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/health/live": {
+            "get": {
+                "description": "Checks if service is running (liveness probe)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System"
+                ],
+                "summary": "Liveness probe",
+                "responses": {
+                    "200": {
+                        "description": "Service is alive",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.HealthResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service is not alive",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.HealthResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health/ready": {
+            "get": {
+                "description": "Checks if service is ready to serve traffic (readiness probe)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System"
+                ],
+                "summary": "Readiness probe",
+                "responses": {
+                    "200": {
+                        "description": "Service is ready",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.HealthResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service is not ready",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.HealthResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health/startup": {
+            "get": {
+                "description": "Checks if service has completed initialization (startup probe)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System"
+                ],
+                "summary": "Startup probe",
+                "responses": {
+                    "200": {
+                        "description": "Service has completed initialization",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.HealthResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service has not completed initialization",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.HealthResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1200,6 +1278,7 @@ const docTemplate = `{
         },
         "smsgateway.MessagePriority": {
             "type": "integer",
+            "format": "int32",
             "enum": [
                 -128,
                 0,
@@ -1209,6 +1288,12 @@ const docTemplate = `{
             "x-enum-comments": {
                 "PriorityBypassThreshold": "Threshold at which messages bypass limits and delays"
             },
+            "x-enum-descriptions": [
+                "",
+                "",
+                "Threshold at which messages bypass limits and delays",
+                ""
+            ],
             "x-enum-varnames": [
                 "PriorityMinimum",
                 "PriorityDefault",
@@ -1326,6 +1411,13 @@ const docTemplate = `{
                 "ProcessingStateProcessed": "Processed (received by device)",
                 "ProcessingStateSent": "Sent"
             },
+            "x-enum-descriptions": [
+                "Pending",
+                "Processed (received by device)",
+                "Sent",
+                "Delivered",
+                "Failed"
+            ],
             "x-enum-varnames": [
                 "ProcessingStatePending",
                 "ProcessingStateProcessed",
@@ -1591,7 +1683,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "api.sms-gate.app",
 	BasePath:         "",
 	Schemes:          []string{"https"},
-	Title:            "SMS Gateway for Android™ API",
+	Title:            "SMSGate API",
 	Description:      "This API provides programmatic access to sending SMS messages on Android devices. Features include sending SMS, checking message status, device management, webhook configuration, and system health checks.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

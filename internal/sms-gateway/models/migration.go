@@ -2,6 +2,7 @@ package models
 
 import (
 	"embed"
+	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -10,5 +11,8 @@ import (
 var migrations embed.FS
 
 func Migrate(db *gorm.DB) error {
-	return db.AutoMigrate(&User{}, &Device{})
+	if err := db.AutoMigrate(new(User), new(Device)); err != nil {
+		return fmt.Errorf("models migration failed: %w", err)
+	}
+	return nil
 }

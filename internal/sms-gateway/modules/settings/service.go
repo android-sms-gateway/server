@@ -53,10 +53,7 @@ func (s *Service) UpdateSettings(userID string, settings map[string]any) (map[st
 		return nil, err
 	}
 
-	updatedSettings, err := s.settings.UpdateSettings(&DeviceSettings{
-		UserID:   userID,
-		Settings: filtered,
-	})
+	updatedSettings, err := s.settings.UpdateSettings(NewDeviceSettings(userID, filtered))
 	if err != nil {
 		return nil, err
 	}
@@ -72,10 +69,7 @@ func (s *Service) ReplaceSettings(userID string, settings map[string]any) (map[s
 		return nil, err
 	}
 
-	updated, err := s.settings.ReplaceSettings(&DeviceSettings{
-		UserID:   userID,
-		Settings: filtered,
-	})
+	updated, err := s.settings.ReplaceSettings(NewDeviceSettings(userID, filtered))
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +83,7 @@ func (s *Service) ReplaceSettings(userID string, settings map[string]any) (map[s
 func (s *Service) notifyDevices(userID string) {
 	go func(userID string) {
 		if err := s.eventsSvc.Notify(userID, nil, events.NewSettingsUpdatedEvent()); err != nil {
-			s.logger.Error("can't notify devices", zap.Error(err))
+			s.logger.Error("failed to notify devices", zap.Error(err))
 		}
 	}(userID)
 }

@@ -8,16 +8,24 @@ import (
 )
 
 type DeviceSettings struct {
+	models.TimedModel
+
 	UserID   string         `gorm:"primaryKey;not null;type:varchar(32)"`
 	Settings map[string]any `gorm:"not null;type:json;serializer:json"`
 
 	User models.User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
+}
 
-	models.TimedModel
+func NewDeviceSettings(userID string, settings map[string]any) *DeviceSettings {
+	//nolint:exhaustruct // partial constructor
+	return &DeviceSettings{
+		UserID:   userID,
+		Settings: settings,
+	}
 }
 
 func Migrate(db *gorm.DB) error {
-	if err := db.AutoMigrate(&DeviceSettings{}); err != nil {
+	if err := db.AutoMigrate(new(DeviceSettings)); err != nil {
 		return fmt.Errorf("device_settings migration failed: %w", err)
 	}
 	return nil
