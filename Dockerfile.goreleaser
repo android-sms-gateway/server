@@ -1,0 +1,27 @@
+FROM alpine:3.22
+
+ARG TARGETPLATFORM
+ARG BINARY_NAME
+
+# Install certificates and timezone data
+RUN apk add --no-cache ca-certificates tzdata curl
+
+# Set the Current Working Directory inside the container
+WORKDIR /app
+
+# Copy the Pre-built binary file from GoReleaser
+COPY scripts/docker-entrypoint.sh /docker-entrypoint.sh
+COPY $TARGETPLATFORM/$BINARY_NAME ./app
+
+# Command to run the executable
+EXPOSE 3000
+
+USER guest
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD curl -fs http://localhost:3000/health/live
+
+CMD [ "/app/app" ]
+
