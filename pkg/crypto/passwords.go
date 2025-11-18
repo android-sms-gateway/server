@@ -14,7 +14,7 @@ var (
 func MakeBCryptHash(password string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return "", fmt.Errorf("can't hash password: %w", err)
+		return "", fmt.Errorf("failed to hash password: %w", err)
 	}
 	return string(hash), nil
 }
