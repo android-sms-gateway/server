@@ -18,7 +18,11 @@ func (o *mobileDeviceRegisterOptions) withCredentials(username, password string)
 	return o
 }
 
-func mobileDeviceRegister(t *testing.T, client *resty.Client, opts ...*mobileDeviceRegisterOptions) mobileRegisterResponse {
+func mobileDeviceRegister(
+	t *testing.T,
+	client *resty.Client,
+	opts ...*mobileDeviceRegisterOptions,
+) mobileRegisterResponse {
 	req := client.R()
 	for _, opt := range opts {
 		if opt.username != "" && opt.password != "" {
