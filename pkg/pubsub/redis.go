@@ -26,7 +26,7 @@ type RedisConfig struct {
 	Prefix string
 }
 
-type redisPubSub struct {
+type RedisPubSub struct {
 	prefix     string
 	bufferSize uint
 
@@ -39,13 +39,13 @@ type redisPubSub struct {
 	closeCh     chan struct{}
 }
 
-func NewRedis(config RedisConfig, opts ...Option) (*redisPubSub, error) {
+func NewRedis(config RedisConfig, opts ...Option) (*RedisPubSub, error) {
 	if config.Prefix != "" && !strings.HasSuffix(config.Prefix, ":") {
 		config.Prefix += ":"
 	}
 
 	if config.Client == nil && config.URL == "" {
-		return nil, fmt.Errorf("no redis client or url provided")
+		return nil, fmt.Errorf("%w: no redis client or url provided", ErrInvalidConfig)
 	}
 
 	client := config.Client
@@ -63,19 +63,21 @@ func NewRedis(config RedisConfig, opts ...Option) (*redisPubSub, error) {
 	}
 	o.apply(opts...)
 
-	return &redisPubSub{
+	return &RedisPubSub{
 		prefix:     config.Prefix,
 		bufferSize: o.bufferSize,
 
 		client:      client,
 		ownedClient: config.Client == nil,
 
+		wg:          sync.WaitGroup{},
+		mu:          sync.Mutex{},
 		subscribers: make(map[string]context.CancelFunc),
 		closeCh:     make(chan struct{}),
 	}, nil
 }
 
-func (r *redisPubSub) Publish(ctx context.Context, topic string, data []byte) error {
+func (r *RedisPubSub) Publish(ctx context.Context, topic string, data []byte) error {
 	select {
 	case <-r.closeCh:
 		return ErrPubSubClosed
@@ -86,10 +88,14 @@ func (r *redisPubSub) Publish(ctx context.Context, topic string, data []byte) er
 		return ErrInvalidTopic
 	}
 
-	return r.client.Publish(ctx, r.prefix+topic, data).Err()
+	if err := r.client.Publish(ctx, r.prefix+topic, data).Err(); err != nil {
+		return fmt.Errorf("failed to publish message: %w", err)
+	}
+
+	return nil
 }
 
-func (r *redisPubSub) Subscribe(ctx context.Context, topic string) (*Subscription, error) {
+func (r *RedisPubSub) Subscribe(ctx context.Context, topic string) (*Subscription, error) {
 	select {
 	case <-r.closeCh:
 		return nil, ErrPubSubClosed
@@ -104,7 +110,7 @@ func (r *redisPubSub) Subscribe(ctx context.Context, topic string) (*Subscriptio
 	_, err := ps.Receive(ctx)
 	if err != nil {
 		closeErr := ps.Close()
-		return nil, errors.Join(fmt.Errorf("can't subscribe: %w", err), closeErr)
+		return nil, errors.Join(fmt.Errorf("failed to subscribe: %w", err), closeErr)
 	}
 
 	id := uuid.NewString()
@@ -160,7 +166,7 @@ func (r *redisPubSub) Subscribe(ctx context.Context, topic string) (*Subscriptio
 	return &Subscription{id: id, ctx: subCtx, cancel: cancel, ch: ch}, nil
 }
 
-func (r *redisPubSub) Close() error {
+func (r *RedisPubSub) Close() error {
 	select {
 	case <-r.closeCh:
 		return nil
@@ -171,10 +177,12 @@ func (r *redisPubSub) Close() error {
 	r.wg.Wait()
 
 	if r.ownedClient {
-		return r.client.Close()
+		if err := r.client.Close(); err != nil {
+			return fmt.Errorf("failed to close redis client: %w", err)
+		}
 	}
 
 	return nil
 }
 
-var _ PubSub = (*redisPubSub)(nil)
+var _ PubSub = (*RedisPubSub)(nil)
