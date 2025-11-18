@@ -17,19 +17,13 @@ const (
 	levelFail statusLevel = 2
 )
 
-var statusLevels = map[statusLevel]Status{
-	levelPass: StatusPass,
-	levelWarn: StatusWarn,
-	levelFail: StatusFail,
-}
-
-// Health status of the application.
+// CheckResult represents the result of a set of health checks.
 type CheckResult struct {
 	// A map of check names to their respective details.
-	Checks Checks
+	Checks Checks `json:"checks"`
 }
 
-// Overall status of the application.
+// Status returns the overall status of the application.
 // It can be one of the following values: "pass", "warn", or "fail".
 func (c CheckResult) Status() Status {
 	// Determine overall status
@@ -44,10 +38,19 @@ func (c CheckResult) Status() Status {
 		}
 	}
 
-	return statusLevels[level]
+	switch level {
+	case levelPass:
+		return StatusPass
+	case levelWarn:
+		return StatusWarn
+	case levelFail:
+		return StatusFail
+	}
+
+	return StatusFail
 }
 
-// Details of a health check.
+// CheckDetail of a health check.
 type CheckDetail struct {
 	// A human-readable description of the check.
 	Description string
@@ -60,10 +63,10 @@ type CheckDetail struct {
 	Status Status
 }
 
-// Map of check names to their respective details.
+// Checks is a map of check names to their respective details.
 type Checks map[string]CheckDetail
 
-type HealthProvider interface {
+type Provider interface {
 	Name() string
 
 	StartedProbe(ctx context.Context) (Checks, error)
