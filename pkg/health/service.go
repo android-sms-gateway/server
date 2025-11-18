@@ -7,12 +7,12 @@ import (
 )
 
 type Service struct {
-	providers []HealthProvider
+	providers []Provider
 
 	logger *zap.Logger
 }
 
-func NewService(providers []HealthProvider, logger *zap.Logger) *Service {
+func NewService(providers []Provider, logger *zap.Logger) *Service {
 	return &Service{
 		providers: providers,
 
@@ -20,7 +20,10 @@ func NewService(providers []HealthProvider, logger *zap.Logger) *Service {
 	}
 }
 
-func (s *Service) checkProvider(ctx context.Context, probe func(context.Context, HealthProvider) (Checks, error)) CheckResult {
+func (s *Service) checkProvider(
+	ctx context.Context,
+	probe func(context.Context, Provider) (Checks, error),
+) CheckResult {
 	check := CheckResult{
 		Checks: map[string]CheckDetail{},
 	}
@@ -34,7 +37,7 @@ func (s *Service) checkProvider(ctx context.Context, probe func(context.Context,
 
 		healthChecks, err := probe(ctx, p)
 		if err != nil {
-			s.logger.Error("Failed check", zap.String("provider", p.Name()), zap.Error(err))
+			s.logger.Error("failed check", zap.String("provider", p.Name()), zap.Error(err))
 			check.Checks[p.Name()] = CheckDetail{
 				Description:   "Failed check",
 				ObservedUnit:  "",
@@ -57,19 +60,19 @@ func (s *Service) checkProvider(ctx context.Context, probe func(context.Context,
 }
 
 func (s *Service) CheckReadiness(ctx context.Context) CheckResult {
-	return s.checkProvider(ctx, func(ctx context.Context, p HealthProvider) (Checks, error) {
+	return s.checkProvider(ctx, func(ctx context.Context, p Provider) (Checks, error) {
 		return p.ReadyProbe(ctx)
 	})
 }
 
 func (s *Service) CheckLiveness(ctx context.Context) CheckResult {
-	return s.checkProvider(ctx, func(ctx context.Context, p HealthProvider) (Checks, error) {
+	return s.checkProvider(ctx, func(ctx context.Context, p Provider) (Checks, error) {
 		return p.LiveProbe(ctx)
 	})
 }
 
 func (s *Service) CheckStartup(ctx context.Context) CheckResult {
-	return s.checkProvider(ctx, func(ctx context.Context, p HealthProvider) (Checks, error) {
+	return s.checkProvider(ctx, func(ctx context.Context, p Provider) (Checks, error) {
 		return p.StartedProbe(ctx)
 	})
 }
