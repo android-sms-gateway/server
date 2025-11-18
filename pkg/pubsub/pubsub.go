@@ -6,8 +6,9 @@ import (
 )
 
 var (
-	ErrPubSubClosed = errors.New("pubsub is closed")
-	ErrInvalidTopic = errors.New("invalid topic name")
+	ErrInvalidConfig = errors.New("invalid config")
+	ErrPubSubClosed  = errors.New("pubsub is closed")
+	ErrInvalidTopic  = errors.New("invalid topic name")
 )
 
 type Message struct {
