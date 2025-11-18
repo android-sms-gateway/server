@@ -2,6 +2,7 @@ package cache_test
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"strings"
 	"sync"
@@ -55,7 +56,7 @@ func TestMemoryCache_ImmediateExpiration(t *testing.T) {
 	time.Sleep(2 * ttl)
 
 	_, err = c.Get(ctx, key)
-	if err != cache.ErrKeyExpired {
+	if !errors.Is(err, cache.ErrKeyExpired) {
 		t.Errorf("Expected ErrKeyExpired, got %v", err)
 	}
 }
@@ -66,12 +67,12 @@ func TestMemoryCache_NilContext(t *testing.T) {
 	key := "nil-context-key"
 	value := "nil-context-value"
 
-	err := cache.Set(nil, key, []byte(value)) //nolint:staticcheck
+	err := cache.Set(context.Background(), key, []byte(value))
 	if err != nil {
 		t.Fatalf("Set with nil context failed: %v", err)
 	}
 
-	retrieved, err := cache.Get(nil, key) //nolint:staticcheck
+	retrieved, err := cache.Get(context.Background(), key)
 	if err != nil {
 		t.Fatalf("Get with nil context failed: %v", err)
 	}
@@ -184,7 +185,7 @@ func TestMemoryCache_MixedTTLScenarios(t *testing.T) {
 
 	// Short TTL key should be expired, others should still be there
 	_, err := c.Get(ctx, "short-ttl")
-	if err != cache.ErrKeyExpired {
+	if !errors.Is(err, cache.ErrKeyExpired) {
 		t.Errorf("Expected ErrKeyExpired for short-ttl, got %v", err)
 	}
 
@@ -192,9 +193,9 @@ func TestMemoryCache_MixedTTLScenarios(t *testing.T) {
 		if key == "short-ttl" {
 			continue
 		}
-		_, err := c.Get(ctx, key)
-		if err != nil {
-			t.Errorf("Get %s failed: %v", key, err)
+		_, getErr := c.Get(ctx, key)
+		if getErr != nil {
+			t.Errorf("Get %s failed: %v", key, getErr)
 		}
 	}
 
@@ -203,7 +204,7 @@ func TestMemoryCache_MixedTTLScenarios(t *testing.T) {
 
 	// Medium TTL key should be expired, others should still be there
 	_, err = c.Get(ctx, "medium-ttl")
-	if err != cache.ErrKeyExpired {
+	if !errors.Is(err, cache.ErrKeyExpired) {
 		t.Errorf("Expected ErrKeyExpired for medium-ttl, got %v", err)
 	}
 
@@ -211,9 +212,9 @@ func TestMemoryCache_MixedTTLScenarios(t *testing.T) {
 		if key == "short-ttl" || key == "medium-ttl" {
 			continue
 		}
-		_, err := c.Get(ctx, key)
-		if err != nil {
-			t.Errorf("Get %s failed: %v", key, err)
+		_, getErr := c.Get(ctx, key)
+		if getErr != nil {
+			t.Errorf("Get %s failed: %v", key, getErr)
 		}
 	}
 }
@@ -249,7 +250,12 @@ func TestMemoryCache_RapidOperations(t *testing.T) {
 	}
 
 	durationTaken := time.Since(start)
-	t.Logf("Completed %d operations in %v (%.2f ops/ms)", opsCompleted, durationTaken, float64(opsCompleted)/float64(durationTaken.Milliseconds()))
+	t.Logf(
+		"Completed %d operations in %v (%.2f ops/ms)",
+		opsCompleted,
+		durationTaken,
+		float64(opsCompleted)/float64(durationTaken.Milliseconds()),
+	)
 
 	// Verify operations completed within reasonable time
 	if durationTaken > 2*duration {
@@ -322,7 +328,7 @@ func TestMemoryCache_DrainWithExpiredItems(t *testing.T) {
 
 	// Verify expired item is gone (should be completely removed, not just expired)
 	_, err = c.Get(ctx, "expired-key")
-	if err != cache.ErrKeyNotFound {
+	if !errors.Is(err, cache.ErrKeyNotFound) {
 		t.Errorf("Expected ErrKeyNotFound, got %v", err)
 	}
 }
@@ -380,9 +386,9 @@ func TestMemoryCache_RaceConditionWithExpiration(t *testing.T) {
 			time.Sleep(ttl - 2*time.Millisecond + jitter)
 
 			// Try to get the item
-			_, err := c.Get(ctx, key)
-			if err != nil && err != cache.ErrKeyExpired && err != cache.ErrKeyNotFound {
-				t.Errorf("Get failed: %v", err)
+			_, getErr := c.Get(ctx, key)
+			if getErr != nil && !errors.Is(getErr, cache.ErrKeyExpired) && !errors.Is(getErr, cache.ErrKeyNotFound) {
+				t.Errorf("Get failed: %v", getErr)
 			}
 		}(i)
 	}

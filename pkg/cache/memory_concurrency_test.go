@@ -1,8 +1,8 @@
-//nolint:errcheck
 package cache_test
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -29,14 +29,14 @@ func TestMemoryCache_ConcurrentReads(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Launch multiple concurrent reads
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
-			retrieved, err := cache.Get(ctx, key)
-			if err != nil {
-				t.Errorf("Get failed: %v", err)
+			retrieved, getErr := cache.Get(ctx, key)
+			if getErr != nil {
+				t.Errorf("Get failed: %v", getErr)
 				return
 			}
 
@@ -58,12 +58,12 @@ func TestMemoryCache_ConcurrentWrites(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Launch multiple concurrent writes
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		wg.Add(1)
 		go func(goroutineID int) {
 			defer wg.Done()
 
-			for j := 0; j < numKeys/numGoroutines; j++ {
+			for j := range numKeys / numGoroutines {
 				key := "key-" + strconv.Itoa(goroutineID) + "-" + strconv.Itoa(j)
 				value := "value-" + strconv.Itoa(goroutineID) + "-" + strconv.Itoa(j)
 
@@ -78,8 +78,8 @@ func TestMemoryCache_ConcurrentWrites(t *testing.T) {
 	wg.Wait()
 
 	// Verify all keys were set correctly
-	for i := 0; i < numGoroutines; i++ {
-		for j := 0; j < numKeys/numGoroutines; j++ {
+	for i := range numGoroutines {
+		for j := range numKeys / numGoroutines {
 			key := "key-" + strconv.Itoa(i) + "-" + strconv.Itoa(j)
 			expectedValue := "value-" + strconv.Itoa(i) + "-" + strconv.Itoa(j)
 
@@ -115,7 +115,7 @@ func TestMemoryCache_ConcurrentReadWrite(t *testing.T) {
 			for range numOperations / numReaders {
 				key := "shared-key"
 				_, err := c.Get(ctx, key)
-				if err != nil && err != cache.ErrKeyNotFound {
+				if err != nil && !errors.Is(err, cache.ErrKeyNotFound) {
 					t.Errorf("Get failed: %v", err)
 				} else if err == nil {
 					readCount.Add(1)
@@ -157,12 +157,12 @@ func TestMemoryCache_ConcurrentSetAndGetAndDelete(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Launch goroutines that perform Set, Get, and Delete operations
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		wg.Add(1)
 		go func(goroutineID int) {
 			defer wg.Done()
 
-			for j := 0; j < numOperations/numGoroutines; j++ {
+			for j := range numOperations / numGoroutines {
 				key := "key-" + strconv.Itoa(goroutineID) + "-" + strconv.Itoa(j)
 				value := "value-" + strconv.Itoa(goroutineID) + "-" + strconv.Itoa(j)
 
@@ -218,10 +218,10 @@ func TestMemoryCache_ConcurrentSetOrFail(t *testing.T) {
 
 			for range attemptsPerGoroutine {
 				err := c.SetOrFail(ctx, key, []byte(value))
-				switch err {
-				case nil:
+				switch {
+				case err == nil:
 					successCount.Add(1)
-				case cache.ErrKeyExists:
+				case errors.Is(err, cache.ErrKeyExists):
 					existsCount.Add(1)
 				default:
 					t.Errorf("SetOrFail failed: %v", err)
@@ -281,7 +281,7 @@ func TestMemoryCache_ConcurrentDrain(t *testing.T) {
 
 	// Verify that items were drained (at least one goroutine should have gotten items)
 	totalDrained := 0
-	drainResults.Range(func(key, value any) bool {
+	drainResults.Range(func(_, value any) bool {
 		items := value.(map[string][]byte)
 		totalDrained += len(items)
 		return true
@@ -295,7 +295,7 @@ func TestMemoryCache_ConcurrentDrain(t *testing.T) {
 	for i := range numItems {
 		key := "item-" + strconv.Itoa(i)
 		_, err := c.Get(ctx, key)
-		if err != cache.ErrKeyNotFound {
+		if !errors.Is(err, cache.ErrKeyNotFound) {
 			t.Errorf("Expected ErrKeyNotFound for key %s after drain, got %v", key, err)
 		}
 	}
@@ -342,7 +342,7 @@ func TestMemoryCache_ConcurrentCleanup(t *testing.T) {
 	for i := range numItems {
 		key := "item-" + strconv.Itoa(i)
 		_, err := c.Get(ctx, key)
-		if err != cache.ErrKeyNotFound {
+		if !errors.Is(err, cache.ErrKeyNotFound) {
 			t.Errorf("Expected ErrKeyNotFound for key %s, got %v", key, err)
 		}
 	}
@@ -357,7 +357,7 @@ func TestMemoryCache_ConcurrentGetAndDelete(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Pre-populate cache with items
-	for i := 0; i < numGoroutines*attemptsPerGoroutine; i++ {
+	for i := range numGoroutines * attemptsPerGoroutine {
 		key := "item-" + strconv.Itoa(i)
 		value := "value-" + strconv.Itoa(i)
 
@@ -368,16 +368,16 @@ func TestMemoryCache_ConcurrentGetAndDelete(t *testing.T) {
 	}
 
 	// Launch goroutines that perform GetAndDelete operations
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		wg.Add(1)
 		go func(goroutineID int) {
 			defer wg.Done()
 
-			for j := 0; j < attemptsPerGoroutine; j++ {
+			for j := range attemptsPerGoroutine {
 				key := "item-" + strconv.Itoa(goroutineID*attemptsPerGoroutine+j)
 
 				_, err := c.GetAndDelete(ctx, key)
-				if err != nil && err != cache.ErrKeyNotFound {
+				if err != nil && !errors.Is(err, cache.ErrKeyNotFound) {
 					t.Errorf("GetAndDelete failed: %v", err)
 				}
 			}
@@ -387,16 +387,16 @@ func TestMemoryCache_ConcurrentGetAndDelete(t *testing.T) {
 	wg.Wait()
 
 	// All items should be deleted
-	for i := 0; i < numGoroutines*attemptsPerGoroutine; i++ {
+	for i := range numGoroutines * attemptsPerGoroutine {
 		key := "item-" + strconv.Itoa(i)
 		_, err := c.Get(ctx, key)
-		if err != cache.ErrKeyNotFound {
+		if !errors.Is(err, cache.ErrKeyNotFound) {
 			t.Errorf("Expected ErrKeyNotFound for key %s after GetAndDelete, got %v", key, err)
 		}
 	}
 }
 
-func TestMemoryCache_RaceConditionDetection(t *testing.T) {
+func TestMemoryCache_RaceConditionDetection(_ *testing.T) {
 	// This test is specifically designed to detect race conditions
 	// by running many operations concurrently with the race detector enabled
 
@@ -409,7 +409,7 @@ func TestMemoryCache_RaceConditionDetection(t *testing.T) {
 
 	start := time.Now()
 
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		wg.Add(1)
 		go func(goroutineID int) {
 			defer wg.Done()
