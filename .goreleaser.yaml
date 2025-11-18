@@ -1,0 +1,67 @@
+version: 2
+project_name: server
+
+before:
+  hooks:
+    - go install github.com/swaggo/swag/cmd/swag@latest
+    - go mod tidy
+    - go generate ./...
+
+builds:
+  - main: ./cmd/sms-gateway
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    ldflags:
+      - -s -w
+      - -X github.com/android-sms-gateway/server/internal/version.AppVersion={{ .Version }}
+      - -X github.com/android-sms-gateway/server/internal/version.AppRelease={{ .Env.RELEASE_ID }}
+
+archives:
+  - formats: ["tar.gz"]
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        formats: ["zip"]
+
+dockers_v2:
+  - dockerfile: Dockerfile.goreleaser
+    extra_files:
+      - scripts/docker-entrypoint.sh
+    images:
+      - "{{ .Env.DOCKER_REGISTRY }}/{{ .ProjectName }}"
+    tags:
+      - "{{ .Tag }}"
+      - "v{{ .Major }}"
+      - "v{{ .Major }}.{{ .Minor }}"
+      - "latest"
+    labels:
+      "org.opencontainers.image.created": "{{ .Date }}"
+      "org.opencontainers.image.title": "{{ .ProjectName }}"
+      "org.opencontainers.image.revision": "{{ .FullCommit }}"
+      "org.opencontainers.image.version": "{{ .Version }}"
+      "org.opencontainers.image.name": "{{ .Env.DOCKER_REGISTRY }}/{{ .ProjectName }}"
+      "org.opencontainers.image.source": "{{ .GitURL }}"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    build_args:
+      BINARY_NAME: "{{ .ProjectName }}"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
