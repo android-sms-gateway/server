@@ -226,6 +226,9 @@ func (s *Service) removeConnection(deviceID, connID string) {
 			if conn.id == connID {
 				close(conn.closeSignal)
 				s.connections[deviceID] = append(connections[:i], connections[i+1:]...)
+
+				// Decrement active connections metric
+				s.metrics.DecrementActiveConnections()
 				s.logger.Info(
 					"Removing SSE connection",
 					zap.String("device_id", deviceID),
@@ -234,9 +237,6 @@ func (s *Service) removeConnection(deviceID, connID string) {
 				break
 			}
 		}
-
-		// Decrement active connections metric
-		s.metrics.DecrementActiveConnections()
 
 		if len(s.connections[deviceID]) == 0 {
 			delete(s.connections, deviceID)
