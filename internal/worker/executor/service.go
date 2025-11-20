@@ -100,12 +100,12 @@ func (s *Service) execute(ctx context.Context, task PeriodicTask) {
 	logger := s.logger.With(zap.String("name", task.Name()))
 
 	if err := s.locker.AcquireLock(ctx, task.Name()); err != nil {
-		logger.Error("failed to acquire lock", zap.String("name", task.Name()), zap.Error(err))
+		logger.Error("failed to acquire lock", zap.Error(err))
 		return
 	}
 	defer func() {
 		if err := s.locker.ReleaseLock(ctx, task.Name()); err != nil {
-			logger.Error("failed to release lock", zap.String("name", task.Name()), zap.Error(err))
+			logger.Error("failed to release lock", zap.Error(err))
 		}
 	}()
 
