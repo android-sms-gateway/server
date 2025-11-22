@@ -72,7 +72,7 @@ func NewCode(authSvc *auth.Service) fiber.Handler {
 		// Get the code
 		code := auth[5:]
 
-		user, err := authSvc.AuthorizeUserByCode(code)
+		user, err := authSvc.AuthorizeUserByCode(c.Context(), code)
 		if err != nil {
 			return fiber.ErrUnauthorized
 		}

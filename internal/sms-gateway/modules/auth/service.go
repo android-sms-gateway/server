@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/subtle"
 	"fmt"
 	"time"
@@ -10,10 +9,8 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/online"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/otp"
 	"github.com/android-sms-gateway/server/pkg/crypto"
-	"github.com/capcom6/go-helpers/cache"
-	"github.com/jaevor/go-nanoid"
-	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -22,78 +19,50 @@ type Config struct {
 	PrivateToken string
 }
 
-type Params struct {
-	fx.In
-
-	Config Config
-
-	Users      *repository
-	DevicesSvc *devices.Service
-	OnlineSvc  online.Service
-
-	Logger *zap.Logger
-}
-
 type Service struct {
 	config Config
 
 	users      *repository
-	codesCache *cache.Cache[string]
 	usersCache *usersCache
 
+	otpSvc     *otp.Service
 	devicesSvc *devices.Service
 	onlineSvc  online.Service
 
 	logger *zap.Logger
-
-	idgen func() string
 }
 
-func New(params Params) *Service {
-	const idLen = 21
-	idgen, _ := nanoid.Standard(idLen)
-
+func New(
+	config Config,
+	users *repository,
+	otpSvc *otp.Service,
+	devicesSvc *devices.Service,
+	onlineSvc online.Service,
+	logger *zap.Logger,
+) *Service {
 	return &Service{
-		config:     params.Config,
-		users:      params.Users,
-		devicesSvc: params.DevicesSvc,
-		onlineSvc:  params.OnlineSvc,
-		logger:     params.Logger,
-		idgen:      idgen,
+		config: config,
 
-		codesCache: cache.New[string](cache.Config{TTL: codeTTL}),
+		users: users,
+
+		otpSvc:     otpSvc,
+		devicesSvc: devicesSvc,
+		onlineSvc:  onlineSvc,
+
+		logger: logger,
+
 		usersCache: newUsersCache(),
 	}
 }
 
 // GenerateUserCode generates a unique one-time user authorization code.
-func (s *Service) GenerateUserCode(userID string) (OneTimeCode, error) {
-	var code string
-	var err error
-
-	const bytesLen = 3
-	const maxCode = 1000000
-	b := make([]byte, bytesLen)
-	validUntil := time.Now().Add(codeTTL)
-	for range 3 {
-		if _, err = rand.Read(b); err != nil {
-			continue
-		}
-		num := (int(b[0]) << 16) | (int(b[1]) << 8) | int(b[2]) //nolint:mnd //bitshift
-		code = fmt.Sprintf("%06d", num%maxCode)
-
-		if err = s.codesCache.SetOrFail(code, userID, cache.WithValidUntil(validUntil)); err != nil {
-			continue
-		}
-
-		break
-	}
-
+func (s *Service) GenerateUserCode(ctx context.Context, userID string) (*otp.Code, error) {
+	code, err := s.otpSvc.Generate(ctx, userID)
 	if err != nil {
-		return OneTimeCode{}, fmt.Errorf("failed to generate code: %w", err)
+		return nil, fmt.Errorf("failed to generate code: %w", err)
 	}
 
-	return OneTimeCode{Code: code, ValidUntil: validUntil}, nil
+	return code, nil
 }
 
 func (s *Service) RegisterUser(login, password string) (*models.User, error) {
@@ -176,15 +145,15 @@ func (s *Service) AuthorizeUser(username, password string) (*models.User, error)
 }
 
 // AuthorizeUserByCode authorizes a user by one-time code.
-func (s *Service) AuthorizeUserByCode(code string) (*models.User, error) {
-	userID, err := s.codesCache.GetAndDelete(code)
+func (s *Service) AuthorizeUserByCode(ctx context.Context, code string) (*models.User, error) {
+	userID, err := s.otpSvc.Validate(ctx, code)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user by code: %w", err)
+		return nil, fmt.Errorf("failed to validate code: %w", err)
 	}
 
 	user, err := s.users.GetByID(userID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
 	return user, nil
@@ -234,6 +203,5 @@ func (s *Service) Run(ctx context.Context) {
 }
 
 func (s *Service) clean(_ context.Context) {
-	s.codesCache.Cleanup()
 	s.usersCache.Cleanup()
 }
