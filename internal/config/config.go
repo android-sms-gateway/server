@@ -16,6 +16,7 @@ type Config struct {
 	Messages Messages  `yaml:"messages"` // messages config
 	Cache    Cache     `yaml:"cache"`    // cache (memory or redis) config
 	PubSub   PubSub    `yaml:"pubsub"`   // pubsub (memory or redis) config
+	OTP      OTP       `yaml:"otp"`      // one-time password config
 }
 
 type Gateway struct {
@@ -81,6 +82,11 @@ type PubSub struct {
 	BufferSize uint   `yaml:"buffer_size" envconfig:"PUBSUB__BUFFER_SIZE"`
 }
 
+type OTP struct {
+	TTL     uint16 `yaml:"ttl"     envconfig:"OTP__TTL"`
+	Retries uint8  `yaml:"retries" envconfig:"OTP__RETRIES"`
+}
+
 func Default() Config {
 	//nolint:exhaustruct,mnd // default values
 	return Config{
@@ -112,6 +118,10 @@ func Default() Config {
 		PubSub: PubSub{
 			URL:        "memory://",
 			BufferSize: 128,
+		},
+		OTP: OTP{
+			TTL:     300,
+			Retries: 3,
 		},
 	}
 }
