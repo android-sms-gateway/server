@@ -1,6 +1,7 @@
 @baseUrl={{$dotenv CLOUD__URL}}
 @credentials={{$dotenv CLOUD__CREDENTIALS}}
 @mobileToken={{$dotenv MOBILE__TOKEN}}
+@jwtToken={{$dotenv JWT__TOKEN}}
 @phone={{$dotenv PHONE}}
 
 ###
@@ -34,7 +35,8 @@ Authorization: Basic {{credentials}}
 ###
 POST {{baseUrl}}/3rdparty/v1/messages HTTP/1.1
 Content-Type: application/json
-Authorization: Basic {{credentials}}
+# Authorization: Basic {{credentials}}
+Authorization: Bearer {{jwtToken}}
 
 {
     "textMessage": {
@@ -78,11 +80,13 @@ Authorization: Basic {{credentials}}
 
 ###
 GET {{baseUrl}}/3rdparty/v1/messages/Fc10ZyTRDVlqPjIm9Jbly HTTP/1.1
-Authorization: Basic {{credentials}}
+# Authorization: Basic {{credentials}}
+Authorization: Bearer {{jwtToken}}
 
 ###
 GET {{baseUrl}}/3rdparty/v1/messages HTTP/1.1
-Authorization: Basic {{credentials}}
+# Authorization: Basic {{credentials}}
+Authorization: Bearer {{jwtToken}}
 
 ###
 GET {{baseUrl}}/3rdparty/v1/messages?from=2025-01-01T00:00:00.000Z&to=2025-12-31T23:59:59Z&state=Pending&deviceId=fL2m4IirEvh9BvTf6TIB0&limit=50&offset=0 HTTP/1.1
@@ -101,7 +105,9 @@ Content-Type: application/json
 
 ###
 GET {{baseUrl}}/3rdparty/v1/devices HTTP/1.1
-Authorization: Basic {{credentials}}
+# Authorization: Basic {{credentials}}
+Authorization: Bearer {{jwtToken}}
+
 
 ###
 DELETE {{baseUrl}}/3rdparty/v1/devices/gF0jEYiaG_x9sI1YFWa7a HTTP/1.1
@@ -190,6 +196,31 @@ Content-Type: application/json
         "signing_key": "{{$guid}}"
     }
 }
+
+###
+POST {{baseUrl}}/3rdparty/v1/auth/token HTTP/1.1
+Authorization: Basic {{credentials}}
+Content-Type: application/json
+
+{
+    "ttl": 3600,
+    "scopes": [
+        "messages:send",
+        "messages:read",
+        "devices:list",
+        "devices:write",
+        "webhooks:list",
+        "webhooks:write",
+        "settings:read",
+        "settings:write",
+        "logs:read"
+    ]
+}
+
+###
+DELETE {{baseUrl}}/3rdparty/v1/auth/token/w8pxz0a4Fwa4xgzyCvSeC HTTP/1.1
+Authorization: Basic {{credentials}}
+Content-Type: application/json
 
 ###
 GET http://localhost:3000/metrics HTTP/1.1
