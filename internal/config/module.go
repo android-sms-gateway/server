@@ -6,6 +6,7 @@ import (
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/cache"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/jwt"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
@@ -130,6 +131,13 @@ func Module() fx.Option {
 			return pubsub.Config{
 				URL:        cfg.PubSub.URL,
 				BufferSize: cfg.PubSub.BufferSize,
+			}
+		}),
+		fx.Provide(func(cfg Config) jwt.Config {
+			return jwt.Config{
+				Secret: cfg.JWT.Secret,
+				TTL:    time.Duration(cfg.JWT.TTL),
+				Issuer: cfg.JWT.Issuer,
 			}
 		}),
 	)

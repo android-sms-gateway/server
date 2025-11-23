@@ -47,13 +47,10 @@ func (s *Service) Create(username, password string) (*User, error) {
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	user := &userModel{
-		ID:           username,
-		PasswordHash: passwordHash,
-	}
+	user := newUserModel(username, passwordHash)
 
-	if err := s.users.Insert(user); err != nil {
-		return nil, fmt.Errorf("failed to create user: %w", err)
+	if insErr := s.users.Insert(user); insErr != nil {
+		return nil, fmt.Errorf("failed to create user: %w", insErr)
 	}
 
 	return newUser(user), nil
@@ -81,13 +78,13 @@ func (s *Service) Login(ctx context.Context, username, password string) (*User, 
 		return nil, err
 	}
 
-	if err := crypto.CompareBCryptHash(user.PasswordHash, password); err != nil {
-		return nil, fmt.Errorf("login failed: %w", err)
+	if compErr := crypto.CompareBCryptHash(user.PasswordHash, password); compErr != nil {
+		return nil, fmt.Errorf("login failed: %w", compErr)
 	}
 
 	loggedInUser := newUser(user)
-	if err := s.cache.Set(ctx, username, password, *loggedInUser); err != nil {
-		s.logger.Error("failed to cache user", zap.String("username", username), zap.Error(err))
+	if setErr := s.cache.Set(ctx, username, password, *loggedInUser); setErr != nil {
+		s.logger.Error("failed to cache user", zap.String("username", username), zap.Error(setErr))
 	}
 
 	return loggedInUser, nil
@@ -99,8 +96,8 @@ func (s *Service) ChangePassword(ctx context.Context, username, currentPassword,
 		return err
 	}
 
-	if err := s.cache.Delete(ctx, username, currentPassword); err != nil {
-		return err
+	if delErr := s.cache.Delete(ctx, username, currentPassword); delErr != nil {
+		return delErr
 	}
 
 	passwordHash, err := crypto.MakeBCryptHash(newPassword)

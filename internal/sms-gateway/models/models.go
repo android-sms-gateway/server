@@ -15,22 +15,6 @@ type SoftDeletableModel struct {
 	DeletedAt *time.Time `gorm:"<-:update"`
 }
 
-type User struct {
-	SoftDeletableModel
-
-	ID           string   `gorm:"primaryKey;type:varchar(32)"`
-	PasswordHash string   `gorm:"not null;type:varchar(72)"`
-	Devices      []Device `gorm:"-,foreignKey:UserID;constraint:OnDelete:CASCADE"`
-}
-
-func NewUser(id, passwordHash string) *User {
-	//nolint:exhaustruct // pertial constructor
-	return &User{
-		ID:           id,
-		PasswordHash: passwordHash,
-	}
-}
-
 type Device struct {
 	SoftDeletableModel
 

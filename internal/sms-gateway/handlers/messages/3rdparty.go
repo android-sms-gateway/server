@@ -9,10 +9,11 @@ import (
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/converters"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/permissions"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"github.com/capcom6/go-helpers/slices"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -55,6 +56,7 @@ func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyContr
 //	@Summary		Enqueue message
 //	@Description	Enqueues a message for sending. If `deviceId` is set, the specified device is used; otherwise a random registered device is chosen.
 //	@Security		ApiAuth
+//	@Security		JWTAuth
 //	@Tags			User, Messages
 //	@Accept			json
 //	@Produce		json
@@ -64,13 +66,14 @@ func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyContr
 //	@Success		202					{object}	smsgateway.GetMessageResponse	"Message enqueued"
 //	@Failure		400					{object}	smsgateway.ErrorResponse		"Invalid request"
 //	@Failure		401					{object}	smsgateway.ErrorResponse		"Unauthorized"
+//	@Failure		403					{object}	smsgateway.ErrorResponse		"Forbidden"
 //	@Failure		409					{object}	smsgateway.ErrorResponse		"Message with such ID already exists"
 //	@Failure		500					{object}	smsgateway.ErrorResponse		"Internal server error"
 //	@Header			202					{string}	Location						"Get message state URL"
 //	@Router			/3rdparty/v1/messages [post]
 //
 // Enqueue message.
-func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
+func (h *ThirdPartyController) post(user users.User, c *fiber.Ctx) error {
 	var params thirdPartyPostQueryParams
 	if err := h.QueryParserValidator(c, &params); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
@@ -172,6 +175,7 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 //	@Summary		Get messages
 //	@Description	Retrieves a list of messages with filtering and pagination
 //	@Security		ApiAuth
+//	@Security		JWTAuth
 //	@Tags			User, Messages
 //	@Produce		json
 //	@Param			from		query		string							false	"Start date in RFC3339 format"			Format(date-time)
@@ -183,11 +187,12 @@ func (h *ThirdPartyController) post(user models.User, c *fiber.Ctx) error {
 //	@Success		200			{object}	smsgateway.GetMessagesResponse	"A list of messages"
 //	@Failure		400			{object}	smsgateway.ErrorResponse		"Invalid request"
 //	@Failure		401			{object}	smsgateway.ErrorResponse		"Unauthorized"
+//	@Failure		403			{object}	smsgateway.ErrorResponse		"Forbidden"
 //	@Failure		500			{object}	smsgateway.ErrorResponse		"Internal server error"
 //	@Router			/3rdparty/v1/messages [get]
 //
 // Get message history.
-func (h *ThirdPartyController) list(user models.User, c *fiber.Ctx) error {
+func (h *ThirdPartyController) list(user users.User, c *fiber.Ctx) error {
 	params := new(thirdPartyGetQueryParams)
 	if err := h.QueryParserValidator(c, params); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
@@ -208,17 +213,19 @@ func (h *ThirdPartyController) list(user models.User, c *fiber.Ctx) error {
 //	@Summary		Get message state
 //	@Description	Returns message state by ID
 //	@Security		ApiAuth
+//	@Security		JWTAuth
 //	@Tags			User, Messages
 //	@Produce		json
 //	@Param			id	path		string							true	"Message ID"
 //	@Success		200	{object}	smsgateway.GetMessageResponse	"Message state"
 //	@Failure		400	{object}	smsgateway.ErrorResponse		"Invalid request"
 //	@Failure		401	{object}	smsgateway.ErrorResponse		"Unauthorized"
+//	@Failure		403	{object}	smsgateway.ErrorResponse		"Forbidden"
 //	@Failure		500	{object}	smsgateway.ErrorResponse		"Internal server error"
 //	@Router			/3rdparty/v1/messages/{id} [get]
 //
 // Get message state.
-func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
+func (h *ThirdPartyController) get(user users.User, c *fiber.Ctx) error {
 	id := c.Params("id")
 
 	state, err := h.messagesSvc.GetState(user, id)
@@ -237,6 +244,7 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 //	@Summary		Request inbox messages export
 //	@Description	Initiates process of inbox messages export via webhooks. For each message the `sms:received` webhook will be triggered. The webhooks will be triggered without specific order.
 //	@Security		ApiAuth
+//	@Security		JWTAuth
 //	@Tags			User, Messages
 //	@Accept			json
 //	@Produce		json
@@ -244,11 +252,12 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 //	@Success		202		{object}	object								"Inbox export request accepted"
 //	@Failure		400		{object}	smsgateway.ErrorResponse			"Invalid request"
 //	@Failure		401		{object}	smsgateway.ErrorResponse			"Unauthorized"
+//	@Failure		403		{object}	smsgateway.ErrorResponse			"Forbidden"
 //	@Failure		500		{object}	smsgateway.ErrorResponse			"Internal server error"
 //	@Router			/3rdparty/v1/messages/inbox/export [post]
 //
 // Export inbox.
-func (h *ThirdPartyController) postInboxExport(user models.User, c *fiber.Ctx) error {
+func (h *ThirdPartyController) postInboxExport(user users.User, c *fiber.Ctx) error {
 	req := new(smsgateway.MessagesExportRequest)
 	if err := h.BodyParserValidator(c, req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
@@ -315,9 +324,9 @@ func (h *ThirdPartyController) errorHandler(c *fiber.Ctx) error {
 func (h *ThirdPartyController) Register(router fiber.Router) {
 	router.Use(h.errorHandler)
 
-	router.Get("", userauth.WithUser(h.list))
-	router.Post("", userauth.WithUser(h.post))
-	router.Get(":id", userauth.WithUser(h.get)).Name(route3rdPartyGetMessage)
+	router.Get("", permissions.RequireScope(ScopeList), userauth.WithUser(h.list))
+	router.Post("", permissions.RequireScope(ScopeSend), userauth.WithUser(h.post))
+	router.Get(":id", permissions.RequireScope(ScopeRead), userauth.WithUser(h.get)).Name(route3rdPartyGetMessage)
 
-	router.Post("inbox/export", userauth.WithUser(h.postInboxExport))
+	router.Post("inbox/export", permissions.RequireScope(ScopeExport), userauth.WithUser(h.postInboxExport))
 }

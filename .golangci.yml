@@ -252,12 +252,12 @@ linters:
         - ^os/exec.Cmd$
         - ^reflect.StructField$
         # public libs
-        - "^github.com/gofiber/.+Config$"
-        - "^gopkg.in/telebot.v4.LongPoller$"
-        - "^gopkg.in/telebot.v4.ReplyMarkup$"
-        - "^gopkg.in/telebot.v4.Settings$"
+        - ^firebase.google.com/go/v4/messaging.AndroidConfig$
+        - ^firebase.google.com/go/v4/messaging.Message$
         - ^github.com/aws/aws-sdk-go-v2/service/s3.+Input$
         - ^github.com/aws/aws-sdk-go-v2/service/s3/types.ObjectIdentifier$
+        - ^github.com/gofiber/.+Config$
+        - ^github.com/golang-jwt/jwt/v5.+Claims$
         - ^github.com/mitchellh/mapstructure.DecoderConfig$
         - ^github.com/prometheus/client_golang/.+Opts$
         - ^github.com/secsy/goftp.Config$
@@ -273,10 +273,11 @@ linters:
         - ^github.com/urfave/cli.v3.FlagBase$
         - ^golang.org/x/tools/go/analysis.Analyzer$
         - ^google.golang.org/protobuf/.+Options$
+        - ^gopkg.in/telebot.v4.LongPoller$
+        - ^gopkg.in/telebot.v4.ReplyMarkup$
+        - ^gopkg.in/telebot.v4.Settings$
         - ^gopkg.in/yaml.v3.Node$
         - ^gorm.io/gorm/clause.+$
-        - ^firebase.google.com/go/v4/messaging.Message$
-        - ^firebase.google.com/go/v4/messaging.AndroidConfig$
       # Allows empty structures in return statements.
       # Default: false
       allow-empty-returns: true

@@ -14,6 +14,11 @@ const (
 //	@securitydefinitions.basic	ApiAuth
 //	@description				User authentication
 
+//	@securitydefinitions.apikey	JWTAuth
+//	@in							header
+//	@name						Authorization
+//	@description				JWT authentication
+
 //	@securitydefinitions.apikey	UserCode
 //	@in							header
 //	@name						Authorization

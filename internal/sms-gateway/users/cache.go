@@ -15,18 +15,27 @@ import (
 const loginCacheTTL = time.Hour
 
 type loginCacheWrapper struct {
-	ID string
+	ID string `json:"id"`
 
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (w *loginCacheWrapper) Unmarshal(data []byte) error {
-	return json.Unmarshal(data, w)
+	if err := json.Unmarshal(data, w); err != nil {
+		return fmt.Errorf("failed to unmarshal login cache wrapper: %w", err)
+	}
+
+	return nil
 }
 
 func (w *loginCacheWrapper) Marshal() ([]byte, error) {
-	return json.Marshal(w)
+	data, err := json.Marshal(w)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal login cache wrapper: %w", err)
+	}
+
+	return data, nil
 }
 
 type loginCache struct {

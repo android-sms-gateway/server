@@ -8,10 +8,18 @@ import (
 )
 
 type userModel struct {
+	models.SoftDeletableModel
+
 	ID           string `gorm:"primaryKey;type:varchar(32)"`
 	PasswordHash string `gorm:"not null;type:varchar(72)"`
+}
 
-	models.SoftDeletableModel
+func newUserModel(id string, passwordHash string) *userModel {
+	//nolint:exhaustruct // partial constructor
+	return &userModel{
+		ID:           id,
+		PasswordHash: passwordHash,
+	}
 }
 
 func (u *userModel) TableName() string {

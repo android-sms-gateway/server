@@ -21,6 +21,7 @@ func Module() fx.Option {
 	)
 }
 
+//nolint:gochecknoinits // framework-specific
 func init() {
 	db.RegisterMigration(Migrate)
 }
