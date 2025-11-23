@@ -5,34 +5,23 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/logs"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/messages"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/jwtauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/settings"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/thirdparty"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/webhooks"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/jwt"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-type ThirdPartyHandlerParams struct {
-	fx.In
-
-	HealthHandler   *HealthHandler
-	MessagesHandler *messages.ThirdPartyController
-	WebhooksHandler *webhooks.ThirdPartyController
-	DevicesHandler  *devices.ThirdPartyController
-	SettingsHandler *settings.ThirdPartyController
-	LogsHandler     *logs.ThirdPartyController
-
-	AuthSvc *auth.Service
-
-	Logger    *zap.Logger
-	Validator *validator.Validate
-}
-
 type thirdPartyHandler struct {
 	base.Handler
+
+	usersSvc *users.Service
+	jwtSvc   jwt.Service
 
 	healthHandler   *HealthHandler
 	messagesHandler *messages.ThirdPartyController
@@ -40,8 +29,41 @@ type thirdPartyHandler struct {
 	devicesHandler  *devices.ThirdPartyController
 	settingsHandler *settings.ThirdPartyController
 	logsHandler     *logs.ThirdPartyController
+	authHandler     *thirdparty.AuthHandler
+}
 
-	authSvc *auth.Service
+func newThirdPartyHandler(
+	usersSvc *users.Service,
+	jwtService jwt.Service,
+
+	healthHandler *HealthHandler,
+	messagesHandler *messages.ThirdPartyController,
+	webhooksHandler *webhooks.ThirdPartyController,
+	devicesHandler *devices.ThirdPartyController,
+	settingsHandler *settings.ThirdPartyController,
+	logsHandler *logs.ThirdPartyController,
+	authHandler *thirdparty.AuthHandler,
+
+	logger *zap.Logger,
+	validator *validator.Validate,
+) *thirdPartyHandler {
+	return &thirdPartyHandler{
+		Handler: base.Handler{
+			Logger:    logger,
+			Validator: validator,
+		},
+
+		usersSvc: usersSvc,
+		jwtSvc:   jwtService,
+
+		healthHandler:   healthHandler,
+		messagesHandler: messagesHandler,
+		webhooksHandler: webhooksHandler,
+		devicesHandler:  devicesHandler,
+		settingsHandler: settingsHandler,
+		logsHandler:     logsHandler,
+		authHandler:     authHandler,
+	}
 }
 
 func (h *thirdPartyHandler) Register(router fiber.Router) {
@@ -50,9 +72,12 @@ func (h *thirdPartyHandler) Register(router fiber.Router) {
 	h.healthHandler.Register(router)
 
 	router.Use(
-		userauth.NewBasic(h.authSvc),
+		userauth.NewBasic(h.usersSvc),
+		jwtauth.NewJWT(h.jwtSvc, h.usersSvc),
 		userauth.UserRequired(),
 	)
+
+	h.authHandler.Register(router.Group("/auth"))
 
 	h.messagesHandler.Register(router.Group("/message")) // TODO: remove after 2025-12-31
 	h.messagesHandler.Register(router.Group("/messages"))
@@ -65,17 +90,4 @@ func (h *thirdPartyHandler) Register(router fiber.Router) {
 	h.webhooksHandler.Register(router.Group("/webhooks"))
 
 	h.logsHandler.Register(router.Group("/logs"))
-}
-
-func newThirdPartyHandler(params ThirdPartyHandlerParams) *thirdPartyHandler {
-	return &thirdPartyHandler{
-		Handler:         base.Handler{Logger: params.Logger.Named("ThirdPartyHandler"), Validator: params.Validator},
-		healthHandler:   params.HealthHandler,
-		messagesHandler: params.MessagesHandler,
-		webhooksHandler: params.WebhooksHandler,
-		devicesHandler:  params.DevicesHandler,
-		settingsHandler: params.SettingsHandler,
-		logsHandler:     params.LogsHandler,
-		authSvc:         params.AuthSvc,
-	}
 }

@@ -7,6 +7,7 @@ import (
 	appconfig "github.com/android-sms-gateway/server/internal/config"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/cache"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/jwt"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	appdb "github.com/android-sms-gateway/server/internal/sms-gateway/modules/db"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
@@ -20,6 +21,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/online"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/openapi"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/pubsub"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"github.com/android-sms-gateway/server/pkg/health"
 	"github.com/capcom6/go-infra-fx/cli"
 	"github.com/capcom6/go-infra-fx/db"
@@ -40,6 +42,7 @@ func Module() fx.Option {
 		validator.Module,
 		openapi.Module(),
 		handlers.Module(),
+		users.Module(),
 		auth.Module(),
 		push.Module(),
 		db.Module,
@@ -54,6 +57,7 @@ func Module() fx.Option {
 		metrics.Module(),
 		sse.Module(),
 		online.Module(),
+		jwt.Module(),
 	)
 }
 

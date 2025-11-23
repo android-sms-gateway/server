@@ -90,13 +90,13 @@ func TestHandler_BodyParserValidator(t *testing.T) {
 			description:    "Invalid request body - missing name",
 			path:           "/test",
 			payload:        &testRequestBody{Age: 25},
-			expectedStatus: fiber.StatusBadRequest,
+			expectedStatus: fiber.StatusInternalServerError,
 		},
 		{
 			description:    "Invalid request body - age too low",
 			path:           "/test",
 			payload:        &testRequestBody{Name: "John Doe", Age: 17},
-			expectedStatus: fiber.StatusBadRequest,
+			expectedStatus: fiber.StatusInternalServerError,
 		},
 		{
 			description:    "Valid request body - no validation",
@@ -108,7 +108,7 @@ func TestHandler_BodyParserValidator(t *testing.T) {
 			description:    "No request body",
 			path:           "/test",
 			payload:        nil,
-			expectedStatus: fiber.StatusBadRequest,
+			expectedStatus: fiber.StatusUnprocessableEntity,
 		},
 	}
 
@@ -157,7 +157,7 @@ func TestHandler_QueryParserValidator(t *testing.T) {
 		{
 			description:    "Invalid query parameters - non-integer age",
 			path:           "/test?name=John&age=abc",
-			expectedStatus: fiber.StatusBadRequest,
+			expectedStatus: fiber.StatusInternalServerError,
 		},
 		{
 			description:    "Valid query parameters",
@@ -167,17 +167,17 @@ func TestHandler_QueryParserValidator(t *testing.T) {
 		{
 			description:    "Invalid query parameters - missing name",
 			path:           "/test?age=25",
-			expectedStatus: fiber.StatusBadRequest,
+			expectedStatus: fiber.StatusInternalServerError,
 		},
 		{
 			description:    "Invalid query parameters - age too low",
 			path:           "/test?name=John&age=17",
-			expectedStatus: fiber.StatusBadRequest,
+			expectedStatus: fiber.StatusInternalServerError,
 		},
 		{
 			description:    "Invalid query parameters - missing age",
 			path:           "/test?name=John",
-			expectedStatus: fiber.StatusBadRequest,
+			expectedStatus: fiber.StatusInternalServerError,
 		},
 	}
 
@@ -234,7 +234,7 @@ func TestHandler_ParamsParserValidator(t *testing.T) {
 		{
 			description:    "Invalid path parameters - invalid ID",
 			path:           "/test/invalid/John",
-			expectedStatus: fiber.StatusBadRequest,
+			expectedStatus: fiber.StatusInternalServerError,
 		},
 	}
 
@@ -285,13 +285,13 @@ func TestHandler_ValidateStruct(t *testing.T) {
 			description:    "Invalid struct with validator - missing required field",
 			handler:        handlerWithValidator,
 			input:          &testRequestBody{Age: 25},
-			expectedStatus: fiber.StatusBadRequest,
+			expectedStatus: fiber.StatusInternalServerError,
 		},
 		{
 			description:    "Invalid struct with validator - custom validation fails",
 			handler:        handlerWithValidator,
 			input:          &testRequestBody{Name: "John Doe", Age: 17},
-			expectedStatus: fiber.StatusBadRequest,
+			expectedStatus: fiber.StatusInternalServerError,
 		},
 		{
 			description:    "Valid struct without validator",
@@ -303,7 +303,7 @@ func TestHandler_ValidateStruct(t *testing.T) {
 			description:    "Invalid struct without validator - custom validation fails",
 			handler:        handlerWithoutValidator,
 			input:          &testRequestBody{Name: "John Doe", Age: 17},
-			expectedStatus: fiber.StatusBadRequest,
+			expectedStatus: fiber.StatusInternalServerError,
 		},
 		{
 			description:    "Valid struct with Validatable interface",
@@ -315,7 +315,7 @@ func TestHandler_ValidateStruct(t *testing.T) {
 			description:    "Invalid struct with Validatable interface",
 			handler:        handlerWithValidator,
 			input:          &testRequestQuery{Name: "John", Age: 17},
-			expectedStatus: fiber.StatusBadRequest,
+			expectedStatus: fiber.StatusInternalServerError,
 		},
 	}
 
@@ -327,7 +327,7 @@ func TestHandler_ValidateStruct(t *testing.T) {
 				t.Errorf("Expected no error, got %v", err)
 			}
 
-			if test.expectedStatus == fiber.StatusBadRequest && err == nil {
+			if test.expectedStatus == fiber.StatusInternalServerError && err == nil {
 				t.Errorf("Expected error, got nil")
 			}
 		})

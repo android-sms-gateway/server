@@ -50,7 +50,12 @@ func New(config Config, tokens *Repository, metrics *Metrics) (Service, error) {
 	}, nil
 }
 
-func (s *service) GenerateToken(ctx context.Context, userID string, scopes []string, ttl time.Duration) (*TokenInfo, error) {
+func (s *service) GenerateToken(
+	ctx context.Context,
+	userID string,
+	scopes []string,
+	ttl time.Duration,
+) (*TokenInfo, error) {
 	var tokenInfo *TokenInfo
 	var err error
 
@@ -119,7 +124,7 @@ func (s *service) ParseToken(ctx context.Context, token string) (*Claims, error)
 		parsedToken, parseErr := jwt.ParseWithClaims(
 			token,
 			new(Claims),
-			func(t *jwt.Token) (any, error) {
+			func(_ *jwt.Token) (any, error) {
 				return []byte(s.config.Secret), nil
 			},
 			jwt.WithExpirationRequired(),
