@@ -22,6 +22,7 @@ func (tokenModel) TableName() string {
 }
 
 func newTokenModel(id, userID string, expiresAt time.Time) *tokenModel {
+	//nolint:exhaustruct // partial constructor
 	return &tokenModel{
 		ID:        id,
 		UserID:    userID,

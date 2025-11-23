@@ -18,11 +18,131 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/3rdparty/v1/auth/token": {
+            "post": {
+                "security": [
+                    {
+                        "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
+                    }
+                ],
+                "description": "Generate new access token with specified scopes and ttl",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User",
+                    "Auth"
+                ],
+                "summary": "Generate token",
+                "parameters": [
+                    {
+                        "description": "Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.TokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Token",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.TokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/3rdparty/v1/auth/token/{jti}": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
+                    }
+                ],
+                "description": "Revoke access token with specified jti",
+                "tags": [
+                    "User",
+                    "Auth"
+                ],
+                "summary": "Revoke token",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT ID",
+                        "name": "jti",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/3rdparty/v1/devices": {
             "get": {
                 "security": [
                     {
                         "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
                     }
                 ],
                 "description": "Returns list of registered devices",
@@ -56,6 +176,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -70,6 +196,9 @@ const docTemplate = `{
                 "security": [
                     {
                         "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
                     }
                 ],
                 "description": "Removes device",
@@ -102,6 +231,12 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
@@ -152,6 +287,9 @@ const docTemplate = `{
                 "security": [
                     {
                         "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
                     }
                 ],
                 "description": "Retrieve a list of log entries within a specified time range.",
@@ -195,6 +333,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -215,6 +359,9 @@ const docTemplate = `{
                 "security": [
                     {
                         "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
                     }
                 ],
                 "description": "Retrieves a list of messages with filtering and pagination",
@@ -290,6 +437,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -302,6 +455,9 @@ const docTemplate = `{
                 "security": [
                     {
                         "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
                     }
                 ],
                 "description": "Enqueues a message for sending. If ` + "`" + `deviceId` + "`" + ` is set, the specified device is used; otherwise a random registered device is chosen.",
@@ -366,6 +522,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
                     "409": {
                         "description": "Message with such ID already exists",
                         "schema": {
@@ -386,6 +548,9 @@ const docTemplate = `{
                 "security": [
                     {
                         "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
                     }
                 ],
                 "description": "Initiates process of inbox messages export via webhooks. For each message the ` + "`" + `sms:received` + "`" + ` webhook will be triggered. The webhooks will be triggered without specific order.",
@@ -430,6 +595,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -444,6 +615,9 @@ const docTemplate = `{
                 "security": [
                     {
                         "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
                     }
                 ],
                 "description": "Returns message state by ID",
@@ -483,6 +657,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -497,6 +677,9 @@ const docTemplate = `{
                 "security": [
                     {
                         "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
                     }
                 ],
                 "description": "Returns settings for a specific user",
@@ -521,6 +704,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -533,6 +722,9 @@ const docTemplate = `{
                 "security": [
                     {
                         "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
                     }
                 ],
                 "description": "Replaces settings",
@@ -577,6 +769,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -589,6 +787,9 @@ const docTemplate = `{
                 "security": [
                     {
                         "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
                     }
                 ],
                 "description": "Partially updates settings for a specific user",
@@ -633,6 +834,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -647,6 +854,9 @@ const docTemplate = `{
                 "security": [
                     {
                         "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
                     }
                 ],
                 "description": "Returns list of registered webhooks",
@@ -674,6 +884,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -686,6 +902,9 @@ const docTemplate = `{
                 "security": [
                     {
                         "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
                     }
                 ],
                 "description": "Registers webhook. If webhook with same ID already exists, it will be replaced",
@@ -730,6 +949,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -744,6 +969,9 @@ const docTemplate = `{
                 "security": [
                     {
                         "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
                     }
                 ],
                 "description": "Deletes webhook",
@@ -773,6 +1001,12 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
@@ -874,7 +1108,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "data": {
-                    "description": "Base64-encoded payload",
+                    "description": "Data is the base64-encoded payload.",
                     "type": "string",
                     "format": "byte",
                     "maxLength": 65535,
@@ -882,7 +1116,7 @@ const docTemplate = `{
                     "example": "SGVsbG8gV29ybGQh"
                 },
                 "port": {
-                    "description": "Destination port",
+                    "description": "Port is the destination port.",
                     "type": "integer",
                     "maximum": 65535,
                     "minimum": 1,
@@ -1215,7 +1449,7 @@ const docTemplate = `{
                     "example": true
                 },
                 "message": {
-                    "description": "Message content\nDeprecated: use TextMessage instead",
+                    "description": "Message content (deprecated, use TextMessage instead)",
                     "type": "string",
                     "maxLength": 65535,
                     "example": "Hello World!"
@@ -1259,13 +1493,13 @@ const docTemplate = `{
                     ]
                 },
                 "ttl": {
-                    "description": "Time to live in seconds (conflicts with ` + "`" + `validUntil` + "`" + `)",
+                    "description": "Time to live in seconds (conflicts with ` + "`" + `ValidUntil` + "`" + `)",
                     "type": "integer",
                     "minimum": 5,
                     "example": 86400
                 },
                 "validUntil": {
-                    "description": "Valid until (conflicts with ` + "`" + `ttl` + "`" + `)",
+                    "description": "Valid until (conflicts with ` + "`" + `TTL` + "`" + `)",
                     "type": "string",
                     "example": "2020-01-01T00:00:00Z"
                 },
@@ -1278,7 +1512,6 @@ const docTemplate = `{
         },
         "smsgateway.MessagePriority": {
             "type": "integer",
-            "format": "int32",
             "enum": [
                 -128,
                 0,
@@ -1288,12 +1521,6 @@ const docTemplate = `{
             "x-enum-comments": {
                 "PriorityBypassThreshold": "Threshold at which messages bypass limits and delays"
             },
-            "x-enum-descriptions": [
-                "",
-                "",
-                "Threshold at which messages bypass limits and delays",
-                ""
-            ],
             "x-enum-varnames": [
                 "PriorityMinimum",
                 "PriorityDefault",
@@ -1411,13 +1638,6 @@ const docTemplate = `{
                 "ProcessingStateProcessed": "Processed (received by device)",
                 "ProcessingStateSent": "Sent"
             },
-            "x-enum-descriptions": [
-                "Pending",
-                "Processed (received by device)",
-                "Sent",
-                "Delivered",
-                "Failed"
-            ],
             "x-enum-varnames": [
                 "ProcessingStatePending",
                 "ProcessingStateProcessed",
@@ -1587,11 +1807,52 @@ const docTemplate = `{
             ],
             "properties": {
                 "text": {
-                    "description": "Message text",
+                    "description": "Text is the message text.",
                     "type": "string",
                     "maxLength": 65535,
                     "minLength": 1,
                     "example": "Hello World!"
+                }
+            }
+        },
+        "smsgateway.TokenRequest": {
+            "type": "object",
+            "required": [
+                "scopes"
+            ],
+            "properties": {
+                "scopes": {
+                    "description": "scopes for which the access token is valid",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ttl": {
+                    "description": "lifetime of the access token in seconds",
+                    "type": "integer"
+                }
+            }
+        },
+        "smsgateway.TokenResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "description": "actual access token",
+                    "type": "string"
+                },
+                "expires_at": {
+                    "description": "time at which the access token is no longer valid",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "unique identifier for the access token",
+                    "type": "string"
+                },
+                "token_type": {
+                    "description": "type of the access token",
+                    "type": "string"
                 }
             }
         },
@@ -1633,28 +1894,43 @@ const docTemplate = `{
         "smsgateway.WebhookEvent": {
             "type": "string",
             "enum": [
-                "sms:received",
+                "mms:received",
                 "sms:data-received",
-                "sms:sent",
                 "sms:delivered",
                 "sms:failed",
-                "system:ping",
-                "mms:received"
+                "sms:received",
+                "sms:sent",
+                "system:ping"
             ],
+            "x-enum-comments": {
+                "WebhookEventMmsReceived": "Triggered when an MMS is received.",
+                "WebhookEventSmsDataReceived": "Triggered when a data SMS is received.",
+                "WebhookEventSmsDelivered": "Triggered when an SMS is delivered.",
+                "WebhookEventSmsFailed": "Triggered when an SMS processing fails.",
+                "WebhookEventSmsReceived": "Triggered when an SMS is received.",
+                "WebhookEventSmsSent": "Triggered when an SMS is sent.",
+                "WebhookEventSystemPing": "Triggered when the device pings the server."
+            },
             "x-enum-varnames": [
-                "WebhookEventSmsReceived",
+                "WebhookEventMmsReceived",
                 "WebhookEventSmsDataReceived",
-                "WebhookEventSmsSent",
                 "WebhookEventSmsDelivered",
                 "WebhookEventSmsFailed",
-                "WebhookEventSystemPing",
-                "WebhookEventMmsReceived"
+                "WebhookEventSmsReceived",
+                "WebhookEventSmsSent",
+                "WebhookEventSystemPing"
             ]
         }
     },
     "securityDefinitions": {
         "ApiAuth": {
             "type": "basic"
+        },
+        "JWTAuth": {
+            "description": "JWT authentication",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         },
         "MobileToken": {
             "description": "Mobile device token",

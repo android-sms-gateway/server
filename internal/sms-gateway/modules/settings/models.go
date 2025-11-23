@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"gorm.io/gorm"
 )
 
@@ -13,7 +14,7 @@ type DeviceSettings struct {
 	UserID   string         `gorm:"primaryKey;not null;type:varchar(32)"`
 	Settings map[string]any `gorm:"not null;type:json;serializer:json"`
 
-	User models.User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
+	User users.User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 }
 
 func NewDeviceSettings(userID string, settings map[string]any) *DeviceSettings {

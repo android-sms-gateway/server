@@ -38,15 +38,19 @@ cache: # cache config
   url: memory:// # cache url (memory:// or redis://) [CACHE__URL]
 pubsub: # pubsub config
   url: memory:// # pubsub url (memory:// or redis://) [PUBSUB__URL]
+jwt:
+  secret: # jwt secret (leave empty to disable JWT functionality) [JWT__SECRET]
+  ttl: 24h # jwt ttl [JWT__TTL]
+  issuer: # jwt issuer [JWT__ISSUER]
 
 ## Worker Config ##
 
 tasks: # tasks config
   messages_hashing:
-    interval: 168h # task execution interval in hours [TASKS__MESSAGES_HASHING__INTERVAL]
+    interval: 168h # task execution interval [TASKS__MESSAGES_HASHING__INTERVAL]
   messages_cleanup:
-    interval: 24h # task execution interval in hours [TASKS__MESSAGES_CLEANUP__INTERVAL]
-    max_age: 720h # messages max age in hours [TASKS__MESSAGES_CLEANUP__MAX_AGE]
+    interval: 24h # task execution interval [TASKS__MESSAGES_CLEANUP__INTERVAL]
+    max_age: 720h # messages max age [TASKS__MESSAGES_CLEANUP__MAX_AGE]
   devices_cleanup:
-    interval: 24h # task execution interval in hours [TASKS__DEVICES_CLEANUP__INTERVAL]
-    max_age: 8760h # inactive devices max age in hours [TASKS__DEVICES_CLEANUP__MAX_AGE]
+    interval: 24h # task execution interval [TASKS__DEVICES_CLEANUP__INTERVAL]
+    max_age: 8760h # inactive devices max age [TASKS__DEVICES_CLEANUP__MAX_AGE]

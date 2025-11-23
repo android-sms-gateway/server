@@ -51,9 +51,9 @@ func (r *repository) Insert(user *userModel) error {
 	return nil
 }
 
-func (r *repository) UpdatePassword(ID string, passwordHash string) error {
+func (r *repository) UpdatePassword(id string, passwordHash string) error {
 	if err := r.db.Model((*userModel)(nil)).
-		Where("id = ?", ID).
+		Where("id = ?", id).
 		Update("password_hash", passwordHash).Error; err != nil {
 		return fmt.Errorf("can't update password: %w", err)
 	}

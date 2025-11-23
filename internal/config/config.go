@@ -1,5 +1,7 @@
 package config
 
+import "time"
+
 type GatewayMode string
 
 const (
@@ -16,6 +18,7 @@ type Config struct {
 	Messages Messages  `yaml:"messages"` // messages config
 	Cache    Cache     `yaml:"cache"`    // cache (memory or redis) config
 	PubSub   PubSub    `yaml:"pubsub"`   // pubsub (memory or redis) config
+	JWT      JWT       `yaml:"jwt"`      // jwt config
 }
 
 type Gateway struct {
@@ -81,6 +84,12 @@ type PubSub struct {
 	BufferSize uint   `yaml:"buffer_size" envconfig:"PUBSUB__BUFFER_SIZE"`
 }
 
+type JWT struct {
+	Secret string   `yaml:"secret" envconfig:"JWT__SECRET"`
+	TTL    Duration `yaml:"ttl"    envconfig:"JWT__TTL"`
+	Issuer string   `yaml:"issuer" envconfig:"JWT__ISSUER"`
+}
+
 func Default() Config {
 	//nolint:exhaustruct,mnd // default values
 	return Config{
@@ -112,6 +121,10 @@ func Default() Config {
 		PubSub: PubSub{
 			URL:        "memory://",
 			BufferSize: 128,
+		},
+		JWT: JWT{
+			TTL:    Duration(time.Hour * 24),
+			Issuer: "sms-gate.app",
 		},
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/logs"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/messages"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/settings"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/thirdparty"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/webhooks"
 	"github.com/capcom6/go-infra-fx/http"
 	"go.uber.org/fx"
@@ -37,5 +38,6 @@ func Module() fx.Option {
 			events.NewMobileController,
 			fx.Private,
 		),
+		thirdparty.Module(),
 	)
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"gorm.io/gorm"
 )
 
@@ -20,7 +21,7 @@ type Webhook struct {
 	URL   string                  `json:"url"   validate:"required,http_url" gorm:"not null;type:varchar(256)"`
 	Event smsgateway.WebhookEvent `json:"event"                              gorm:"not null;type:varchar(32)"`
 
-	User   models.User    `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
+	User   users.User     `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 	Device *models.Device `gorm:"foreignKey:DeviceID;constraint:OnDelete:CASCADE"`
 }
 
