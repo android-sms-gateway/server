@@ -136,7 +136,7 @@ func (s *Service) AuthorizeUserByCode(code string) (*users.User, error) {
 		return nil, fmt.Errorf("failed to get user by code: %w", err)
 	}
 
-	user, err := s.usersSvc.GetByUsername(userID)
+	user, err := s.usersSvc.GetByID(userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}

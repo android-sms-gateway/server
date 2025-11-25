@@ -26,7 +26,7 @@ func NewJWT(jwtSvc jwt.Service, usersSvc *users.Service) fiber.Handler {
 			return fiber.ErrUnauthorized
 		}
 
-		user, err := usersSvc.GetByUsername(claims.UserID)
+		user, err := usersSvc.GetByID(claims.UserID)
 		if err != nil {
 			if !errors.Is(err, users.ErrNotFound) {
 				return fiber.ErrInternalServerError

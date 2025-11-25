@@ -33,15 +33,6 @@ func NewService(
 }
 
 func (s *Service) Create(username, password string) (*User, error) {
-	exists, err := s.users.Exists(username)
-	if err != nil {
-		return nil, err
-	}
-
-	if exists {
-		return nil, fmt.Errorf("%w: %s", ErrExists, username)
-	}
-
 	passwordHash, err := crypto.MakeBCryptHash(password)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash password: %w", err)
@@ -56,8 +47,8 @@ func (s *Service) Create(username, password string) (*User, error) {
 	return newUser(user), nil
 }
 
-func (s *Service) GetByUsername(username string) (*User, error) {
-	user, err := s.users.GetByID(username)
+func (s *Service) GetByID(id string) (*User, error) {
+	user, err := s.users.GetByID(id)
 	if err != nil {
 		return nil, err
 	}

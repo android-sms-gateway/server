@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/android-sms-gateway/server/pkg/mysql"
 	"gorm.io/gorm"
 )
 
@@ -45,6 +46,10 @@ func (r *repository) GetByID(id string) (*userModel, error) {
 
 func (r *repository) Insert(user *userModel) error {
 	if err := r.db.Create(user).Error; err != nil {
+		if mysql.IsDuplicateKeyViolation(err) {
+			return fmt.Errorf("%w: %w", ErrExists, err)
+		}
+
 		return fmt.Errorf("can't create user: %w", err)
 	}
 
