@@ -69,7 +69,7 @@ jobs:
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.13.5
+          terraform_version: 1.4.6
 
       - name: Initialize Terraform
         working-directory: deployments/docker-swarm-terraform
