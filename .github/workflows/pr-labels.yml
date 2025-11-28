@@ -11,6 +11,6 @@ jobs:
       pull-requests: write # Grant permission to modify labels
     steps:
       - name: Remove specific labels
-        uses: actions-ecosystem/action-remove-labels@v1 # Use a marketplace action for label removal
-        with:
-          labels: "ready,deployed" # Comma-separated list of labels to remove
+        run: gh pr edit ${{ github.event.pull_request.number }} --remove-label "ready,deployed"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
