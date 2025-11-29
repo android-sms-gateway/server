@@ -19,6 +19,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/webhooks"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/online"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/openapi"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/otp"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/pubsub"
 	"github.com/android-sms-gateway/server/pkg/health"
 	"github.com/capcom6/go-infra-fx/cli"
@@ -54,6 +55,7 @@ func Module() fx.Option {
 		metrics.Module(),
 		sse.Module(),
 		online.Module(),
+		otp.Module(),
 	)
 }
 
