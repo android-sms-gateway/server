@@ -9,7 +9,7 @@ groups:
           service: jwt
         annotations:
           summary: "High JWT validation error rate"
-          description: "JWT validation error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+          description: "JWT validation error rate is {{ $value | humanizePercentage }} (threshold: 10%)"
 
       - alert: JWT_Issuance_Latency_High
         expr: histogram_quantile(0.99, rate(sms_auth_jwt_issuance_duration_seconds_bucket[5m])) > 0.5
