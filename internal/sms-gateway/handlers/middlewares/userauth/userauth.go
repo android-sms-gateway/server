@@ -50,7 +50,7 @@ func NewBasic(authSvc *auth.Service) fiber.Handler {
 			return fiber.ErrUnauthorized
 		}
 
-		c.Locals(localsUser, user)
+		setUser(c, user)
 
 		return c.Next()
 	}
@@ -77,10 +77,14 @@ func NewCode(authSvc *auth.Service) fiber.Handler {
 			return fiber.ErrUnauthorized
 		}
 
-		c.Locals(localsUser, user)
+		setUser(c, user)
 
 		return c.Next()
 	}
+}
+
+func setUser(c *fiber.Ctx, user *models.User) {
+	c.Locals(localsUser, user)
 }
 
 // HasUser checks if a user is present in the Locals of the given context.
