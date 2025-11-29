@@ -23,7 +23,8 @@ func (o *options) apply(opts ...Option) {
 // WithTTL sets the TTL (time to live) for an item.
 //
 // The item will expire after the given duration from the time of insertion.
-// A TTL of zero or negative means the item will not expire.
+// A TTL of zero means the item will not expire.
+// A negative TTL means the item expires immediately.
 //
 // Parameters:
 //   - ttl: The duration after which the item will expire

@@ -37,7 +37,7 @@ type MemoryCache struct {
 //   - ttl: The default TTL for cache items. Zero means no expiration.
 //
 // Returns:
-//   - *memoryCache: A new in-memory cache instance
+//   - *MemoryCache: A new in-memory cache instance
 //
 // Example:
 //
