@@ -218,27 +218,36 @@ func (m *MemoryCache) Get(_ context.Context, key string, opts ...GetOption) ([]b
 		o.apply(opts...)
 
 		m.mux.Lock()
+		defer m.mux.Unlock()
 		item, ok := m.items[key]
 
-		if ok && o.delete {
+		if !ok || item.isExpired(time.Now()) {
+			return item, ok
+		}
+
+		if o.delete {
 			delete(m.items, key)
-		} else if ok && !item.isExpired(time.Now()) {
-			switch {
-			case o.validUntil != nil:
-				item.validUntil = *o.validUntil
-			case o.setTTL != nil:
-				item.validUntil = time.Now().Add(*o.setTTL)
-			case o.updateTTL != nil:
-				if item.validUntil.IsZero() {
-					item.validUntil = time.Now().Add(*o.updateTTL)
-				} else {
-					item.validUntil = item.validUntil.Add(*o.updateTTL)
-				}
-			case o.defaultTTL:
+			return item, ok
+		}
+
+		switch {
+		case o.validUntil != nil:
+			item.validUntil = *o.validUntil
+		case o.setTTL != nil:
+			item.validUntil = time.Now().Add(*o.setTTL)
+		case o.updateTTL != nil:
+			if item.validUntil.IsZero() {
+				item.validUntil = time.Now().Add(*o.updateTTL)
+			} else {
+				item.validUntil = item.validUntil.Add(*o.updateTTL)
+			}
+		case o.defaultTTL:
+			if m.ttl > 0 {
 				item.validUntil = time.Now().Add(m.ttl)
+			} else {
+				item.validUntil = time.Time{}
 			}
 		}
-		m.mux.Unlock()
 
 		return item, ok
 	})
