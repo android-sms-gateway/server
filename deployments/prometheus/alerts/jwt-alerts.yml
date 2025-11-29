@@ -2,7 +2,7 @@ groups:
   - name: jwt-alerts
     rules:
       - alert: JWT_Validation_ErrorRate_High
-        expr: rate(sms_auth_jwt_tokens_validated_total{status="error"}[5m]) / clamp_min(rate(sms_auth_jwt_tokens_validated_total[5m]), 1e-9) > 0.05
+        expr: rate(sms_auth_jwt_tokens_validated_total{status="error"}[5m]) / clamp_min(rate(sms_auth_jwt_tokens_validated_total[5m]), 1e-9) > 0.1
         for: 5m
         labels:
           severity: warning
