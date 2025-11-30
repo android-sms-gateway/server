@@ -12,6 +12,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/db"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/events"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"github.com/capcom6/go-helpers/anys"
 	"github.com/capcom6/go-helpers/slices"
 	"github.com/nyaruka/phonenumbers"
@@ -124,7 +125,7 @@ func (s *Service) UpdateState(device *models.Device, message MessageStateIn) err
 }
 
 func (s *Service) SelectStates(
-	user models.User,
+	user users.User,
 	filter SelectFilter,
 	options SelectOptions,
 ) ([]MessageStateOut, int64, error) {
@@ -138,7 +139,7 @@ func (s *Service) SelectStates(
 	return slices.Map(messages, modelToMessageState), total, nil
 }
 
-func (s *Service) GetState(user models.User, id string) (*MessageStateOut, error) {
+func (s *Service) GetState(user users.User, id string) (*MessageStateOut, error) {
 	dto, err := s.cache.Get(context.Background(), user.ID, id)
 	if err == nil {
 		s.metrics.IncCache(true)

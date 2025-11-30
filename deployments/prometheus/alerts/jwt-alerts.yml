@@ -1,0 +1,32 @@
+groups:
+  - name: jwt-alerts
+    rules:
+      - alert: JWT_Validation_ErrorRate_High
+        expr: rate(sms_auth_jwt_tokens_validated_total{status="error"}[5m]) / max(rate(sms_auth_jwt_tokens_validated_total[5m]), 0.00001) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: jwt
+        annotations:
+          summary: "High JWT validation error rate"
+          description: "JWT validation error rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+
+      - alert: JWT_Issuance_Latency_High
+        expr: histogram_quantile(0.99, rate(sms_auth_jwt_issuance_duration_seconds_bucket[5m])) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          service: jwt
+        annotations:
+          summary: "High JWT issuance latency (p99)"
+          description: "JWT issuance p99 latency is {{ $value }}s (threshold: 0.5s)"
+
+      - alert: JWT_Revocation_Failures
+        expr: rate(sms_auth_jwt_tokens_revoked_total{status="error"}[5m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          service: jwt
+        annotations:
+          summary: "JWT revocation failures detected"
+          description: "JWT revocation errors occurring at rate {{ $value }}/s"
