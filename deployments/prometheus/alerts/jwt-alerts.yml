@@ -2,7 +2,7 @@ groups:
   - name: jwt-alerts
     rules:
       - alert: JWT_Validation_ErrorRate_High
-        expr: rate(sms_auth_jwt_tokens_validated_total{status="error"}[5m]) / clamp_min(rate(sms_auth_jwt_tokens_validated_total[5m]), 1e-9) > 0.1
+        expr: rate(sms_auth_jwt_tokens_validated_total{status="error"}[5m]) / max(rate(sms_auth_jwt_tokens_validated_total[5m]), 0.00001) > 0.1
         for: 5m
         labels:
           severity: warning
@@ -30,13 +30,3 @@ groups:
         annotations:
           summary: "JWT revocation failures detected"
           description: "JWT revocation errors occurring at rate {{ $value }}/s"
-
-      - alert: JWT_Validation_Failures_High
-        expr: rate(sms_auth_jwt_tokens_validated_total{status="error"}[5m]) / max(rate(sms_auth_jwt_tokens_validated_total[5m]), 0.00001) > 0.1
-        for: 5m
-        labels:
-          severity: warning
-          service: jwt
-        annotations:
-          summary: "High JWT validation failure rate"
-          description: "JWT validation failure rate is {{ $value | humanizePercentage }} (threshold: 10%)"
