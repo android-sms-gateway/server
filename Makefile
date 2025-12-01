@@ -12,7 +12,7 @@ endif
 	init init-dev ngrok air db-upgrade db-upgrade-raw run test-e2e build install \
 	docker-build docker docker-dev docker-clean
 
-all: fmt lint test benchmark ## Run all tests and checks
+all: fmt lint coverage ## Run all tests and checks
 
 fmt: ## Format the code
 	golangci-lint fmt
