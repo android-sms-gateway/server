@@ -13,8 +13,8 @@ func Module() fx.Option {
 		fx.Decorate(func(log *zap.Logger) *zap.Logger {
 			return log.Named("auth")
 		}),
-		fx.Provide(New),
 		fx.Provide(newRepository, fx.Private),
+		fx.Provide(New),
 		fx.Invoke(func(lc fx.Lifecycle, svc *Service) {
 			ctx, cancel := context.WithCancel(context.Background())
 			lc.Append(fx.Hook{
