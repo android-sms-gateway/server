@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
-	"github.com/android-sms-gateway/server/pkg/cache"
 	"github.com/capcom6/go-helpers/maps"
+	"github.com/go-core-fx/cachefx/cache"
 	"go.uber.org/zap"
 )
 

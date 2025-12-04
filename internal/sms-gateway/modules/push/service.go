@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/android-sms-gateway/server/internal/sms-gateway/cache"
+	cacheFactory "github.com/android-sms-gateway/server/internal/sms-gateway/cache"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/client"
-	cacheImpl "github.com/android-sms-gateway/server/pkg/cache"
+	"github.com/go-core-fx/cachefx/cache"
 	"github.com/samber/lo"
 
 	"go.uber.org/zap"
@@ -43,7 +43,7 @@ type Service struct {
 func New(
 	config Config,
 	client client.Client,
-	cacheFactory cache.Factory,
+	cacheFactory cacheFactory.Factory,
 	metrics *metrics,
 	logger *zap.Logger,
 ) (*Service, error) {
@@ -207,7 +207,7 @@ func (s *Service) retry(ctx context.Context, events []*eventWrapper) {
 		wrapper.Retries++
 
 		if wrapper.Retries >= maxRetries {
-			if err := s.blacklist.Set(ctx, token, []byte{}, cacheImpl.WithTTL(blacklistTimeout)); err != nil {
+			if err := s.blacklist.Set(ctx, token, []byte{}, cache.WithTTL(blacklistTimeout)); err != nil {
 				s.logger.Warn("failed to blacklist", zap.String("token", token), zap.Error(err))
 				continue
 			}
