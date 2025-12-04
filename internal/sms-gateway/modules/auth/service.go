@@ -10,7 +10,6 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/online"
-	"github.com/android-sms-gateway/server/pkg/crypto"
 	"github.com/capcom6/go-helpers/cache"
 	"github.com/jaevor/go-nanoid"
 	"go.uber.org/fx"
@@ -97,7 +96,7 @@ func (s *Service) GenerateUserCode(userID string) (OneTimeCode, error) {
 }
 
 func (s *Service) RegisterUser(login, password string) (*models.User, error) {
-	passwordHash, err := crypto.MakeBCryptHash(password)
+	passwordHash, err := MakeBCryptHash(password)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
@@ -164,7 +163,7 @@ func (s *Service) AuthorizeUser(username, password string) (*models.User, error)
 		return user, err
 	}
 
-	if cmpErr := crypto.CompareBCryptHash(user.PasswordHash, password); cmpErr != nil {
+	if cmpErr := CompareBCryptHash(user.PasswordHash, password); cmpErr != nil {
 		return nil, fmt.Errorf("password is incorrect: %w", cmpErr)
 	}
 
@@ -196,11 +195,11 @@ func (s *Service) ChangePassword(userID string, currentPassword string, newPassw
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 
-	if hashErr := crypto.CompareBCryptHash(user.PasswordHash, currentPassword); hashErr != nil {
+	if hashErr := CompareBCryptHash(user.PasswordHash, currentPassword); hashErr != nil {
 		return fmt.Errorf("current password is incorrect: %w", hashErr)
 	}
 
-	newHash, err := crypto.MakeBCryptHash(newPassword)
+	newHash, err := MakeBCryptHash(newPassword)
 	if err != nil {
 		return fmt.Errorf("failed to hash new password: %w", err)
 	}

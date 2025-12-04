@@ -1,4 +1,4 @@
-package crypto
+package auth
 
 import (
 	"errors"
