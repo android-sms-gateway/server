@@ -25,6 +25,7 @@ import (
 	"github.com/capcom6/go-infra-fx/db"
 	"github.com/capcom6/go-infra-fx/http"
 	"github.com/capcom6/go-infra-fx/validator"
+	"github.com/go-core-fx/cachefx"
 	"github.com/go-core-fx/logger"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -34,10 +35,12 @@ func Module() fx.Option {
 	return fx.Module(
 		"server",
 		logger.Module(),
-		appconfig.Module(),
-		appdb.Module(),
 		http.Module,
 		validator.Module,
+		cachefx.Module(),
+
+		appconfig.Module(),
+		appdb.Module(),
 		openapi.Module(),
 		handlers.Module(),
 		auth.Module(),
