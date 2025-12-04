@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/android-sms-gateway/server/pkg/cache"
+	"github.com/go-core-fx/cachefx/cache"
 	"go.uber.org/zap"
 )
 

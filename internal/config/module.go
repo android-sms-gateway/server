@@ -4,7 +4,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/android-sms-gateway/server/internal/sms-gateway/cache"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/jwt"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
@@ -17,6 +16,7 @@ import (
 	"github.com/capcom6/go-infra-fx/config"
 	"github.com/capcom6/go-infra-fx/db"
 	"github.com/capcom6/go-infra-fx/http"
+	"github.com/go-core-fx/cachefx"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -123,8 +123,8 @@ func Module() fx.Option {
 				sse.WithKeepAlivePeriod(time.Duration(cfg.SSE.KeepAlivePeriodSeconds) * time.Second),
 			)
 		}),
-		fx.Provide(func(cfg Config) cache.Config {
-			return cache.Config{
+		fx.Provide(func(cfg Config) cachefx.Config {
+			return cachefx.Config{
 				URL: cfg.Cache.URL,
 			}
 		}),

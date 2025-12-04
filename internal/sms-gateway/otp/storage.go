@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/android-sms-gateway/server/pkg/cache"
+	"github.com/go-core-fx/cachefx/cache"
 )
 
 // Storage wraps the cache interface for string values.
