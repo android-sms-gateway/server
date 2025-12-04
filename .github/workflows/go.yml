@@ -75,6 +75,7 @@ jobs:
   benchmark:
     name: Benchmark
     runs-on: ubuntu-latest
+    if: false
     permissions:
       contents: read
       pull-requests: write
