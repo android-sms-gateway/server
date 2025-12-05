@@ -36,6 +36,9 @@ type metrics struct {
 
 // newMetrics creates and initializes all online metrics.
 func newMetrics() *metrics {
+	var memBuckets = []float64{1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, .001, .005, .01, .05, .1}
+	var dbBuckets = []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10}
+
 	return &metrics{
 		statusSetCounter: promauto.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "sms",
@@ -56,7 +59,7 @@ func newMetrics() *metrics {
 			Subsystem: "online",
 			Name:      metricCacheLatency,
 			Help:      "Cache operation latency in seconds",
-			Buckets:   []float64{0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1},
+			Buckets:   memBuckets,
 		}),
 
 		persistenceLatency: promauto.NewHistogram(prometheus.HistogramOpts{
@@ -64,7 +67,7 @@ func newMetrics() *metrics {
 			Subsystem: "online",
 			Name:      metricPersistenceLatency,
 			Help:      "Persistence operation latency in seconds",
-			Buckets:   []float64{0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1},
+			Buckets:   dbBuckets,
 		}),
 
 		persistenceErrors: promauto.NewCounter(prometheus.CounterOpts{

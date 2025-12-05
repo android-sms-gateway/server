@@ -21,6 +21,8 @@ type metrics struct {
 }
 
 func newMetrics() *metrics {
+	var defBuckets = []float64{.01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25}
+
 	return &metrics{
 		activeTasksCounter: promauto.NewGauge(prometheus.GaugeOpts{
 			Namespace: "worker",
@@ -39,7 +41,7 @@ func newMetrics() *metrics {
 			Subsystem: "executor",
 			Name:      "task_duration_seconds",
 			Help:      "Task duration in seconds",
-			Buckets:   []float64{.001, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
+			Buckets:   defBuckets,
 		}, []string{"task"}),
 	}
 }
