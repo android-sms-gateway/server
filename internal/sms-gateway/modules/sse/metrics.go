@@ -33,6 +33,8 @@ type metrics struct {
 
 // newMetrics creates and initializes all SSE metrics.
 func newMetrics() *metrics {
+	var defBuckets = []float64{1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, .001, .005, .01, .05, .1}
+
 	metrics := &metrics{
 		activeConnections: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "sms",
@@ -57,7 +59,7 @@ func newMetrics() *metrics {
 			Subsystem: "sse",
 			Name:      MetricEventLatency,
 			Help:      "Event delivery latency in seconds",
-			Buckets:   []float64{0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1},
+			Buckets:   defBuckets,
 		}, []string{}),
 		keepalivesSent: promauto.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "sms",
