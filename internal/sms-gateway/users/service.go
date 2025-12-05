@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/android-sms-gateway/server/pkg/cache"
-	"github.com/android-sms-gateway/server/pkg/crypto"
 	"go.uber.org/zap"
 )
 
@@ -42,7 +41,7 @@ func (s *Service) Create(username, password string) (*User, error) {
 		return nil, fmt.Errorf("%w: %s", ErrExists, username)
 	}
 
-	passwordHash, err := crypto.MakeBCryptHash(password)
+	passwordHash, err := MakeBCryptHash(password)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
@@ -78,7 +77,7 @@ func (s *Service) Login(ctx context.Context, username, password string) (*User, 
 		return nil, err
 	}
 
-	if compErr := crypto.CompareBCryptHash(user.PasswordHash, password); compErr != nil {
+	if compErr := CompareBCryptHash(user.PasswordHash, password); compErr != nil {
 		return nil, fmt.Errorf("login failed: %w", compErr)
 	}
 
@@ -100,7 +99,7 @@ func (s *Service) ChangePassword(ctx context.Context, username, currentPassword,
 		return delErr
 	}
 
-	passwordHash, err := crypto.MakeBCryptHash(newPassword)
+	passwordHash, err := MakeBCryptHash(newPassword)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
