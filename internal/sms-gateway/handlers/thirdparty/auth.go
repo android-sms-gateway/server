@@ -67,7 +67,7 @@ func (h *AuthHandler) postToken(user users.User, c *fiber.Ctx) error {
 		c.Context(),
 		user.ID,
 		req.Scopes,
-		time.Duration(req.TTL)*time.Second, //nolint:gosec // validated in the service
+		time.Duration(req.TTL)*time.Second,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to generate token: %w", err)
