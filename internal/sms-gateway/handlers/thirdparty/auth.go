@@ -86,6 +86,7 @@ func (h *AuthHandler) postToken(user users.User, c *fiber.Ctx) error {
 //	@Security		ApiAuth
 //	@Security		JWTAuth
 //	@Tags			User, Auth
+//	@Produce		json
 //	@Param			jti	path	string	true	"JWT ID"
 //	@Success		204	"No Content"
 //	@Failure		401	{object}	smsgateway.ErrorResponse	"Unauthorized"

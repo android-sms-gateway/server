@@ -11,7 +11,12 @@ const docTemplate = `{
         "title": "{{.Title}}",
         "contact": {
             "name": "SMSGate Support",
+            "url": "https://docs.sms-gate.app/",
             "email": "support@sms-gate.app"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0"
         },
         "version": "{{.Version}}"
     },
@@ -96,6 +101,9 @@ const docTemplate = `{
                     }
                 ],
                 "description": "Revoke access token with specified jti",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "User",
                     "Auth"
@@ -1512,6 +1520,7 @@ const docTemplate = `{
         },
         "smsgateway.MessagePriority": {
             "type": "integer",
+            "format": "int32",
             "enum": [
                 -128,
                 0,
@@ -1521,6 +1530,12 @@ const docTemplate = `{
             "x-enum-comments": {
                 "PriorityBypassThreshold": "Threshold at which messages bypass limits and delays"
             },
+            "x-enum-descriptions": [
+                "",
+                "",
+                "Threshold at which messages bypass limits and delays",
+                ""
+            ],
             "x-enum-varnames": [
                 "PriorityMinimum",
                 "PriorityDefault",
@@ -1638,6 +1653,13 @@ const docTemplate = `{
                 "ProcessingStateProcessed": "Processed (received by device)",
                 "ProcessingStateSent": "Sent"
             },
+            "x-enum-descriptions": [
+                "Pending",
+                "Processed (received by device)",
+                "Sent",
+                "Delivered",
+                "Failed"
+            ],
             "x-enum-varnames": [
                 "ProcessingStatePending",
                 "ProcessingStateProcessed",
@@ -1911,6 +1933,15 @@ const docTemplate = `{
                 "WebhookEventSmsSent": "Triggered when an SMS is sent.",
                 "WebhookEventSystemPing": "Triggered when the device pings the server."
             },
+            "x-enum-descriptions": [
+                "Triggered when an MMS is received.",
+                "Triggered when a data SMS is received.",
+                "Triggered when an SMS is delivered.",
+                "Triggered when an SMS processing fails.",
+                "Triggered when an SMS is received.",
+                "Triggered when an SMS is sent.",
+                "Triggered when the device pings the server."
+            ],
             "x-enum-varnames": [
                 "WebhookEventMmsReceived",
                 "WebhookEventSmsDataReceived",
