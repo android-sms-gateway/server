@@ -234,7 +234,6 @@ func (s *Service) prepareMessage(device models.Device, message MessageIn, opts E
 
 	validUntil := message.ValidUntil
 	if message.TTL != nil && *message.TTL > 0 {
-		//nolint:gosec // not a problem
 		validUntil = anys.AsPointer(
 			time.Now().Add(time.Duration(*message.TTL) * time.Second),
 		)

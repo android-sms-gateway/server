@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	cacheImpl "github.com/android-sms-gateway/server/pkg/cache"
+	cacheImpl "github.com/go-core-fx/cachefx/cache"
 )
 
 const (
