@@ -4,20 +4,21 @@ import (
 	"encoding/base64"
 	"strings"
 
-	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/permissions"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
 )
 
 const localsUser = "user"
 
-// NewBasic returns a middleware that will check if the request contains a valid
-// "Authorization" header in the form of "Basic <base64 encoded username:password>".
-// If the header is valid, the middleware will authorize the user and store the
-// user in the request's Locals under the key LocalsUser. If the header is invalid,
-// the middleware will call c.Next() and continue with the request.
-func NewBasic(authSvc *auth.Service) fiber.Handler {
+// NewBasic returns a middleware that optionally performs HTTP Basic authentication.
+// If the "Authorization" header is missing or does not start with "Basic ", the request is passed through unchanged.
+// If the header is present, the middleware expects a base64-encoded "username:password" payload, decodes it,
+// validates the credentials format, and authenticates the user using the given users service.
+// On invalid or failed authentication it returns 401 Unauthorized; on success it stores the user in Locals.
+func NewBasic(usersSvc *users.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		auth := c.Get(fiber.HeaderAuthorization)
 
@@ -45,12 +46,13 @@ func NewBasic(authSvc *auth.Service) fiber.Handler {
 		username := creds[:index]
 		password := creds[index+1:]
 
-		user, err := authSvc.AuthorizeUser(username, password)
+		user, err := usersSvc.Login(c.Context(), username, password)
 		if err != nil {
 			return fiber.ErrUnauthorized
 		}
 
-		c.Locals(localsUser, user)
+		SetUser(c, *user)
+		permissions.SetScopes(c, []string{permissions.ScopeAll})
 
 		return c.Next()
 	}
@@ -77,10 +79,14 @@ func NewCode(authSvc *auth.Service) fiber.Handler {
 			return fiber.ErrUnauthorized
 		}
 
-		c.Locals(localsUser, user)
+		SetUser(c, *user)
 
 		return c.Next()
 	}
+}
+
+func SetUser(c *fiber.Ctx, user users.User) {
+	c.Locals(localsUser, user)
 }
 
 // HasUser checks if a user is present in the Locals of the given context.
@@ -90,18 +96,23 @@ func HasUser(c *fiber.Ctx) bool {
 	return GetUser(c) != nil
 }
 
-// GetUser returns the user stored in the Locals under the key LocalsUser.
-func GetUser(c *fiber.Ctx) *models.User {
-	if user, ok := c.Locals(localsUser).(*models.User); ok {
-		return user
+// GetUser returns the user stored in the Locals of the given context.
+// It returns nil if the Locals do not contain a user under the key localsUser.
+// The user is stored in Locals by the NewBasic and NewCode middlewares via SetUser,
+// and is retrieved as a users.User value (exposed here as *users.User for convenience).
+func GetUser(c *fiber.Ctx) *users.User {
+	user, ok := c.Locals(localsUser).(users.User)
+	if !ok {
+		return nil
 	}
 
-	return nil
+	return &user
 }
 
-// UserRequired is a middleware that ensures a user is present in the request's Locals.
-// If a user is not found, it returns an unauthorized error, otherwise it passes control
-// to the next handler in the stack.
+// UserRequired is a middleware that checks if a user is present in the request's Locals.
+// If the user is not present, it will return an unauthorized error.
+// It is a convenience function that wraps the call to HasUser and calls the
+// handler if the user is present.
 func UserRequired() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		if !HasUser(c) {
@@ -113,11 +124,16 @@ func UserRequired() fiber.Handler {
 }
 
 // WithUser is a decorator that provides the current user to the handler.
-func WithUser(handler func(models.User, *fiber.Ctx) error) fiber.Handler {
+// It assumes that the user is stored in Locals under the key localsUser.
+// If the user is not present, it returns 401 Unauthorized.
+//
+// It is a convenience function that wraps the call to GetUser and calls the
+// handler with the user as the first argument.
+func WithUser(handler func(users.User, *fiber.Ctx) error) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		user := GetUser(c)
 		if user == nil {
-			return fiber.NewError(fiber.StatusUnauthorized, "Unauthorized")
+			return fiber.ErrUnauthorized
 		}
 
 		return handler(*user, c)

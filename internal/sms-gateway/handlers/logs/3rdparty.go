@@ -2,8 +2,9 @@ package logs
 
 import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/permissions"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
@@ -33,18 +34,20 @@ func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyContr
 //	@Summary		Get logs
 //	@Description	Retrieve a list of log entries within a specified time range.
 //	@Security		ApiAuth
+//	@Security		JWTAuth
 //	@Tags			System, Logs
 //	@Produce		json
 //	@Param			from	query		string						false	"The start of the time range for the logs to retrieve. Logs created after this timestamp will be included."	Format(date-time)
 //	@Param			to		query		string						false	"The end of the time range for the logs to retrieve. Logs created before this timestamp will be included."	Format(date-time)
 //	@Success		200		{object}	smsgateway.GetLogsResponse	"Log entries"
 //	@Failure		401		{object}	smsgateway.ErrorResponse	"Unauthorized"
+//	@Failure		403		{object}	smsgateway.ErrorResponse	"Forbidden"
 //	@Failure		500		{object}	smsgateway.ErrorResponse	"Internal server error"
 //	@Failure		501		{object}	smsgateway.ErrorResponse	"Not implemented"
 //	@Router			/3rdparty/v1/logs [get]
 //
 // Get logs.
-func (h *ThirdPartyController) get(_ models.User, _ *fiber.Ctx) error {
+func (h *ThirdPartyController) get(_ users.User, _ *fiber.Ctx) error {
 	return fiber.NewError(
 		fiber.StatusNotImplemented,
 		"For privacy reasons, device's logs are not accessible through Cloud server",
@@ -52,5 +55,5 @@ func (h *ThirdPartyController) get(_ models.User, _ *fiber.Ctx) error {
 }
 
 func (h *ThirdPartyController) Register(router fiber.Router) {
-	router.Get("", userauth.WithUser(h.get))
+	router.Get("", permissions.RequireScope(ScopeRead), userauth.WithUser(h.get))
 }

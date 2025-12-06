@@ -16,34 +16,20 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"github.com/capcom6/go-helpers/anys"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/keyauth"
 	"github.com/jaevor/go-nanoid"
-	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-type mobileHandlerParams struct {
-	fx.In
-
-	Logger    *zap.Logger
-	Validator *validator.Validate
-
-	AuthSvc    *auth.Service
-	DevicesSvc *devices.Service
-
-	MessagesCtrl *messages.MobileController
-	WebhooksCtrl *webhooks.MobileController
-	SettingsCtrl *settings.MobileController
-	EventsCtrl   *events.MobileController
-}
 
 type mobileHandler struct {
 	base.Handler
 
 	authSvc    *auth.Service
+	usersSvc   *users.Service
 	devicesSvc *devices.Service
 
 	messagesCtrl *messages.MobileController
@@ -52,6 +38,40 @@ type mobileHandler struct {
 	eventsCtrl   *events.MobileController
 
 	idGen func() string
+}
+
+func newMobileHandler(
+	authSvc *auth.Service,
+	usersSvc *users.Service,
+	devicesSvc *devices.Service,
+
+	messagesCtrl *messages.MobileController,
+	webhooksCtrl *webhooks.MobileController,
+	settingsCtrl *settings.MobileController,
+	eventsCtrl *events.MobileController,
+
+	logger *zap.Logger,
+	validator *validator.Validate,
+) *mobileHandler {
+	const idLength = 21
+	idGen, _ := nanoid.Standard(idLength)
+
+	return &mobileHandler{
+		Handler: base.Handler{
+			Logger:    logger,
+			Validator: validator,
+		},
+		authSvc:    authSvc,
+		usersSvc:   usersSvc,
+		devicesSvc: devicesSvc,
+
+		messagesCtrl: messagesCtrl,
+		webhooksCtrl: webhooksCtrl,
+		settingsCtrl: settingsCtrl,
+		eventsCtrl:   eventsCtrl,
+
+		idGen: idGen,
+	}
 }
 
 //	@Summary		Get device information
@@ -102,26 +122,26 @@ func (h *mobileHandler) postDevice(c *fiber.Ctx) error {
 
 	var (
 		err      error
-		user     *models.User
-		login    string
+		user     *users.User
+		username string
 		password string
 	)
 
-	if userauth.HasUser(c) {
-		user = userauth.GetUser(c)
-		login = user.ID
+	if authUser := userauth.GetUser(c); authUser != nil {
+		user = authUser
+		username = user.ID
 	} else {
 		id := h.idGen()
-		login = strings.ToUpper(id[:6])
+		username = strings.ToUpper(id[:6])
 		password = strings.ToLower(id[7:])
 
-		user, err = h.authSvc.RegisterUser(login, password)
+		user, err = h.usersSvc.Create(username, password)
 		if err != nil {
 			return fmt.Errorf("failed to create user: %w", err)
 		}
 	}
 
-	device, err := h.authSvc.RegisterDevice(user, req.Name, req.PushToken)
+	device, err := h.authSvc.RegisterDevice(*user, req.Name, req.PushToken)
 	if err != nil {
 		return fmt.Errorf("failed to register device: %w", err)
 	}
@@ -130,7 +150,7 @@ func (h *mobileHandler) postDevice(c *fiber.Ctx) error {
 		JSON(smsgateway.MobileRegisterResponse{
 			Id:       device.ID,
 			Token:    device.AuthToken,
-			Login:    login,
+			Login:    username,
 			Password: password,
 		})
 }
@@ -178,7 +198,7 @@ func (h *mobileHandler) patchDevice(device models.Device, c *fiber.Ctx) error {
 //	@Router			/mobile/v1/user/code [get]
 //
 // Get user code.
-func (h *mobileHandler) getUserCode(user models.User, c *fiber.Ctx) error {
+func (h *mobileHandler) getUserCode(user users.User, c *fiber.Ctx) error {
 	code, err := h.authSvc.GenerateUserCode(user.ID)
 	if err != nil {
 		h.Logger.Error("failed to generate user code", zap.Error(err), zap.String("user_id", user.ID))
@@ -212,9 +232,9 @@ func (h *mobileHandler) changePassword(device models.Device, c *fiber.Ctx) error
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	if err := h.authSvc.ChangePassword(device.UserID, req.CurrentPassword, req.NewPassword); err != nil {
+	if err := h.usersSvc.ChangePassword(c.Context(), device.UserID, req.CurrentPassword, req.NewPassword); err != nil {
 		h.Logger.Error("failed to change password", zap.Error(err))
-		return fiber.NewError(fiber.StatusUnauthorized, "Invalid current password")
+		return fiber.NewError(fiber.StatusUnauthorized, "failed to change password")
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
@@ -224,7 +244,7 @@ func (h *mobileHandler) Register(router fiber.Router) {
 	router = router.Group("/mobile/v1")
 
 	router.Post("/device",
-		userauth.NewBasic(h.authSvc),
+		userauth.NewBasic(h.usersSvc),
 		userauth.NewCode(h.authSvc),
 		keyauth.New(keyauth.Config{
 			Next: func(c *fiber.Ctx) bool {
@@ -246,7 +266,7 @@ func (h *mobileHandler) Register(router fiber.Router) {
 	)
 
 	router.Get("/user/code",
-		userauth.NewBasic(h.authSvc),
+		userauth.NewBasic(h.usersSvc),
 		userauth.UserRequired(),
 		userauth.WithUser(h.getUserCode),
 	)
@@ -269,22 +289,4 @@ func (h *mobileHandler) Register(router fiber.Router) {
 	h.webhooksCtrl.Register(router.Group("/webhooks"))
 	h.settingsCtrl.Register(router.Group("/settings"))
 	h.eventsCtrl.Register(router.Group("/events"))
-}
-
-func newMobileHandler(params mobileHandlerParams) *mobileHandler {
-	const idGenSize = 21
-	idGen, _ := nanoid.Standard(idGenSize)
-
-	return &mobileHandler{
-		Handler: base.Handler{Logger: params.Logger, Validator: params.Validator},
-		authSvc: params.AuthSvc,
-
-		messagesCtrl: params.MessagesCtrl,
-		devicesSvc:   params.DevicesSvc,
-		webhooksCtrl: params.WebhooksCtrl,
-		settingsCtrl: params.SettingsCtrl,
-		eventsCtrl:   params.EventsCtrl,
-
-		idGen: idGen,
-	}
 }

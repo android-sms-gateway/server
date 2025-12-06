@@ -5,10 +5,11 @@ import (
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/permissions"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/settings"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
@@ -46,15 +47,17 @@ func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyContr
 //	@Summary		Get settings
 //	@Description	Returns settings for a specific user
 //	@Security		ApiAuth
+//	@Security		JWTAuth
 //	@Tags			User, Settings
 //	@Produce		json
 //	@Success		200	{object}	smsgateway.DeviceSettings	"Settings"
 //	@Failure		401	{object}	smsgateway.ErrorResponse	"Unauthorized"
+//	@Failure		403	{object}	smsgateway.ErrorResponse	"Forbidden"
 //	@Failure		500	{object}	smsgateway.ErrorResponse	"Internal server error"
 //	@Router			/3rdparty/v1/settings [get]
 //
 // Get settings.
-func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
+func (h *ThirdPartyController) get(user users.User, c *fiber.Ctx) error {
 	settings, err := h.settingsSvc.GetSettings(user.ID, true)
 	if err != nil {
 		return fmt.Errorf("failed to get settings: %w", err)
@@ -66,6 +69,7 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 //	@Summary		Replace settings
 //	@Description	Replaces settings
 //	@Security		ApiAuth
+//	@Security		JWTAuth
 //	@Tags			User, Settings
 //	@Accept			json
 //	@Produce		json
@@ -73,11 +77,12 @@ func (h *ThirdPartyController) get(user models.User, c *fiber.Ctx) error {
 //	@Success		200		{object}	object						"Settings updated"
 //	@Failure		400		{object}	smsgateway.ErrorResponse	"Invalid request"
 //	@Failure		401		{object}	smsgateway.ErrorResponse	"Unauthorized"
+//	@Failure		403		{object}	smsgateway.ErrorResponse	"Forbidden"
 //	@Failure		500		{object}	smsgateway.ErrorResponse	"Internal server error"
 //	@Router			/3rdparty/v1/settings [put]
 //
 // Update settings.
-func (h *ThirdPartyController) put(user models.User, c *fiber.Ctx) error {
+func (h *ThirdPartyController) put(user users.User, c *fiber.Ctx) error {
 	if err := h.BodyParserValidator(c, new(smsgateway.DeviceSettings)); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid settings format: %v", err))
 	}
@@ -100,6 +105,7 @@ func (h *ThirdPartyController) put(user models.User, c *fiber.Ctx) error {
 //	@Summary		Partially update settings
 //	@Description	Partially updates settings for a specific user
 //	@Security		ApiAuth
+//	@Security		JWTAuth
 //	@Tags			User, Settings
 //	@Accept			json
 //	@Produce		json
@@ -107,11 +113,12 @@ func (h *ThirdPartyController) put(user models.User, c *fiber.Ctx) error {
 //	@Success		200		{object}	object						"Settings updated"
 //	@Failure		400		{object}	smsgateway.ErrorResponse	"Invalid request"
 //	@Failure		401		{object}	smsgateway.ErrorResponse	"Unauthorized"
+//	@Failure		403		{object}	smsgateway.ErrorResponse	"Forbidden"
 //	@Failure		500		{object}	smsgateway.ErrorResponse	"Internal server error"
 //	@Router			/3rdparty/v1/settings [patch]
 //
 // Partially update settings.
-func (h *ThirdPartyController) patch(user models.User, c *fiber.Ctx) error {
+func (h *ThirdPartyController) patch(user users.User, c *fiber.Ctx) error {
 	if err := h.BodyParserValidator(c, new(smsgateway.DeviceSettings)); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid settings format: %v", err))
 	}
@@ -131,7 +138,7 @@ func (h *ThirdPartyController) patch(user models.User, c *fiber.Ctx) error {
 }
 
 func (h *ThirdPartyController) Register(app fiber.Router) {
-	app.Get("", userauth.WithUser(h.get))
-	app.Patch("", userauth.WithUser(h.patch))
-	app.Put("", userauth.WithUser(h.put))
+	app.Get("", permissions.RequireScope(ScopeRead), userauth.WithUser(h.get))
+	app.Patch("", permissions.RequireScope(ScopeWrite), userauth.WithUser(h.patch))
+	app.Put("", permissions.RequireScope(ScopeWrite), userauth.WithUser(h.put))
 }

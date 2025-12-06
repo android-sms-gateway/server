@@ -36,7 +36,7 @@ func (h *health) LiveProbe(_ context.Context) (Checks, error) {
 
 	memoryCheck := CheckDetail{
 		Description:   "Memory usage",
-		ObservedValue: int(m.Alloc / oneMiB), //nolint:gosec // not a security issue
+		ObservedValue: int(m.Alloc / oneMiB),
 		ObservedUnit:  "MiB",
 		Status:        StatusPass,
 	}

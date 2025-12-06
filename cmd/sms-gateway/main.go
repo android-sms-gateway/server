@@ -14,6 +14,11 @@ const (
 //	@securitydefinitions.basic	ApiAuth
 //	@description				User authentication
 
+//	@securitydefinitions.apikey	JWTAuth
+//	@in							header
+//	@name						Authorization
+//	@description				JWT authentication
+
 //	@securitydefinitions.apikey	UserCode
 //	@in							header
 //	@name						Authorization
@@ -35,6 +40,10 @@ const (
 
 //	@contact.name	SMSGate Support
 //	@contact.email	support@sms-gate.app
+//  @contact.url	https://docs.sms-gate.app/
+
+//	@license.name	Apache 2.0
+//	@license.url	http://www.apache.org/licenses/LICENSE-2.0
 
 //	@host		localhost:3000/api
 //	@host		api.sms-gate.app

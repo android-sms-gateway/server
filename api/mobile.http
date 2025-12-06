@@ -68,8 +68,8 @@ Authorization: Bearer {{mobileToken}}
 Content-Type: application/json
 
 {
-  "currentPassword": "wsmgz1akhoo24o",
-  "newPassword": "wsmgz1akhoo24o"
+  "currentPassword": "8f8ijpnuvemq7y",
+  "newPassword": "8f8ijpnuvemq7y"
 }
 
 ###
