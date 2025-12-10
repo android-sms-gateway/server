@@ -34,7 +34,7 @@ func NewJWT(jwtSvc jwt.Service, usersSvc *users.Service) fiber.Handler {
 			return fiber.ErrUnauthorized
 		}
 
-		userauth.SetUser(c, *user)
+		userauth.SetUser(c, user)
 		permissions.SetScopes(c, claims.Scopes)
 
 		return c.Next()

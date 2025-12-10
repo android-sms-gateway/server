@@ -51,7 +51,7 @@ func NewBasic(usersSvc *users.Service) fiber.Handler {
 			return fiber.ErrUnauthorized
 		}
 
-		SetUser(c, *user)
+		SetUser(c, user)
 		permissions.SetScopes(c, []string{permissions.ScopeAll})
 
 		return c.Next()
@@ -74,18 +74,18 @@ func NewCode(authSvc *auth.Service) fiber.Handler {
 		// Get the code
 		code := auth[5:]
 
-		user, err := authSvc.AuthorizeUserByCode(code)
+		user, err := authSvc.AuthorizeUserByCode(c.Context(), code)
 		if err != nil {
 			return fiber.ErrUnauthorized
 		}
 
-		SetUser(c, *user)
+		SetUser(c, user)
 
 		return c.Next()
 	}
 }
 
-func SetUser(c *fiber.Ctx, user users.User) {
+func SetUser(c *fiber.Ctx, user *users.User) {
 	c.Locals(localsUser, user)
 }
 
@@ -101,12 +101,12 @@ func HasUser(c *fiber.Ctx) bool {
 // The user is stored in Locals by the NewBasic and NewCode middlewares via SetUser,
 // and is retrieved as a users.User value (exposed here as *users.User for convenience).
 func GetUser(c *fiber.Ctx) *users.User {
-	user, ok := c.Locals(localsUser).(users.User)
+	user, ok := c.Locals(localsUser).(*users.User)
 	if !ok {
 		return nil
 	}
 
-	return &user
+	return user
 }
 
 // UserRequired is a middleware that checks if a user is present in the request's Locals.
