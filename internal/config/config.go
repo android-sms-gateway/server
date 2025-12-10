@@ -19,6 +19,7 @@ type Config struct {
 	Cache    Cache     `yaml:"cache"`    // cache (memory or redis) config
 	PubSub   PubSub    `yaml:"pubsub"`   // pubsub (memory or redis) config
 	JWT      JWT       `yaml:"jwt"`      // jwt config
+	OTP      OTP       `yaml:"otp"`      // one-time password config
 }
 
 type Gateway struct {
@@ -90,6 +91,11 @@ type JWT struct {
 	Issuer string   `yaml:"issuer" envconfig:"JWT__ISSUER"`
 }
 
+type OTP struct {
+	TTL     uint16 `yaml:"ttl"     envconfig:"OTP__TTL"`
+	Retries uint8  `yaml:"retries" envconfig:"OTP__RETRIES"`
+}
+
 func Default() Config {
 	//nolint:exhaustruct,mnd // default values
 	return Config{
@@ -125,6 +131,10 @@ func Default() Config {
 		JWT: JWT{
 			TTL:    Duration(time.Hour * 24),
 			Issuer: "sms-gate.app",
+		},
+		OTP: OTP{
+			TTL:     300,
+			Retries: 3,
 		},
 	}
 }
