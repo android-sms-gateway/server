@@ -42,6 +42,9 @@ jwt:
   secret: # jwt secret (leave empty to disable JWT functionality) [JWT__SECRET]
   ttl: 24h # jwt ttl [JWT__TTL]
   issuer: # jwt issuer [JWT__ISSUER]
+otp: # otp config
+  ttl: 300 # otp ttl in seconds [OTP__TTL]
+  retries: 3 # otp generation retries (collision handling) [OTP__RETRIES]
 
 ## Worker Config ##
 

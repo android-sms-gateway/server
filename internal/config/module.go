@@ -12,6 +12,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/sse"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/otp"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/pubsub"
 	"github.com/capcom6/go-infra-fx/config"
 	"github.com/capcom6/go-infra-fx/db"
@@ -138,6 +139,12 @@ func Module() fx.Option {
 				Secret: cfg.JWT.Secret,
 				TTL:    time.Duration(cfg.JWT.TTL),
 				Issuer: cfg.JWT.Issuer,
+			}
+		}),
+		fx.Provide(func(cfg Config) otp.Config {
+			return otp.Config{
+				TTL:     time.Duration(cfg.OTP.TTL) * time.Second,
+				Retries: int(cfg.OTP.Retries),
 			}
 		}),
 	)

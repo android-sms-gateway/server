@@ -20,6 +20,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/webhooks"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/online"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/openapi"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/otp"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/pubsub"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"github.com/android-sms-gateway/server/pkg/health"
@@ -58,6 +59,7 @@ func Module() fx.Option {
 		sse.Module(),
 		online.Module(),
 		jwt.Module(),
+		otp.Module(),
 	)
 }
 
