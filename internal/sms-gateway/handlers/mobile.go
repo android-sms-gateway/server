@@ -199,7 +199,7 @@ func (h *mobileHandler) patchDevice(device models.Device, c *fiber.Ctx) error {
 //
 // Get user code.
 func (h *mobileHandler) getUserCode(user users.User, c *fiber.Ctx) error {
-	code, err := h.authSvc.GenerateUserCode(user.ID)
+	code, err := h.authSvc.GenerateUserCode(c.Context(), user.ID)
 	if err != nil {
 		h.Logger.Error("failed to generate user code", zap.Error(err), zap.String("user_id", user.ID))
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate user code")

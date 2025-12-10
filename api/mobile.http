@@ -9,7 +9,8 @@ Authorization: Bearer {{mobileToken}}
 
 ###
 GET {{baseUrl}}/user/code HTTP/1.1
-Authorization: Bearer {{mobileToken}}
+Authorization: Basic {{credentials}}
+# Authorization: Bearer {{mobileToken}}
 
 ###
 POST {{baseUrl}}/device HTTP/1.1
