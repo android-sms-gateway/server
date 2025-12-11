@@ -1,17 +1,15 @@
 package jwtauth
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/permissions"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/jwt"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewJWT(jwtSvc jwt.Service, usersSvc *users.Service) fiber.Handler {
+func NewJWT(jwtSvc jwt.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		token := c.Get("Authorization")
 
@@ -26,15 +24,7 @@ func NewJWT(jwtSvc jwt.Service, usersSvc *users.Service) fiber.Handler {
 			return fiber.ErrUnauthorized
 		}
 
-		user, err := usersSvc.GetByUsername(claims.UserID)
-		if err != nil {
-			if !errors.Is(err, users.ErrNotFound) {
-				return fiber.ErrInternalServerError
-			}
-			return fiber.ErrUnauthorized
-		}
-
-		userauth.SetUser(c, user)
+		userauth.SetUserID(c, claims.UserID)
 		permissions.SetScopes(c, claims.Scopes)
 
 		return c.Next()

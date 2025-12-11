@@ -9,7 +9,6 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/settings"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
@@ -57,8 +56,8 @@ func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyContr
 //	@Router			/3rdparty/v1/settings [get]
 //
 // Get settings.
-func (h *ThirdPartyController) get(user users.User, c *fiber.Ctx) error {
-	settings, err := h.settingsSvc.GetSettings(user.ID, true)
+func (h *ThirdPartyController) get(userID string, c *fiber.Ctx) error {
+	settings, err := h.settingsSvc.GetSettings(userID, true)
 	if err != nil {
 		return fmt.Errorf("failed to get settings: %w", err)
 	}
@@ -82,7 +81,7 @@ func (h *ThirdPartyController) get(user users.User, c *fiber.Ctx) error {
 //	@Router			/3rdparty/v1/settings [put]
 //
 // Update settings.
-func (h *ThirdPartyController) put(user users.User, c *fiber.Ctx) error {
+func (h *ThirdPartyController) put(userID string, c *fiber.Ctx) error {
 	if err := h.BodyParserValidator(c, new(smsgateway.DeviceSettings)); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid settings format: %v", err))
 	}
@@ -93,7 +92,7 @@ func (h *ThirdPartyController) put(user users.User, c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to parse request body: %v", err))
 	}
 
-	updated, err := h.settingsSvc.ReplaceSettings(user.ID, settings)
+	updated, err := h.settingsSvc.ReplaceSettings(userID, settings)
 
 	if err != nil {
 		return fmt.Errorf("failed to update settings: %w", err)
@@ -118,7 +117,7 @@ func (h *ThirdPartyController) put(user users.User, c *fiber.Ctx) error {
 //	@Router			/3rdparty/v1/settings [patch]
 //
 // Partially update settings.
-func (h *ThirdPartyController) patch(user users.User, c *fiber.Ctx) error {
+func (h *ThirdPartyController) patch(userID string, c *fiber.Ctx) error {
 	if err := h.BodyParserValidator(c, new(smsgateway.DeviceSettings)); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid settings format: %v", err))
 	}
@@ -129,7 +128,7 @@ func (h *ThirdPartyController) patch(user users.User, c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("failed to parse request body: %v", err))
 	}
 
-	updated, err := h.settingsSvc.UpdateSettings(user.ID, settings)
+	updated, err := h.settingsSvc.UpdateSettings(userID, settings)
 	if err != nil {
 		return fmt.Errorf("failed to update settings: %w", err)
 	}
@@ -138,7 +137,7 @@ func (h *ThirdPartyController) patch(user users.User, c *fiber.Ctx) error {
 }
 
 func (h *ThirdPartyController) Register(app fiber.Router) {
-	app.Get("", permissions.RequireScope(ScopeRead), userauth.WithUser(h.get))
-	app.Patch("", permissions.RequireScope(ScopeWrite), userauth.WithUser(h.patch))
-	app.Put("", permissions.RequireScope(ScopeWrite), userauth.WithUser(h.put))
+	app.Get("", permissions.RequireScope(ScopeRead), userauth.WithUserID(h.get))
+	app.Patch("", permissions.RequireScope(ScopeWrite), userauth.WithUserID(h.patch))
+	app.Put("", permissions.RequireScope(ScopeWrite), userauth.WithUserID(h.put))
 }
