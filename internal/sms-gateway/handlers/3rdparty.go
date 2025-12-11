@@ -73,7 +73,7 @@ func (h *thirdPartyHandler) Register(router fiber.Router) {
 
 	router.Use(
 		userauth.NewBasic(h.usersSvc),
-		jwtauth.NewJWT(h.jwtSvc, h.usersSvc),
+		jwtauth.NewJWT(h.jwtSvc),
 		userauth.UserRequired(),
 	)
 

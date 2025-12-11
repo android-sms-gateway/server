@@ -13,7 +13,6 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"github.com/capcom6/go-helpers/slices"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -73,7 +72,7 @@ func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyContr
 //	@Router			/3rdparty/v1/messages [post]
 //
 // Enqueue message.
-func (h *ThirdPartyController) post(user users.User, c *fiber.Ctx) error {
+func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 	var params thirdPartyPostQueryParams
 	if err := h.QueryParserValidator(c, &params); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
@@ -85,7 +84,7 @@ func (h *ThirdPartyController) post(user users.User, c *fiber.Ctx) error {
 	}
 
 	device, err := h.devicesSvc.GetAny(
-		user.ID,
+		userID,
 		req.DeviceID,
 		time.Duration(params.DeviceActiveWithin)*time.Hour,
 	)
@@ -93,7 +92,7 @@ func (h *ThirdPartyController) post(user users.User, c *fiber.Ctx) error {
 		h.Logger.Error(
 			"failed to select device",
 			zap.Error(err),
-			zap.String("user_id", user.ID),
+			zap.String("user_id", userID),
 			zap.String("device_id", req.DeviceID),
 		)
 
@@ -139,7 +138,7 @@ func (h *ThirdPartyController) post(user users.User, c *fiber.Ctx) error {
 		h.Logger.Error(
 			"failed to enqueue message",
 			zap.Error(err),
-			zap.String("user_id", user.ID),
+			zap.String("user_id", userID),
 			zap.String("device_id", req.DeviceID),
 		)
 
@@ -192,15 +191,15 @@ func (h *ThirdPartyController) post(user users.User, c *fiber.Ctx) error {
 //	@Router			/3rdparty/v1/messages [get]
 //
 // Get message history.
-func (h *ThirdPartyController) list(user users.User, c *fiber.Ctx) error {
+func (h *ThirdPartyController) list(userID string, c *fiber.Ctx) error {
 	params := new(thirdPartyGetQueryParams)
 	if err := h.QueryParserValidator(c, params); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	messages, total, err := h.messagesSvc.SelectStates(user, params.ToFilter(), params.ToOptions())
+	messages, total, err := h.messagesSvc.SelectStates(userID, params.ToFilter(), params.ToOptions())
 	if err != nil {
-		h.Logger.Error("failed to get message history", zap.Error(err), zap.String("user_id", user.ID))
+		h.Logger.Error("failed to get message history", zap.Error(err), zap.String("user_id", userID))
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to retrieve message history")
 	}
 
@@ -225,16 +224,16 @@ func (h *ThirdPartyController) list(user users.User, c *fiber.Ctx) error {
 //	@Router			/3rdparty/v1/messages/{id} [get]
 //
 // Get message state.
-func (h *ThirdPartyController) get(user users.User, c *fiber.Ctx) error {
+func (h *ThirdPartyController) get(userID string, c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	state, err := h.messagesSvc.GetState(user, id)
+	state, err := h.messagesSvc.GetState(userID, id)
 	if err != nil {
 		if errors.Is(err, messages.ErrMessageNotFound) {
 			return fiber.NewError(fiber.StatusNotFound, err.Error())
 		}
 
-		h.Logger.Error("failed to get message state", zap.Error(err), zap.String("user_id", user.ID))
+		h.Logger.Error("failed to get message state", zap.Error(err), zap.String("user_id", userID))
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to get message state")
 	}
 
@@ -257,24 +256,24 @@ func (h *ThirdPartyController) get(user users.User, c *fiber.Ctx) error {
 //	@Router			/3rdparty/v1/messages/inbox/export [post]
 //
 // Export inbox.
-func (h *ThirdPartyController) postInboxExport(user users.User, c *fiber.Ctx) error {
+func (h *ThirdPartyController) postInboxExport(userID string, c *fiber.Ctx) error {
 	req := new(smsgateway.MessagesExportRequest)
 	if err := h.BodyParserValidator(c, req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	device, err := h.devicesSvc.Get(user.ID, devices.WithID(req.DeviceID))
+	device, err := h.devicesSvc.Get(userID, devices.WithID(req.DeviceID))
 	if err != nil {
 		if errors.Is(err, devices.ErrNotFound) {
 			return fiber.NewError(fiber.StatusBadRequest, "Invalid device ID")
 		}
 
-		h.Logger.Error("failed to get device", zap.Error(err), zap.String("user_id", user.ID))
+		h.Logger.Error("failed to get device", zap.Error(err), zap.String("user_id", userID))
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to get device")
 	}
 
 	if expErr := h.messagesSvc.ExportInbox(device, req.Since, req.Until); expErr != nil {
-		h.Logger.Error("failed to export inbox", zap.Error(expErr), zap.String("user_id", user.ID))
+		h.Logger.Error("failed to export inbox", zap.Error(expErr), zap.String("user_id", userID))
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to export inbox")
 	}
 
@@ -324,9 +323,9 @@ func (h *ThirdPartyController) errorHandler(c *fiber.Ctx) error {
 func (h *ThirdPartyController) Register(router fiber.Router) {
 	router.Use(h.errorHandler)
 
-	router.Get("", permissions.RequireScope(ScopeList), userauth.WithUser(h.list))
-	router.Post("", permissions.RequireScope(ScopeSend), userauth.WithUser(h.post))
-	router.Get(":id", permissions.RequireScope(ScopeRead), userauth.WithUser(h.get)).Name(route3rdPartyGetMessage)
+	router.Get("", permissions.RequireScope(ScopeList), userauth.WithUserID(h.list))
+	router.Post("", permissions.RequireScope(ScopeSend), userauth.WithUserID(h.post))
+	router.Get(":id", permissions.RequireScope(ScopeRead), userauth.WithUserID(h.get)).Name(route3rdPartyGetMessage)
 
-	router.Post("inbox/export", permissions.RequireScope(ScopeExport), userauth.WithUser(h.postInboxExport))
+	router.Post("inbox/export", permissions.RequireScope(ScopeExport), userauth.WithUserID(h.postInboxExport))
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/permissions"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"github.com/capcom6/go-helpers/slices"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -50,8 +49,8 @@ func NewThirdPartyController(
 //	@Router			/3rdparty/v1/devices [get]
 //
 // List devices.
-func (h *ThirdPartyController) get(user users.User, c *fiber.Ctx) error {
-	devices, err := h.devicesSvc.Select(user.ID)
+func (h *ThirdPartyController) get(userID string, c *fiber.Ctx) error {
+	devices, err := h.devicesSvc.Select(userID)
 	if err != nil {
 		return fmt.Errorf("failed to select devices: %w", err)
 	}
@@ -77,10 +76,10 @@ func (h *ThirdPartyController) get(user users.User, c *fiber.Ctx) error {
 //	@Router			/3rdparty/v1/devices/{id} [delete]
 //
 // Remove device.
-func (h *ThirdPartyController) remove(user users.User, c *fiber.Ctx) error {
+func (h *ThirdPartyController) remove(userID string, c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	err := h.devicesSvc.Remove(user.ID, devices.WithID(id))
+	err := h.devicesSvc.Remove(userID, devices.WithID(id))
 	if errors.Is(err, devices.ErrNotFound) {
 		return fiber.NewError(fiber.StatusNotFound, err.Error())
 	}
@@ -92,6 +91,6 @@ func (h *ThirdPartyController) remove(user users.User, c *fiber.Ctx) error {
 }
 
 func (h *ThirdPartyController) Register(router fiber.Router) {
-	router.Get("", permissions.RequireScope(ScopeList), userauth.WithUser(h.get))
-	router.Delete(":id", permissions.RequireScope(ScopeDelete), userauth.WithUser(h.remove))
+	router.Get("", permissions.RequireScope(ScopeList), userauth.WithUserID(h.get))
+	router.Delete(":id", permissions.RequireScope(ScopeDelete), userauth.WithUserID(h.remove))
 }
