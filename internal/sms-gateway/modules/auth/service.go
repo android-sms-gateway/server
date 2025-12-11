@@ -61,13 +61,13 @@ func (s *Service) GenerateUserCode(ctx context.Context, userID string) (*otp.Cod
 	return code, nil
 }
 
-func (s *Service) RegisterDevice(user users.User, name, pushToken *string) (*models.Device, error) {
+func (s *Service) RegisterDevice(userID string, name, pushToken *string) (*models.Device, error) {
 	device := models.NewDevice(
 		name,
 		pushToken,
 	)
 
-	if err := s.devicesSvc.Insert(user.ID, device); err != nil {
+	if err := s.devicesSvc.Insert(userID, device); err != nil {
 		return device, fmt.Errorf("failed to create device: %w", err)
 	}
 

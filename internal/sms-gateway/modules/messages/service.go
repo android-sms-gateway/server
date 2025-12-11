@@ -12,7 +12,6 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/db"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/events"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"github.com/capcom6/go-helpers/anys"
 	"github.com/capcom6/go-helpers/slices"
 	"github.com/nyaruka/phonenumbers"
@@ -125,11 +124,11 @@ func (s *Service) UpdateState(device *models.Device, message MessageStateIn) err
 }
 
 func (s *Service) SelectStates(
-	user users.User,
+	userID string,
 	filter SelectFilter,
 	options SelectOptions,
 ) ([]MessageStateOut, int64, error) {
-	filter.UserID = user.ID
+	filter.UserID = userID
 
 	messages, total, err := s.messages.Select(filter, options)
 	if err != nil {
@@ -139,8 +138,8 @@ func (s *Service) SelectStates(
 	return slices.Map(messages, modelToMessageState), total, nil
 }
 
-func (s *Service) GetState(user users.User, id string) (*MessageStateOut, error) {
-	dto, err := s.cache.Get(context.Background(), user.ID, id)
+func (s *Service) GetState(userID string, id string) (*MessageStateOut, error) {
+	dto, err := s.cache.Get(context.Background(), userID, id)
 	if err == nil {
 		s.metrics.IncCache(true)
 
@@ -153,12 +152,12 @@ func (s *Service) GetState(user users.User, id string) (*MessageStateOut, error)
 	s.metrics.IncCache(false)
 
 	message, err := s.messages.Get(
-		*new(SelectFilter).WithExtID(id).WithUserID(user.ID),
+		*new(SelectFilter).WithExtID(id).WithUserID(userID),
 		*new(SelectOptions).IncludeRecipients().IncludeDevice().IncludeStates(),
 	)
 	if err != nil {
 		if errors.Is(err, ErrMessageNotFound) {
-			if cacheErr := s.cache.Set(context.Background(), user.ID, id, nil); cacheErr != nil {
+			if cacheErr := s.cache.Set(context.Background(), userID, id, nil); cacheErr != nil {
 				s.logger.Warn("failed to cache message", zap.String("id", id), zap.Error(cacheErr))
 			}
 		}
@@ -167,7 +166,7 @@ func (s *Service) GetState(user users.User, id string) (*MessageStateOut, error)
 	}
 
 	dto = anys.AsPointer(modelToMessageState(message))
-	if cacheErr := s.cache.Set(context.Background(), user.ID, id, dto); cacheErr != nil {
+	if cacheErr := s.cache.Set(context.Background(), userID, id, dto); cacheErr != nil {
 		s.logger.Warn("failed to cache message", zap.String("id", id), zap.Error(cacheErr))
 	}
 

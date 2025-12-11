@@ -122,26 +122,23 @@ func (h *mobileHandler) postDevice(c *fiber.Ctx) error {
 
 	var (
 		err      error
-		user     *users.User
-		username string
+		userID   string
 		password string
 	)
 
-	if authUser := userauth.GetUser(c); authUser != nil {
-		user = authUser
-		username = user.ID
+	if authUser := userauth.GetUserID(c); authUser != "" {
+		userID = authUser
 	} else {
 		id := h.idGen()
-		username = strings.ToUpper(id[:6])
+		userID = strings.ToUpper(id[:6])
 		password = strings.ToLower(id[7:])
 
-		user, err = h.usersSvc.Create(username, password)
-		if err != nil {
+		if _, err = h.usersSvc.Create(userID, password); err != nil {
 			return fmt.Errorf("failed to create user: %w", err)
 		}
 	}
 
-	device, err := h.authSvc.RegisterDevice(*user, req.Name, req.PushToken)
+	device, err := h.authSvc.RegisterDevice(userID, req.Name, req.PushToken)
 	if err != nil {
 		return fmt.Errorf("failed to register device: %w", err)
 	}
@@ -150,7 +147,7 @@ func (h *mobileHandler) postDevice(c *fiber.Ctx) error {
 		JSON(smsgateway.MobileRegisterResponse{
 			Id:       device.ID,
 			Token:    device.AuthToken,
-			Login:    username,
+			Login:    userID,
 			Password: password,
 		})
 }
@@ -198,10 +195,10 @@ func (h *mobileHandler) patchDevice(device models.Device, c *fiber.Ctx) error {
 //	@Router			/mobile/v1/user/code [get]
 //
 // Get user code.
-func (h *mobileHandler) getUserCode(user users.User, c *fiber.Ctx) error {
-	code, err := h.authSvc.GenerateUserCode(c.Context(), user.ID)
+func (h *mobileHandler) getUserCode(userID string, c *fiber.Ctx) error {
+	code, err := h.authSvc.GenerateUserCode(c.Context(), userID)
 	if err != nil {
-		h.Logger.Error("failed to generate user code", zap.Error(err), zap.String("user_id", user.ID))
+		h.Logger.Error("failed to generate user code", zap.Error(err), zap.String("user_id", userID))
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate user code")
 	}
 
@@ -268,7 +265,7 @@ func (h *mobileHandler) Register(router fiber.Router) {
 	router.Get("/user/code",
 		userauth.NewBasic(h.usersSvc),
 		userauth.UserRequired(),
-		userauth.WithUser(h.getUserCode),
+		userauth.WithUserID(h.getUserCode),
 	)
 
 	router.Use(
