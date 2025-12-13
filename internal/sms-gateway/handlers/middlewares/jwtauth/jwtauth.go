@@ -24,6 +24,10 @@ func NewJWT(jwtSvc jwt.Service) fiber.Handler {
 			return fiber.ErrUnauthorized
 		}
 
+		if strings.TrimSpace(claims.UserID) == "" {
+			return fiber.ErrUnauthorized
+		}
+
 		userauth.SetUserID(c, claims.UserID)
 		permissions.SetScopes(c, claims.Scopes)
 
