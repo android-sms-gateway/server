@@ -3,6 +3,7 @@ package messages
 import (
 	cacheFactory "github.com/android-sms-gateway/server/internal/sms-gateway/cache"
 	"github.com/capcom6/go-infra-fx/db"
+	cacheImpl "github.com/go-core-fx/cachefx/cache"
 	"github.com/go-core-fx/logger"
 	"go.uber.org/fx"
 )
@@ -11,7 +12,7 @@ func Module() fx.Option {
 	return fx.Module(
 		"messages",
 		logger.WithNamedLogger("messages"),
-		fx.Provide(func(factory cacheFactory.Factory) (cacheFactory.Cache, error) {
+		fx.Provide(func(factory cacheFactory.Factory) (cacheImpl.Cache, error) {
 			return factory.New("messages")
 		}, fx.Private),
 

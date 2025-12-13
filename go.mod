@@ -8,6 +8,7 @@ require (
 	github.com/ansrivas/fiberprometheus/v2 v2.6.1
 	github.com/capcom6/go-helpers v0.3.0
 	github.com/capcom6/go-infra-fx v0.5.2
+	github.com/go-core-fx/cachefx v0.0.1
 	github.com/go-core-fx/fiberfx v0.0.1
 	github.com/go-core-fx/logger v0.0.0-20251028014216-c34d2fb15ca2
 	github.com/go-playground/assert/v2 v2.2.0
@@ -20,11 +21,11 @@ require (
 	github.com/jaevor/go-nanoid v1.3.0
 	github.com/nyaruka/phonenumbers v1.4.0
 	github.com/prometheus/client_golang v1.19.1
-	github.com/redis/go-redis/v9 v9.9.0
+	github.com/redis/go-redis/v9 v9.17.2
 	github.com/samber/lo v1.52.0
 	github.com/swaggo/swag v1.16.6
 	go.uber.org/fx v1.24.0
-	go.uber.org/zap v1.27.0
+	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.45.0
 	google.golang.org/api v0.148.0
 	gopkg.in/yaml.v3 v3.0.1

@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/android-sms-gateway/server/pkg/cache"
+	"github.com/go-core-fx/cachefx/cache"
 )
 
 const loginCacheTTL = time.Hour
