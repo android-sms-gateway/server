@@ -10,7 +10,6 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/permissions"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/jwt"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
@@ -37,8 +36,8 @@ func NewAuthHandler(
 
 func (h *AuthHandler) Register(router fiber.Router) {
 	router.Use(h.errorHandler)
-	router.Post("/token", permissions.RequireScope(ScopeTokensManage), userauth.WithUser(h.postToken))
-	router.Delete("/token/:jti", permissions.RequireScope(ScopeTokensManage), userauth.WithUser(h.deleteToken))
+	router.Post("/token", permissions.RequireScope(ScopeTokensManage), userauth.WithUserID(h.postToken))
+	router.Delete("/token/:jti", permissions.RequireScope(ScopeTokensManage), userauth.WithUserID(h.deleteToken))
 }
 
 //	@Summary		Generate token
@@ -57,7 +56,7 @@ func (h *AuthHandler) Register(router fiber.Router) {
 //	@Router			/3rdparty/v1/auth/token [post]
 //
 // Generate token.
-func (h *AuthHandler) postToken(user users.User, c *fiber.Ctx) error {
+func (h *AuthHandler) postToken(userID string, c *fiber.Ctx) error {
 	req := new(smsgateway.TokenRequest)
 	if err := h.BodyParserValidator(c, req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
@@ -65,7 +64,7 @@ func (h *AuthHandler) postToken(user users.User, c *fiber.Ctx) error {
 
 	token, err := h.jwtSvc.GenerateToken(
 		c.Context(),
-		user.ID,
+		userID,
 		req.Scopes,
 		time.Duration(req.TTL)*time.Second, //nolint:gosec // validated in the service
 	)
@@ -95,10 +94,10 @@ func (h *AuthHandler) postToken(user users.User, c *fiber.Ctx) error {
 //	@Router			/3rdparty/v1/auth/token/{jti} [delete]
 //
 // Revoke token.
-func (h *AuthHandler) deleteToken(user users.User, c *fiber.Ctx) error {
+func (h *AuthHandler) deleteToken(userID string, c *fiber.Ctx) error {
 	jti := c.Params("jti")
 
-	if err := h.jwtSvc.RevokeToken(c.Context(), user.ID, jti); err != nil {
+	if err := h.jwtSvc.RevokeToken(c.Context(), userID, jti); err != nil {
 		return fmt.Errorf("failed to revoke token: %w", err)
 	}
 

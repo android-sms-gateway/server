@@ -11,13 +11,13 @@ import (
 	"github.com/gofiber/fiber/v2/utils"
 )
 
-const localsUser = "user"
+const localsUserID = "userID"
 
 // NewBasic returns a middleware that optionally performs HTTP Basic authentication.
 // If the "Authorization" header is missing or does not start with "Basic ", the request is passed through unchanged.
 // If the header is present, the middleware expects a base64-encoded "username:password" payload, decodes it,
 // validates the credentials format, and authenticates the user using the given users service.
-// On invalid or failed authentication it returns 401 Unauthorized; on success it stores the user in Locals.
+// On invalid or failed authentication it returns 401 Unauthorized; on success it stores the user ID in Locals.
 func NewBasic(usersSvc *users.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		auth := c.Get(fiber.HeaderAuthorization)
@@ -51,7 +51,7 @@ func NewBasic(usersSvc *users.Service) fiber.Handler {
 			return fiber.ErrUnauthorized
 		}
 
-		SetUser(c, user)
+		SetUserID(c, user.ID)
 		permissions.SetScopes(c, []string{permissions.ScopeAll})
 
 		return c.Next()
@@ -61,7 +61,7 @@ func NewBasic(usersSvc *users.Service) fiber.Handler {
 // NewCode returns a middleware that will check if the request contains a valid
 // "Authorization" header in the form of "Code <one-time user authorization code>".
 // If the header is valid, the middleware will authorize the user and store the
-// user in the request's Locals under the key LocalsUser. If the header is invalid,
+// user ID in the request's Locals under the key localsUserID. If the header is invalid,
 // the middleware will call c.Next() and continue with the request.
 func NewCode(authSvc *auth.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -79,34 +79,33 @@ func NewCode(authSvc *auth.Service) fiber.Handler {
 			return fiber.ErrUnauthorized
 		}
 
-		SetUser(c, user)
+		SetUserID(c, user.ID)
 
 		return c.Next()
 	}
 }
 
-func SetUser(c *fiber.Ctx, user *users.User) {
-	c.Locals(localsUser, user)
+func SetUserID(c *fiber.Ctx, userID string) {
+	c.Locals(localsUserID, userID)
 }
 
 // HasUser checks if a user is present in the Locals of the given context.
-// It returns true if the Locals contain a user under the key LocalsUser,
+// It returns true if the Locals contain a user ID under the key localsUserID,
 // otherwise returns false.
 func HasUser(c *fiber.Ctx) bool {
-	return GetUser(c) != nil
+	return GetUserID(c) != ""
 }
 
-// GetUser returns the user stored in the Locals of the given context.
-// It returns nil if the Locals do not contain a user under the key localsUser.
-// The user is stored in Locals by the NewBasic and NewCode middlewares via SetUser,
-// and is retrieved as a users.User value (exposed here as *users.User for convenience).
-func GetUser(c *fiber.Ctx) *users.User {
-	user, ok := c.Locals(localsUser).(*users.User)
+// GetUserID returns the user ID stored in the Locals of the given context.
+// It returns an empty string if the Locals do not contain a user ID under the key localsUserID.
+// The user ID is stored in Locals by the NewBasic and NewCode middlewares via SetUserID.
+func GetUserID(c *fiber.Ctx) string {
+	userID, ok := c.Locals(localsUserID).(string)
 	if !ok {
-		return nil
+		return ""
 	}
 
-	return user
+	return userID
 }
 
 // UserRequired is a middleware that checks if a user is present in the request's Locals.
@@ -123,19 +122,19 @@ func UserRequired() fiber.Handler {
 	}
 }
 
-// WithUser is a decorator that provides the current user to the handler.
+// WithUserID is a decorator that provides the current user to the handler.
 // It assumes that the user is stored in Locals under the key localsUser.
 // If the user is not present, it returns 401 Unauthorized.
 //
-// It is a convenience function that wraps the call to GetUser and calls the
+// It is a convenience function that wraps the call to GetUserID and calls the
 // handler with the user as the first argument.
-func WithUser(handler func(users.User, *fiber.Ctx) error) fiber.Handler {
+func WithUserID(handler func(string, *fiber.Ctx) error) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		user := GetUser(c)
-		if user == nil {
+		userID := GetUserID(c)
+		if userID == "" {
 			return fiber.ErrUnauthorized
 		}
 
-		return handler(*user, c)
+		return handler(userID, c)
 	}
 }

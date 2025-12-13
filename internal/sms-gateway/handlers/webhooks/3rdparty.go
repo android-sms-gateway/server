@@ -8,7 +8,6 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/permissions"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/webhooks"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
@@ -53,8 +52,8 @@ func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyContr
 //	@Router			/3rdparty/v1/webhooks [get]
 //
 // List webhooks.
-func (h *ThirdPartyController) get(user users.User, c *fiber.Ctx) error {
-	items, err := h.webhooksSvc.Select(user.ID)
+func (h *ThirdPartyController) get(userID string, c *fiber.Ctx) error {
+	items, err := h.webhooksSvc.Select(userID)
 	if err != nil {
 		return fmt.Errorf("failed to select webhooks: %w", err)
 	}
@@ -78,14 +77,14 @@ func (h *ThirdPartyController) get(user users.User, c *fiber.Ctx) error {
 //	@Router			/3rdparty/v1/webhooks [post]
 //
 // Register webhook.
-func (h *ThirdPartyController) post(user users.User, c *fiber.Ctx) error {
+func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 	dto := new(smsgateway.Webhook)
 
 	if err := h.BodyParserValidator(c, dto); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	if err := h.webhooksSvc.Replace(user.ID, dto); err != nil {
+	if err := h.webhooksSvc.Replace(userID, dto); err != nil {
 		if webhooks.IsValidationError(err) {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
@@ -110,10 +109,10 @@ func (h *ThirdPartyController) post(user users.User, c *fiber.Ctx) error {
 //	@Router			/3rdparty/v1/webhooks/{id} [delete]
 //
 // Delete webhook.
-func (h *ThirdPartyController) delete(user users.User, c *fiber.Ctx) error {
+func (h *ThirdPartyController) delete(userID string, c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	if err := h.webhooksSvc.Delete(user.ID, webhooks.WithExtID(id)); err != nil {
+	if err := h.webhooksSvc.Delete(userID, webhooks.WithExtID(id)); err != nil {
 		return fmt.Errorf("failed to delete webhook: %w", err)
 	}
 
@@ -121,7 +120,7 @@ func (h *ThirdPartyController) delete(user users.User, c *fiber.Ctx) error {
 }
 
 func (h *ThirdPartyController) Register(router fiber.Router) {
-	router.Get("", permissions.RequireScope(ScopeList), userauth.WithUser(h.get))
-	router.Post("", permissions.RequireScope(ScopeWrite), userauth.WithUser(h.post))
-	router.Delete("/:id", permissions.RequireScope(ScopeDelete), userauth.WithUser(h.delete))
+	router.Get("", permissions.RequireScope(ScopeList), userauth.WithUserID(h.get))
+	router.Post("", permissions.RequireScope(ScopeWrite), userauth.WithUserID(h.post))
+	router.Delete("/:id", permissions.RequireScope(ScopeDelete), userauth.WithUserID(h.delete))
 }
