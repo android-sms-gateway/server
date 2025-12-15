@@ -76,13 +76,16 @@ services:
       - MYSQL_DATABASE=sms
       - MYSQL_USER=sms
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MARIADB_AUTO_UPGRADE=1
     volumes:
       - mariadb-data:/var/lib/mysql
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-proot", "-h", "127.0.0.1"]
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 3
 
 configs:
   config-yml:
