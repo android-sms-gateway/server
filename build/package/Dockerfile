@@ -33,8 +33,7 @@ FROM alpine:3 AS prod
 
 WORKDIR /app
 
-RUN apk add --no-cache tzdata \
-    curl
+RUN apk add --no-cache tzdata
 
 COPY scripts/docker-entrypoint.sh /docker-entrypoint.sh
 
@@ -48,6 +47,6 @@ USER guest
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD curl -fs http://localhost:3000/health/live
+    CMD [ "/app/app", "health" ]
 
 CMD [ "/app/app" ]

@@ -3,12 +3,14 @@ package main
 import (
 	"os"
 
+	"github.com/android-sms-gateway/server/internal/health"
 	smsgateway "github.com/android-sms-gateway/server/internal/sms-gateway"
 	"github.com/android-sms-gateway/server/internal/worker"
 )
 
 const (
 	cmdWorker = "worker"
+	cmdHealth = "health"
 )
 
 //	@securitydefinitions.basic	ApiAuth
@@ -53,13 +55,18 @@ const (
 func main() {
 	args := os.Args[1:]
 	cmd := "start"
-	if len(args) > 0 && args[0] == cmdWorker {
-		cmd = cmdWorker
+	if len(args) > 0 {
+		cmd = args[0]
 	}
 
-	if cmd == cmdWorker {
+	switch cmd {
+	case cmdHealth:
+		health.Run()
+		return
+	case cmdWorker:
 		worker.Run()
-	} else {
-		smsgateway.Run()
+		return
 	}
+
+	smsgateway.Run()
 }
