@@ -30,7 +30,11 @@ func (r *repository) UpdateSettings(settings *DeviceSettings) (*DeviceSettings, 
 	var updatedSettings *DeviceSettings
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		source := new(DeviceSettings)
-		if err := tx.Clauses(clause.Locking{Strength: clause.LockingStrengthUpdate}).Where("user_id = ?", settings.UserID).Limit(1).Find(source).Error; err != nil {
+		if err := tx.Clauses(clause.Locking{Strength: clause.LockingStrengthUpdate}).
+			Where("user_id = ?", settings.UserID).
+			Limit(1).
+			Find(source).
+			Error; err != nil {
 			return err
 		}
 

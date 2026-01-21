@@ -99,7 +99,10 @@ func (s *service) GenerateToken(
 			return
 		}
 
-		if storeErr := s.tokens.Insert(ctx, newTokenModel(claims.ID, claims.UserID, claims.ExpiresAt.Time)); storeErr != nil {
+		if storeErr := s.tokens.Insert(
+			ctx,
+			newTokenModel(claims.ID, claims.UserID, claims.ExpiresAt.Time),
+		); storeErr != nil {
 			err = fmt.Errorf("failed to insert token: %w", storeErr)
 			return
 		}

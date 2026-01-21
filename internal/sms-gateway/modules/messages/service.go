@@ -114,7 +114,12 @@ func (s *Service) UpdateState(device *models.Device, message MessageStateIn) err
 		return updErr
 	}
 
-	if cacheErr := s.cache.Set(context.Background(), device.UserID, existing.ExtID, anys.AsPointer(modelToMessageState(existing))); cacheErr != nil {
+	if cacheErr := s.cache.Set(
+		context.Background(),
+		device.UserID,
+		existing.ExtID,
+		anys.AsPointer(modelToMessageState(existing)),
+	); cacheErr != nil {
 		s.logger.Warn("failed to cache message", zap.String("id", existing.ExtID), zap.Error(cacheErr))
 	}
 	s.hashingWorker.Enqueue(existing.ID)
@@ -198,7 +203,12 @@ func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueO
 		return state, insErr
 	}
 
-	if cacheErr := s.cache.Set(context.Background(), device.UserID, msg.ExtID, anys.AsPointer(modelToMessageState(*msg))); cacheErr != nil {
+	if cacheErr := s.cache.Set(
+		context.Background(),
+		device.UserID,
+		msg.ExtID,
+		anys.AsPointer(modelToMessageState(*msg)),
+	); cacheErr != nil {
 		s.logger.Warn("failed to cache message", zap.String("id", msg.ExtID), zap.Error(cacheErr))
 	}
 	s.metrics.IncTotal(string(msg.State))

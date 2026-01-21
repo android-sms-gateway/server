@@ -42,7 +42,8 @@ func (m *mySQLLocker) AcquireLock(ctx context.Context, key string) error {
 	}
 
 	var res sql.NullInt64
-	if lockErr := conn.QueryRowContext(ctx, "SELECT GET_LOCK(?, ?)", name, m.timeout.Seconds()).Scan(&res); lockErr != nil {
+	if lockErr := conn.QueryRowContext(ctx, "SELECT GET_LOCK(?, ?)", name, m.timeout.Seconds()).
+		Scan(&res); lockErr != nil {
 		_ = conn.Close()
 		return fmt.Errorf("failed to get lock: %w", lockErr)
 	}
