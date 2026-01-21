@@ -149,7 +149,10 @@ func (s *Service) handleStream(deviceID string, w *bufio.Writer) {
 		case event := <-conn.channel:
 			success := true
 			s.metrics.ObserveEventDeliveryLatency(func() {
-				if err := s.writeToStream(w, fmt.Sprintf("event: %s\ndata: %s", event.name, utils.UnsafeString(event.data))); err != nil {
+				if err := s.writeToStream(
+					w,
+					fmt.Sprintf("event: %s\ndata: %s", event.name, utils.UnsafeString(event.data)),
+				); err != nil {
 					s.logger.Warn("failed to write event data",
 						zap.String("device_id", deviceID),
 						zap.String("connection_id", conn.id),

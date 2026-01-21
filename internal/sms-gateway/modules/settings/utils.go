@@ -110,7 +110,12 @@ func appendMap(m1, m2 map[string]any, rules map[string]any) (map[string]any, err
 			} else if m2[field] == nil {
 				continue
 			} else {
-				return nil, fmt.Errorf("%w: expected field '%s' to be a map, but got %T", ErrInvalidField, field, m2[field])
+				return nil, fmt.Errorf(
+					"%w: expected field '%s' to be a map, but got %T",
+					ErrInvalidField,
+					field,
+					m2[field],
+				)
 			}
 		} else if _, ok := rule.(string); ok {
 			if _, ok := m2[field]; !ok {
