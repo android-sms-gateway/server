@@ -34,6 +34,9 @@ var (
 			"retry_count":       "",
 			"signing_key":       "",
 		},
+		"gateway": map[string]any{
+			"notification_channel": "",
+		},
 	}
 
 	rulesPublic = map[string]any{
@@ -55,6 +58,9 @@ var (
 		"webhooks": map[string]any{
 			"internet_required": "",
 			"retry_count":       "",
+		},
+		"gateway": map[string]any{
+			"notification_channel": "",
 		},
 	}
 )
