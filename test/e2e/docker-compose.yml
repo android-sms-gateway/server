@@ -1,6 +1,6 @@
 services:
   public:
-    image: android-sms-gateway/server
+    image: android-sms-gateway/server:public
     build:
       context: ../..
       dockerfile: ./build/package/Dockerfile
@@ -22,13 +22,13 @@ services:
       - "3000:3000"
     volumes:
       - ./data/config.yml:/app/config.yml:ro
-    restart: 'unless-stopped'
+    restart: "unless-stopped"
     depends_on:
       db:
         condition: service_healthy
 
   private:
-    image: android-sms-gateway/server
+    image: android-sms-gateway/server:private
     build:
       context: ../..
       dockerfile: ./build/package/Dockerfile
@@ -50,7 +50,7 @@ services:
       - "3001:3000"
     volumes:
       - ./data/config.yml:/app/config.yml:ro
-    restart: 'unless-stopped'
+    restart: "unless-stopped"
     depends_on:
       db:
         condition: service_healthy
@@ -62,7 +62,7 @@ services:
       - MARIADB_AUTO_UPGRADE=1
     volumes:
       - ./data/10-init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
-    restart: 'unless-stopped'
+    restart: "unless-stopped"
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       start_period: 4s
