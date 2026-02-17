@@ -34,6 +34,12 @@ github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 h1:d+Bc7a5rLufV
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
 github.com/android-sms-gateway/client-go v1.9.6-0.20251123133512-f7816d96f90a h1:Tm1FDTqFRs1ZftaEmQqDdIXtMRZf2aGCp8t2BgXY/rs=
 github.com/android-sms-gateway/client-go v1.9.6-0.20251123133512-f7816d96f90a/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
+github.com/android-sms-gateway/client-go v1.10.1-0.20260217004820-83d276545735 h1:/dwS503F7TbfkmKoEWHVb1FHZMzdX5fUUEyQgRiojXU=
+github.com/android-sms-gateway/client-go v1.10.1-0.20260217004820-83d276545735/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
+github.com/android-sms-gateway/client-go v1.10.1-0.20260218044357-fb0b167fbe22 h1:egrBOdjsn7onxrbFQwZ0wptDgN/5xO6nsfSIlraB7RU=
+github.com/android-sms-gateway/client-go v1.10.1-0.20260218044357-fb0b167fbe22/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
+github.com/android-sms-gateway/client-go v1.10.1 h1:8Sby6DRp5CEVpTSeZDvi9r1ooMK21Vf1lZkeu7absVw=
+github.com/android-sms-gateway/client-go v1.10.1/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
 github.com/andybalholm/brotli v1.2.0 h1:ukwgCxwYrmACq68yiUqwIWnGY0cTPox/M94sVwToPjQ=
 github.com/andybalholm/brotli v1.2.0/go.mod h1:rzTDkvFWvIrjDXZHkuS16NPggd91W3kUSvPlQ1pLaKY=
 github.com/ansrivas/fiberprometheus/v2 v2.6.1 h1:wac3pXaE6BYYTF04AC6K0ktk6vCD+MnDOJZ3SK66kXM=
