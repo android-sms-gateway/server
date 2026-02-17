@@ -1,14 +1,14 @@
 # This file is licensed under the terms of the MIT license https://opensource.org/license/mit
-# Copyright (c) 2021-2025 Marat Reymers
+# Copyright (c) 2021-2025 Marat Reimers
 
-## Golden config for golangci-lint v2.5.0
+## Golden config for golangci-lint v2.9.0
 #
 # This is the best config for golangci-lint based on my experience and opinion.
 # It is very strict, but not extremely strict.
 # Feel free to adapt it to suit your needs.
-# If this config helps you, please consider keeping a link to this file (see the next comment).
+# If this config helps you, please consider keeping a link to this repo (see the next comment).
 
-# Based on https://gist.github.com/maratori/47a4d00457a92aa426dbd48a18776322
+# Based on https://github.com/maratori/golangci-lint-config
 
 version: "2"
 
@@ -82,6 +82,7 @@ linters:
     - makezero # finds slice declarations with non-zero initial length
     - mirror # reports wrong mirror patterns of bytes/strings usage
     - mnd # detects magic numbers
+    - modernize # suggests simplifications to Go code, using modern language and library features
     - musttag # enforces field tags in (un)marshaled structs
     - nakedret # finds naked returns in functions greater than a specified function length
     - nestif # reports deeply nested if statements
@@ -256,10 +257,15 @@ linters:
         - ^firebase.google.com/go/v4/messaging.Message$
         - ^github.com/aws/aws-sdk-go-v2/service/s3.+Input$
         - ^github.com/aws/aws-sdk-go-v2/service/s3/types.ObjectIdentifier$
+        - ^github.com/go-telegram-bot-api/telegram-bot-api/.+Config$
+        - ^github.com/go-telegram/bot.+Params$
+        - ^github.com/go-telegram/bot/models.+$
         - ^github.com/gofiber/.+Config$
         - ^github.com/golang-jwt/jwt/v5.+Claims$
         - ^github.com/mitchellh/mapstructure.DecoderConfig$
+        - ^github.com/mymmrac/telego.+Parameters$
         - ^github.com/prometheus/client_golang/.+Opts$
+        - ^github.com/revrost/go-openrouter.+$
         - ^github.com/secsy/goftp.Config$
         - ^github.com/Shopify/sarama.Config$
         - ^github.com/Shopify/sarama.ProducerMessage$
@@ -268,6 +274,7 @@ linters:
         - ^github.com/stretchr/testify/mock.Mock$
         - ^github.com/testcontainers/testcontainers-go.+Request$
         - ^github.com/testcontainers/testcontainers-go.FromDockerfile$
+        - ^github.com/ThreeDotsLabs/watermill.+(Config|Schema|Adapter)$
         - ^github.com/urfave/cli.v3.ArgumentBase$
         - ^github.com/urfave/cli.v3.Command$
         - ^github.com/urfave/cli.v3.FlagBase$
@@ -328,6 +335,16 @@ linters:
         # Assert no unused link in godocs.
         # https://github.com/godoc-lint/godoc-lint?tab=readme-ov-file#no-unused-link
         - no-unused-link
+        # Require proper doc links to standard library declarations where applicable.
+        # https://github.com/godoc-lint/godoc-lint?tab=readme-ov-file#require-stdlib-doclink
+        - require-stdlib-doclink
+
+    gosec:
+      # To specify a set of rules to explicitly exclude.
+      # Available rules: https://github.com/securego/gosec#available-rules
+      excludes:
+        - G117 # Potential exposure of secrets via JSON marshaling
+        - G704 # SSRF via taint analysis
 
     govet:
       # Enable all analyzers.
@@ -376,6 +393,9 @@ linters:
       max-func-lines: 0
 
     nolintlint:
+      # Disable to ensure that all nolint directives actually have an effect.
+      # Default: false
+      allow-unused: true
       # Exclude following linters from requiring an explanation.
       # Default: []
       allow-no-explanation: [funlen, gocognit, golines]
