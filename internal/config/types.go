@@ -10,7 +10,7 @@ import (
 
 type Duration time.Duration
 
-// Duration returns the underlying time.Duration value.
+// Duration returns the underlying [time.Duration] value.
 func (d *Duration) Duration() time.Duration {
 	if d == nil {
 		return 0
