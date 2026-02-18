@@ -37,14 +37,10 @@ func NewBasic(usersSvc *users.Service) fiber.Handler {
 
 		// Check if the credentials are in the correct form
 		// which is "username:password".
-		index := strings.Index(creds, ":")
-		if index == -1 {
+		username, password, ok := strings.Cut(creds, ":")
+		if !ok {
 			return fiber.ErrUnauthorized
 		}
-
-		// Get the username and password
-		username := creds[:index]
-		password := creds[index+1:]
 
 		user, err := usersSvc.Login(c.Context(), username, password)
 		if err != nil {
