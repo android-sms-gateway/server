@@ -41,7 +41,7 @@ func (h *AuthHandler) Register(router fiber.Router) {
 }
 
 //	@Summary		Generate token
-//	@Description	Generate new access token with specified scopes and ttl
+//	@Description	Generate new access token with specified scopes and ttl\r\n\r\n*Not available in Local Server mode*
 //	@Security		ApiAuth
 //	@Security		JWTAuth
 //	@Tags			User, Auth
@@ -53,6 +53,7 @@ func (h *AuthHandler) Register(router fiber.Router) {
 //	@Failure		401		{object}	smsgateway.ErrorResponse	"Unauthorized"
 //	@Failure		403		{object}	smsgateway.ErrorResponse	"Forbidden"
 //	@Failure		500		{object}	smsgateway.ErrorResponse	"Internal server error"
+//	@Failure		501		{object}	smsgateway.ErrorResponse	"Not implemented"
 //	@Router			/3rdparty/v1/auth/token [post]
 //
 // Generate token.
@@ -91,6 +92,7 @@ func (h *AuthHandler) postToken(userID string, c *fiber.Ctx) error {
 //	@Failure		401	{object}	smsgateway.ErrorResponse	"Unauthorized"
 //	@Failure		403	{object}	smsgateway.ErrorResponse	"Forbidden"
 //	@Failure		500	{object}	smsgateway.ErrorResponse	"Internal server error"
+//	@Failure		501	{object}	smsgateway.ErrorResponse	"Not implemented"
 //	@Router			/3rdparty/v1/auth/token/{jti} [delete]
 //
 // Revoke token.
