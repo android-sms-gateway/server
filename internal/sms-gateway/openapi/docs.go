@@ -16,7 +16,7 @@ const docTemplate = `{
         },
         "license": {
             "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0"
+            "url": "https://www.apache.org/licenses/LICENSE-2.0"
         },
         "version": "{{.Version}}"
     },
@@ -33,7 +33,7 @@ const docTemplate = `{
                         "JWTAuth": []
                     }
                 ],
-                "description": "Generate new access token with specified scopes and ttl",
+                "description": "Generate new access token with specified scopes and ttl\\r\\n\\r\\n*Not available in Local Server mode*",
                 "consumes": [
                     "application/json"
                 ],
@@ -83,6 +83,12 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "501": {
+                        "description": "Not implemented",
                         "schema": {
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
@@ -136,6 +142,12 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "501": {
+                        "description": "Not implemented",
                         "schema": {
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
@@ -1178,6 +1190,14 @@ const docTemplate = `{
                         }
                     ]
                 },
+                "gateway": {
+                    "description": "Gateway contains settings related to the gateway.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.SettingsGateway"
+                        }
+                    ]
+                },
                 "logs": {
                     "description": "Logs contains settings related to logging.",
                     "allOf": [
@@ -1703,6 +1723,27 @@ const docTemplate = `{
             "properties": {
                 "passphrase": {
                     "description": "Passphrase is the encryption passphrase. If nil or empty, encryption is disabled. Must not be used with Cloud Server.",
+                    "type": "string"
+                }
+            }
+        },
+        "smsgateway.SettingsGateway": {
+            "type": "object",
+            "properties": {
+                "cloud_url": {
+                    "description": "CloudURL is the URL of the cloud server. Must not be used with Cloud Server.",
+                    "type": "string"
+                },
+                "notification_channel": {
+                    "description": "NotificationChannel is the way device receives notifications.",
+                    "type": "string",
+                    "enum": [
+                        "AUTO",
+                        "SSE_ONLY"
+                    ]
+                },
+                "private_token": {
+                    "description": "PrivateToken is the auth token for the private server. Must not be used with Cloud Server.",
                     "type": "string"
                 }
             }
