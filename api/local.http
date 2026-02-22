@@ -1,5 +1,6 @@
 @localUrl={{$dotenv LOCAL__URL}}
 @localCredentials={{$dotenv LOCAL__CREDENTIALS}}
+@localToken={{$dotenv LOCAL__TOKEN}}
 @phone={{$dotenv PHONE}}
 
 ###
@@ -7,7 +8,8 @@ GET {{localUrl}}/health HTTP/1.1
 
 ###
 GET {{localUrl}}/device HTTP/1.1
-Authorization: Basic {{localCredentials}}
+# Authorization: Basic {{localCredentials}}
+Authorization: Bearer {{localToken}}
 
 ###
 POST {{localUrl}}/message?skipPhoneValidation=false HTTP/1.1
@@ -89,11 +91,13 @@ Authorization: Basic {{localCredentials}}
 
 ###
 GET {{localUrl}}/webhooks HTTP/1.1
-Authorization: Basic {{localCredentials}}
+# Authorization: Basic {{localCredentials}}
+Authorization: Bearer {{localToken}}
 
 ###
 POST {{localUrl}}/webhooks HTTP/1.1
-Authorization: Basic {{localCredentials}}
+# Authorization: Basic {{localCredentials}}
+Authorization: Bearer {{localToken}}
 Content-Type: application/json
 
 {
@@ -162,3 +166,21 @@ Content-Type: application/json
     "retry_count": 1
   }
 }
+
+###
+# @name issueToken
+POST {{localUrl}}/auth/token HTTP/1.1
+Authorization: Basic {{localCredentials}}
+Content-Type: application/json
+
+{
+  "scopes": [
+    "webhooks:list"
+  ],
+  "ttl": 86400
+}
+
+###
+@jti={{issueToken.response.body.$.id}}
+DELETE {{localUrl}}/auth/token/{{jti}} HTTP/1.1
+Authorization: Basic {{localCredentials}}
