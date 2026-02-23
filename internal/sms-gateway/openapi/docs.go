@@ -33,7 +33,7 @@ const docTemplate = `{
                         "JWTAuth": []
                     }
                 ],
-                "description": "Generate new access token with specified scopes and ttl\\r\\n\\r\\n*Not available in Local Server mode*",
+                "description": "Generate new access token with specified scopes and ttl",
                 "consumes": [
                     "application/json"
                 ],

@@ -41,7 +41,7 @@ func (h *AuthHandler) Register(router fiber.Router) {
 }
 
 //	@Summary		Generate token
-//	@Description	Generate new access token with specified scopes and ttl\r\n\r\n*Not available in Local Server mode*
+//	@Description	Generate new access token with specified scopes and ttl
 //	@Security		ApiAuth
 //	@Security		JWTAuth
 //	@Tags			User, Auth
