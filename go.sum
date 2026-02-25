@@ -32,12 +32,6 @@ github.com/PuerkitoBio/purell v1.1.1 h1:WEQqlqaGbrPkxLJWfBwQmfEAE1Z7ONdDLqrN38tN
 github.com/PuerkitoBio/purell v1.1.1/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 h1:d+Bc7a5rLufV/sSk/8dngufqelfh6jnri85riMAaF/M=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
-github.com/android-sms-gateway/client-go v1.9.6-0.20251123133512-f7816d96f90a h1:Tm1FDTqFRs1ZftaEmQqDdIXtMRZf2aGCp8t2BgXY/rs=
-github.com/android-sms-gateway/client-go v1.9.6-0.20251123133512-f7816d96f90a/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
-github.com/android-sms-gateway/client-go v1.10.1-0.20260217004820-83d276545735 h1:/dwS503F7TbfkmKoEWHVb1FHZMzdX5fUUEyQgRiojXU=
-github.com/android-sms-gateway/client-go v1.10.1-0.20260217004820-83d276545735/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
-github.com/android-sms-gateway/client-go v1.10.1-0.20260218044357-fb0b167fbe22 h1:egrBOdjsn7onxrbFQwZ0wptDgN/5xO6nsfSIlraB7RU=
-github.com/android-sms-gateway/client-go v1.10.1-0.20260218044357-fb0b167fbe22/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
 github.com/android-sms-gateway/client-go v1.10.1 h1:8Sby6DRp5CEVpTSeZDvi9r1ooMK21Vf1lZkeu7absVw=
 github.com/android-sms-gateway/client-go v1.10.1/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
 github.com/andybalholm/brotli v1.2.0 h1:ukwgCxwYrmACq68yiUqwIWnGY0cTPox/M94sVwToPjQ=
@@ -238,8 +232,8 @@ github.com/moby/term v0.5.0/go.mod h1:8FzsFHVUBGZdbDsJw/ot+X+d5HLUbvklYLJ9uGfcI3
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq1c1nUAm88MOHcQC9l5mIlSMApZMrHA=
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
-github.com/nyaruka/phonenumbers v1.6.9 h1:LUmsIr+WKyBhWTzxm/9j+kGC9JclO+hBOHc18PSo9iM=
-github.com/nyaruka/phonenumbers v1.6.9/go.mod h1:IUu45lj2bSeYXQuxDyyuzOrdV10tyRa1YSsfH8EKN5c=
+github.com/nyaruka/phonenumbers v1.6.10 h1:kGTxTzd320dUamRB/MPeZSIwKNLn4vHlysOt5Cp8uoU=
+github.com/nyaruka/phonenumbers v1.6.10/go.mod h1:IUu45lj2bSeYXQuxDyyuzOrdV10tyRa1YSsfH8EKN5c=
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.1.0-rc5 h1:Ygwkfw9bpDvs+c9E34SdgGOj41dX/cbdlwvlWt0pnFI=
