@@ -2,9 +2,12 @@ package jwt
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Repository struct {
@@ -12,9 +15,7 @@ type Repository struct {
 }
 
 func NewRepository(db *gorm.DB) *Repository {
-	return &Repository{
-		db: db,
-	}
+	return &Repository{db: db}
 }
 
 func (r *Repository) Insert(ctx context.Context, token *tokenModel) error {
@@ -44,4 +45,53 @@ func (r *Repository) IsRevoked(ctx context.Context, jti string) (bool, error) {
 	}
 
 	return count > 0, nil
+}
+
+func (r *Repository) RotateRefreshToken(
+	ctx context.Context,
+	currentJTI string,
+	nextRefresh, nextAccess *tokenModel,
+) error {
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var current tokenModel
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("id = ?", currentJTI).
+			First(&current).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrInvalidToken
+			}
+			return fmt.Errorf("can't lock refresh token: %w", err)
+		}
+
+		now := time.Now()
+		if current.RevokedAt != nil {
+			return ErrTokenReplay
+		}
+
+		if current.ExpiresAt.Before(now) {
+			return ErrInvalidToken
+		}
+
+		if err := tx.Model((*tokenModel)(nil)).Where("id = ?", current.ID).Updates(map[string]any{
+			"revoked_at": now,
+		}).Error; err != nil {
+			return fmt.Errorf("can't mark refresh token as replaced: %w", err)
+		}
+
+		if err := tx.Create(nextRefresh).Error; err != nil {
+			return fmt.Errorf("can't create next refresh token: %w", err)
+		}
+
+		if err := tx.Create(nextAccess).Error; err != nil {
+			return fmt.Errorf("can't create next access token: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("can't rotate refresh token: %w", err)
+	}
+
+	return nil
 }
