@@ -8,7 +8,14 @@ import (
 )
 
 type Service interface {
-	GenerateToken(ctx context.Context, userID string, scopes []string, ttl time.Duration) (*TokenInfo, error)
+	GenerateTokenPair(
+		ctx context.Context,
+		userID string,
+		scopes []string,
+		refreshScope string,
+		accessTTL time.Duration,
+	) (*TokenPairInfo, error)
+	RefreshTokenPair(ctx context.Context, refreshToken string) (*TokenPairInfo, error)
 	ParseToken(ctx context.Context, token string) (*Claims, error)
 	RevokeToken(ctx context.Context, userID, jti string) error
 }
@@ -20,8 +27,19 @@ type Claims struct {
 	Scopes []string `json:"scopes"`
 }
 
+type RefreshClaims struct {
+	Claims
+
+	OriginalScopes []string `json:"orginal_scopes"`
+}
+
 type TokenInfo struct {
-	ID          string
-	AccessToken string
-	ExpiresAt   time.Time
+	ID        string
+	Token     string
+	ExpiresAt time.Time
+}
+
+type TokenPairInfo struct {
+	Access  TokenInfo
+	Refresh TokenInfo
 }

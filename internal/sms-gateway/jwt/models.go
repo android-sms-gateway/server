@@ -17,17 +17,17 @@ type tokenModel struct {
 	RevokedAt *time.Time
 }
 
-func (tokenModel) TableName() string {
-	return "tokens"
-}
-
-func newTokenModel(id, userID string, expiresAt time.Time) *tokenModel {
+func newTokenModel(userID string, token TokenInfo) *tokenModel {
 	//nolint:exhaustruct // partial constructor
 	return &tokenModel{
-		ID:        id,
+		ID:        token.ID,
 		UserID:    userID,
-		ExpiresAt: expiresAt,
+		ExpiresAt: token.ExpiresAt,
 	}
+}
+
+func (tokenModel) TableName() string {
+	return "tokens"
 }
 
 func Migrate(db *gorm.DB) error {

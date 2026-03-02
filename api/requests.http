@@ -2,6 +2,7 @@
 @credentials={{$dotenv CLOUD__CREDENTIALS}}
 @mobileToken={{$dotenv MOBILE__TOKEN}}
 @jwtToken={{$dotenv JWT__TOKEN}}
+@refreshToken={{$dotenv JWT__REFRESH_TOKEN}}
 @phone={{$dotenv PHONE}}
 
 ###
@@ -198,6 +199,7 @@ Content-Type: application/json
 }
 
 ###
+# @name issueToken
 POST {{baseUrl}}/3rdparty/v1/auth/token HTTP/1.1
 Authorization: Basic {{credentials}}
 Content-Type: application/json
@@ -218,7 +220,12 @@ Content-Type: application/json
 }
 
 ###
-DELETE {{baseUrl}}/3rdparty/v1/auth/token/w8pxz0a4Fwa4xgzyCvSeC HTTP/1.1
+POST {{baseUrl}}/3rdparty/v1/auth/token/refresh HTTP/1.1
+Authorization: Bearer {{refreshToken}}
+
+###
+@jti={{issueToken.response.body.$.id}}
+DELETE {{baseUrl}}/3rdparty/v1/auth/token/{{jti}} HTTP/1.1
 Authorization: Basic {{credentials}}
 Content-Type: application/json
 

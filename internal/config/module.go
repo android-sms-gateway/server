@@ -135,10 +135,16 @@ func Module() fx.Option {
 			}
 		}),
 		fx.Provide(func(cfg Config) jwt.Config {
+			accessTTL := cfg.JWT.AccessTTL
+			if accessTTL == 0 {
+				accessTTL = cfg.JWT.TTL
+			}
+
 			return jwt.Config{
-				Secret: cfg.JWT.Secret,
-				TTL:    time.Duration(cfg.JWT.TTL),
-				Issuer: cfg.JWT.Issuer,
+				Secret:     cfg.JWT.Secret,
+				AccessTTL:  time.Duration(accessTTL),
+				RefreshTTL: time.Duration(cfg.JWT.RefreshTTL),
+				Issuer:     cfg.JWT.Issuer,
 			}
 		}),
 		fx.Provide(func(cfg Config) otp.Config {

@@ -12,8 +12,19 @@ func newDisabled() Service {
 	return &disabled{}
 }
 
-// GenerateToken implements Service.
-func (d *disabled) GenerateToken(_ context.Context, _ string, _ []string, _ time.Duration) (*TokenInfo, error) {
+// GenerateTokenPair implements Service.
+func (d *disabled) GenerateTokenPair(
+	_ context.Context,
+	_ string,
+	_ []string,
+	_ string,
+	_ time.Duration,
+) (*TokenPairInfo, error) {
+	return nil, ErrDisabled
+}
+
+// RefreshTokenPair implements Service.
+func (d *disabled) RefreshTokenPair(_ context.Context, _ string) (*TokenPairInfo, error) {
 	return nil, ErrDisabled
 }
 
