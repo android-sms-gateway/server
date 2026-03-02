@@ -88,7 +88,7 @@ type StartParams struct {
 }
 
 func Start(p StartParams) error {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background()) //nolint:gosec // context is canceled on shutdown
 	wg := &sync.WaitGroup{}
 	p.LC.Append(fx.Hook{
 		OnStart: func(_ context.Context) error {
