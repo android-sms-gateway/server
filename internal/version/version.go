@@ -1,4 +1,4 @@
-package version //nolint:revive // ignore package name
+package version
 
 import "strconv"
 

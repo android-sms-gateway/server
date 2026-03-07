@@ -343,7 +343,6 @@ linters:
       # To specify a set of rules to explicitly exclude.
       # Available rules: https://github.com/securego/gosec#available-rules
       excludes:
-        - G117 # Potential exposure of secrets via JSON marshaling
         - G704 # SSRF via taint analysis
 
     govet:
@@ -393,9 +392,6 @@ linters:
       max-func-lines: 0
 
     nolintlint:
-      # Disable to ensure that all nolint directives actually have an effect.
-      # Default: false
-      allow-unused: true
       # Exclude following linters from requiring an explanation.
       # Default: []
       allow-no-explanation: [funlen, gocognit, golines]
@@ -480,6 +476,8 @@ linters:
       - source: "TODO"
         linters: [godot]
       - text: "should have a package comment"
+        linters: [revive]
+      - text: "avoid package names that conflict with Go standard library package names"
         linters: [revive]
       - text: 'exported \S+ \S+ should have comment( \(or a comment on this block\))? or be unexported'
         linters: [revive]

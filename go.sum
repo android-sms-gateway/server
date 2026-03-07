@@ -32,8 +32,8 @@ github.com/PuerkitoBio/purell v1.1.1 h1:WEQqlqaGbrPkxLJWfBwQmfEAE1Z7ONdDLqrN38tN
 github.com/PuerkitoBio/purell v1.1.1/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 h1:d+Bc7a5rLufV/sSk/8dngufqelfh6jnri85riMAaF/M=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
-github.com/android-sms-gateway/client-go v1.10.1 h1:8Sby6DRp5CEVpTSeZDvi9r1ooMK21Vf1lZkeu7absVw=
-github.com/android-sms-gateway/client-go v1.10.1/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
+github.com/android-sms-gateway/client-go v1.11.0 h1:k1AIz5Ug0dd3bDMcd5y/ejMFEhgzyh6yz4ySM9T6KFA=
+github.com/android-sms-gateway/client-go v1.11.0/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
 github.com/andybalholm/brotli v1.2.0 h1:ukwgCxwYrmACq68yiUqwIWnGY0cTPox/M94sVwToPjQ=
 github.com/andybalholm/brotli v1.2.0/go.mod h1:rzTDkvFWvIrjDXZHkuS16NPggd91W3kUSvPlQ1pLaKY=
 github.com/ansrivas/fiberprometheus/v2 v2.6.1 h1:wac3pXaE6BYYTF04AC6K0ktk6vCD+MnDOJZ3SK66kXM=
@@ -90,8 +90,8 @@ github.com/go-core-fx/cachefx v0.0.1 h1:H/3wED8vznRoocRb0W424DqgOcBLxFBW7Y+p2K6r
 github.com/go-core-fx/cachefx v0.0.1/go.mod h1:7RZ5nT7Dc+eMLiLmc0X4sGQlvciKHQrKYCQtKEe/kMM=
 github.com/go-core-fx/fiberfx v0.0.1 h1:tT1aDKttmyV/ajz6YK2SbS2rmh6uqIXAhbz2sGm4s6o=
 github.com/go-core-fx/fiberfx v0.0.1/go.mod h1:Jsc+gQP2SHUR7MWmRmlOw0hjfX5AHr04lOUx4g3k15I=
-github.com/go-core-fx/fxutil v0.0.0-20251027105421-acea37162eb9 h1:0rpJfg+QM3TAFCTignjzPovNkBHeEjOe+ILo+2Mz9aA=
-github.com/go-core-fx/fxutil v0.0.0-20251027105421-acea37162eb9/go.mod h1:nljLWn+Ck1Rrqv9DPdD7Czdd0j5uF+9YRPNs/DpCfnw=
+github.com/go-core-fx/fxutil v0.0.1 h1:A5pqeiTleSw4vDxhVh38uXkt8IPhCEEFpvb5kZJfHvo=
+github.com/go-core-fx/fxutil v0.0.1/go.mod h1:nljLWn+Ck1Rrqv9DPdD7Czdd0j5uF+9YRPNs/DpCfnw=
 github.com/go-core-fx/logger v0.0.0-20251028014216-c34d2fb15ca2 h1:8iJFH4QaIC7J5cDXfp976mU3GufoYH+6FcxFFEwLaQA=
 github.com/go-core-fx/logger v0.0.0-20251028014216-c34d2fb15ca2/go.mod h1:dvExTnpqUry/Qr0x0rg8UiKVUPv3PBb1JT/0llX5NWc=
 github.com/go-faster/city v1.0.1 h1:4WAxSZ3V2Ws4QRDrscLEDcibJY8uf41H6AhXDrNDcGw=

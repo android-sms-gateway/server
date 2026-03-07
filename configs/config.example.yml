@@ -40,7 +40,8 @@ pubsub: # pubsub config
   url: memory:// # pubsub url (memory:// or redis://) [PUBSUB__URL]
 jwt:
   secret: # jwt secret (leave empty to disable JWT functionality) [JWT__SECRET]
-  ttl: 24h # jwt ttl [JWT__TTL]
+  access_ttl: 15m # access token ttl [JWT__ACCESS_TTL]
+  refresh_ttl: 720h # refresh token ttl [JWT__REFRESH_TTL]
   issuer: # jwt issuer [JWT__ISSUER]
 otp: # otp config
   ttl: 300 # otp ttl in seconds [OTP__TTL]
