@@ -12,7 +12,7 @@ import (
 )
 
 type Service interface {
-	Run(ctx context.Context)
+	Run(ctx context.Context) error
 	SetOnline(ctx context.Context, deviceID string)
 }
 
@@ -36,14 +36,14 @@ func New(devicesSvc *devices.Service, cache cache.Cache, logger *zap.Logger, met
 	}
 }
 
-func (s *service) Run(ctx context.Context) {
+func (s *service) Run(ctx context.Context) error {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return nil
 		case <-ticker.C:
 			s.logger.Debug("Persisting online status")
 			if err := s.persist(ctx); err != nil {
