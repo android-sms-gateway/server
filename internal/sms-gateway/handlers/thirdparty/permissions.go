@@ -1,5 +1,6 @@
 package thirdparty
 
 const (
-	ScopeTokensManage = "tokens:manage"
+	ScopeTokensManage  = "tokens:manage"
+	ScopeTokensRefresh = "tokens:refresh"
 )

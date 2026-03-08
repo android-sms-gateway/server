@@ -12,17 +12,6 @@
                 "iconColor": "rgba(0, 211, 255, 1)",
                 "name": "Annotations & Alerts",
                 "type": "dashboard"
-            },
-            {
-                "datasource": {
-                    "type": "grafana",
-                    "uid": "-- Grafana --"
-                },
-                "enable": true,
-                "hide": false,
-                "iconColor": "blue",
-                "name": "Last Updated",
-                "type": "dashboard"
             }
         ]
     },
@@ -53,12 +42,12 @@
                             }
                         ]
                     },
-                    "unit": "short"
+                    "unit": "reqps"
                 },
                 "overrides": []
             },
             "gridPos": {
-                "h": 8,
+                "h": 6,
                 "w": 6,
                 "x": 0,
                 "y": 0
@@ -78,26 +67,19 @@
                     "values": false
                 },
                 "showPercentChange": false,
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true,
-                "text": {},
                 "textMode": "auto",
                 "wideLayout": true
             },
-            "pluginVersion": "12.2.0",
+            "pluginVersion": "12.3.0",
             "targets": [
                 {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
                     "editorMode": "code",
-                    "expr": "sms_auth_jwt_tokens_issued_total{instance=~\"$instance\",job=~\"$job\"}",
-                    "legendFormat": "Tokens Issued",
+                    "expr": "sum(rate(sms_auth_jwt_tokens_issued_total{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval]))",
                     "range": true,
                     "refId": "A"
                 }
             ],
-            "title": "Total Tokens Issued",
+            "title": "Auth Request Rate",
             "type": "stat"
         },
         {
@@ -108,44 +90,42 @@
             "fieldConfig": {
                 "defaults": {
                     "mappings": [],
+                    "max": 1,
                     "min": 0,
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
+                                "color": "red",
                                 "value": 0
                             },
                             {
-                                "color": "red",
-                                "value": 80
+                                "color": "yellow",
+                                "value": 0.95
+                            },
+                            {
+                                "color": "green",
+                                "value": 0.99
                             }
                         ]
                     },
-                    "unit": "short"
+                    "unit": "percentunit"
                 },
                 "overrides": []
             },
             "gridPos": {
-                "h": 8,
+                "h": 6,
                 "w": 6,
                 "x": 6,
                 "y": 0
             },
-            "id": 5,
+            "id": 2,
             "options": {
-                "displayMode": "gradient",
-                "legend": {
-                    "calcs": [],
-                    "displayMode": "list",
-                    "placement": "bottom",
-                    "showLegend": false
-                },
-                "maxVizHeight": 300,
-                "minVizHeight": 75,
-                "minVizWidth": 75,
-                "namePlacement": "auto",
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
                 "orientation": "auto",
+                "percentChangeColorMode": "standard",
                 "reduceOptions": {
                     "calcs": [
                         "lastNotNull"
@@ -153,27 +133,21 @@
                     "fields": "",
                     "values": false
                 },
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true,
-                "showUnfilled": true,
-                "sizing": "auto",
-                "valueMode": "color"
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
             },
-            "pluginVersion": "12.2.0",
+            "pluginVersion": "12.3.0",
             "targets": [
                 {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
                     "editorMode": "code",
-                    "expr": "sms_auth_jwt_tokens_issued_total{status=\"error\",instance=~\"$instance\",job=~\"$job\"}",
-                    "legendFormat": "{{status}}",
+                    "expr": "sum(rate(sms_auth_jwt_tokens_validated_total{status=\"success\",instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) / sum(rate(sms_auth_jwt_tokens_validated_total{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval]))",
                     "range": true,
                     "refId": "A"
                 }
             ],
-            "title": "Issuance Error Count",
-            "type": "bargauge"
+            "title": "Validation Success %",
+            "type": "stat"
         },
         {
             "datasource": {
@@ -183,25 +157,31 @@
             "fieldConfig": {
                 "defaults": {
                     "mappings": [],
+                    "max": 1,
+                    "min": 0,
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
                             {
                                 "color": "green",
-                                "value": 0
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 0.01
                             },
                             {
                                 "color": "red",
-                                "value": 80
+                                "value": 0.05
                             }
                         ]
                     },
-                    "unit": "short"
+                    "unit": "percentunit"
                 },
                 "overrides": []
             },
             "gridPos": {
-                "h": 8,
+                "h": 6,
                 "w": 6,
                 "x": 12,
                 "y": 0
@@ -221,26 +201,19 @@
                     "values": false
                 },
                 "showPercentChange": false,
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true,
-                "text": {},
                 "textMode": "auto",
                 "wideLayout": true
             },
-            "pluginVersion": "12.2.0",
+            "pluginVersion": "12.3.0",
             "targets": [
                 {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
                     "editorMode": "code",
-                    "expr": "sms_auth_jwt_tokens_revoked_total{instance=~\"$instance\",job=~\"$job\"}",
-                    "legendFormat": "Tokens Revoked",
+                    "expr": "sum(rate(sms_auth_jwt_tokens_validated_total{status=\"error\",instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) / sum(rate(sms_auth_jwt_tokens_validated_total{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval]))",
                     "range": true,
                     "refId": "A"
                 }
             ],
-            "title": "Total Tokens Revoked",
+            "title": "Error Rate",
             "type": "stat"
         },
         {
@@ -251,32 +224,29 @@
             "fieldConfig": {
                 "defaults": {
                     "mappings": [],
-                    "max": 100,
-                    "min": 0,
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "red",
+                                "color": "green",
                                 "value": 0
                             },
                             {
-                                "color": "green",
-                                "value": 90
+                                "color": "red",
+                                "value": 80
                             }
                         ]
-                    },
-                    "unit": "percent"
+                    }
                 },
                 "overrides": []
             },
             "gridPos": {
-                "h": 8,
+                "h": 6,
                 "w": 6,
                 "x": 18,
                 "y": 0
             },
-            "id": 2,
+            "id": 4,
             "options": {
                 "colorMode": "value",
                 "graphMode": "area",
@@ -291,26 +261,17 @@
                     "values": false
                 },
                 "showPercentChange": false,
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true,
-                "text": {},
                 "textMode": "auto",
                 "wideLayout": true
             },
-            "pluginVersion": "12.2.0",
+            "pluginVersion": "12.3.0",
             "targets": [
                 {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
-                    "editorMode": "code",
-                    "expr": "100 * sum(sms_auth_jwt_tokens_validated_total{status=\"success\",instance=~\"$instance\",job=~\"$job\"}) / clamp_min(sum(sms_auth_jwt_tokens_validated_total{instance=~\"$instance\",job=~\"$job\"}), 1)",
-                    "legendFormat": "Validation Success Rate",
-                    "range": true,
+                    "expr": "increase(sms_auth_jwt_tokens_issued_total{instance=~\"$instance\",job=~\"$job\"}[24h])",
                     "refId": "A"
                 }
             ],
-            "title": "Validation Success Rate",
+            "title": "Tokens Issued (24h)",
             "type": "stat"
         },
         {
@@ -379,39 +340,31 @@
                 "h": 8,
                 "w": 12,
                 "x": 0,
-                "y": 8
+                "y": 6
             },
-            "id": 4,
+            "id": 5,
             "options": {
                 "legend": {
-                    "calcs": [
-                        "mean",
-                        "max"
-                    ],
-                    "displayMode": "table",
+                    "calcs": [],
+                    "displayMode": "list",
                     "placement": "bottom",
                     "showLegend": true
                 },
                 "tooltip": {
                     "hideZeros": false,
-                    "mode": "multi",
-                    "sort": "desc"
+                    "mode": "single",
+                    "sort": "none"
                 }
             },
-            "pluginVersion": "12.2.0",
+            "pluginVersion": "12.3.0",
             "targets": [
                 {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
-                    "editorMode": "code",
                     "expr": "sum by (status) (rate(sms_auth_jwt_tokens_issued_total{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval]))",
                     "legendFormat": "{{status}}",
-                    "range": true,
                     "refId": "A"
                 }
             ],
-            "title": "Token Issuance Rate",
+            "title": "Auth Throughput",
             "type": "timeseries"
         },
         {
@@ -480,35 +433,27 @@
                 "h": 8,
                 "w": 12,
                 "x": 12,
-                "y": 8
+                "y": 6
             },
-            "id": 7,
+            "id": 6,
             "options": {
                 "legend": {
-                    "calcs": [
-                        "mean",
-                        "max"
-                    ],
-                    "displayMode": "table",
+                    "calcs": [],
+                    "displayMode": "list",
                     "placement": "bottom",
                     "showLegend": true
                 },
                 "tooltip": {
                     "hideZeros": false,
-                    "mode": "multi",
-                    "sort": "desc"
+                    "mode": "single",
+                    "sort": "none"
                 }
             },
-            "pluginVersion": "12.2.0",
+            "pluginVersion": "12.3.0",
             "targets": [
                 {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
-                    "editorMode": "code",
-                    "expr": "sum(rate(sms_auth_jwt_tokens_validated_total{status=\"success\",instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) / clamp_min(sum(rate(sms_auth_jwt_tokens_validated_total{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])), 1)",
+                    "expr": "sum(rate(sms_auth_jwt_tokens_validated_total{status=\"success\",instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) / sum(rate(sms_auth_jwt_tokens_validated_total{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval]))",
                     "legendFormat": "Success Rate",
-                    "range": true,
                     "refId": "A"
                 }
             ],
@@ -581,59 +526,144 @@
                 "h": 8,
                 "w": 12,
                 "x": 0,
-                "y": 16
+                "y": 14
             },
-            "id": 6,
+            "id": 7,
             "options": {
                 "legend": {
-                    "calcs": [
-                        "mean",
-                        "max"
-                    ],
-                    "displayMode": "table",
+                    "calcs": [],
+                    "displayMode": "list",
                     "placement": "bottom",
                     "showLegend": true
                 },
                 "tooltip": {
                     "hideZeros": false,
-                    "mode": "multi",
-                    "sort": "desc"
+                    "mode": "single",
+                    "sort": "none"
                 }
             },
-            "pluginVersion": "12.2.0",
+            "pluginVersion": "12.3.0",
             "targets": [
                 {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
-                    "editorMode": "code",
-                    "expr": "histogram_quantile(0.99, sum(rate(sms_auth_jwt_issuance_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
-                    "legendFormat": "p99",
-                    "range": true,
+                    "expr": "histogram_quantile(0.50, sum(rate(sms_auth_jwt_issuance_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
+                    "legendFormat": "p50",
                     "refId": "A"
                 },
                 {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
-                    "editorMode": "code",
                     "expr": "histogram_quantile(0.95, sum(rate(sms_auth_jwt_issuance_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
                     "legendFormat": "p95",
-                    "range": true,
                     "refId": "B"
                 },
                 {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
-                    "editorMode": "code",
-                    "expr": "histogram_quantile(0.50, sum(rate(sms_auth_jwt_issuance_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
-                    "legendFormat": "p50",
-                    "range": true,
+                    "expr": "histogram_quantile(0.99, sum(rate(sms_auth_jwt_issuance_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
+                    "legendFormat": "p99",
                     "refId": "C"
                 }
             ],
-            "title": "Token Issuance Latency Distribution",
+            "title": "Token Issuance Latency",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "edqp0a73uh2bka"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "showValues": false,
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "s"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 14
+            },
+            "id": 8,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "12.3.0",
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.50, sum(rate(sms_auth_jwt_validation_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
+                    "legendFormat": "p50",
+                    "refId": "A"
+                },
+                {
+                    "expr": "histogram_quantile(0.95, sum(rate(sms_auth_jwt_validation_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
+                    "legendFormat": "p95",
+                    "refId": "B"
+                },
+                {
+                    "expr": "histogram_quantile(0.99, sum(rate(sms_auth_jwt_validation_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
+                    "legendFormat": "p99",
+                    "refId": "C"
+                }
+            ],
+            "title": "Token Validation Latency",
             "type": "timeseries"
         },
         {
@@ -660,10 +690,10 @@
             "gridPos": {
                 "h": 8,
                 "w": 12,
-                "x": 12,
-                "y": 16
+                "x": 0,
+                "y": 22
             },
-            "id": 8,
+            "id": 9,
             "options": {
                 "legend": {
                     "displayMode": "list",
@@ -673,7 +703,7 @@
                 "pieType": "pie",
                 "reduceOptions": {
                     "calcs": [
-                        "last"
+                        "lastNotNull"
                     ],
                     "fields": "",
                     "values": false
@@ -685,23 +715,16 @@
                     "sort": "none"
                 }
             },
-            "pluginVersion": "12.2.0",
+            "pluginVersion": "12.3.0",
             "targets": [
                 {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
-                    "editorMode": "code",
-                    "exemplar": false,
-                    "expr": "sum by (status) (sms_auth_jwt_tokens_validated_total{instance=~\"$instance\",job=~\"$job\"})",
-                    "format": "heatmap",
+                    "expr": "sum by (status) (increase(sms_auth_jwt_tokens_validated_total{instance=~\"$instance\",job=~\"$job\"}[24h]))",
                     "instant": true,
                     "legendFormat": "{{status}}",
-                    "range": false,
                     "refId": "A"
                 }
             ],
-            "title": "Validation Status Classification",
+            "title": "Validation Status Distribution",
             "type": "piechart"
         },
         {
@@ -762,399 +785,60 @@
                             }
                         ]
                     },
-                    "unit": "reqps"
+                    "unit": "s"
                 },
                 "overrides": []
             },
             "gridPos": {
                 "h": 8,
                 "w": 12,
-                "x": 0,
-                "y": 24
+                "x": 12,
+                "y": 22
             },
             "id": 10,
             "options": {
                 "legend": {
-                    "calcs": [
-                        "mean",
-                        "max"
-                    ],
-                    "displayMode": "table",
+                    "calcs": [],
+                    "displayMode": "list",
                     "placement": "bottom",
                     "showLegend": true
                 },
                 "tooltip": {
                     "hideZeros": false,
-                    "mode": "multi",
-                    "sort": "desc"
+                    "mode": "single",
+                    "sort": "none"
                 }
             },
-            "pluginVersion": "12.2.0",
+            "pluginVersion": "12.3.0",
             "targets": [
                 {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
-                    "editorMode": "code",
-                    "expr": "sum by (status) (rate(sms_auth_jwt_tokens_revoked_total{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval]))",
-                    "legendFormat": "{{status}}",
-                    "range": true,
-                    "refId": "A"
-                }
-            ],
-            "title": "Token Revocation Rate",
-            "type": "timeseries"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "edqp0a73uh2bka"
-            },
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "palette-classic"
-                    },
-                    "custom": {
-                        "axisBorderShow": false,
-                        "axisCenteredZero": false,
-                        "axisColorMode": "text",
-                        "axisLabel": "",
-                        "axisPlacement": "auto",
-                        "barAlignment": 0,
-                        "barWidthFactor": 0.6,
-                        "drawStyle": "line",
-                        "fillOpacity": 0,
-                        "gradientMode": "none",
-                        "hideFrom": {
-                            "legend": false,
-                            "tooltip": false,
-                            "viz": false
-                        },
-                        "insertNulls": false,
-                        "lineInterpolation": "linear",
-                        "lineWidth": 1,
-                        "pointSize": 5,
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "auto",
-                        "showValues": false,
-                        "spanNulls": false,
-                        "stacking": {
-                            "group": "A",
-                            "mode": "none"
-                        },
-                        "thresholdsStyle": {
-                            "mode": "off"
-                        }
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": 0
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
-                            }
-                        ]
-                    },
-                    "unit": "s"
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 12,
-                "y": 24
-            },
-            "id": 9,
-            "options": {
-                "legend": {
-                    "calcs": [
-                        "mean",
-                        "max"
-                    ],
-                    "displayMode": "table",
-                    "placement": "bottom",
-                    "showLegend": true
-                },
-                "tooltip": {
-                    "hideZeros": false,
-                    "mode": "multi",
-                    "sort": "desc"
-                }
-            },
-            "pluginVersion": "12.2.0",
-            "targets": [
-                {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
-                    "editorMode": "code",
-                    "expr": "histogram_quantile(0.99, sum(rate(sms_auth_jwt_validation_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
-                    "legendFormat": "p99",
-                    "range": true,
+                    "expr": "histogram_quantile(0.50, sum(rate(sms_auth_jwt_refresh_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
+                    "legendFormat": "p50",
                     "refId": "A"
                 },
                 {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
-                    "editorMode": "code",
-                    "expr": "histogram_quantile(0.95, sum(rate(sms_auth_jwt_validation_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
+                    "expr": "histogram_quantile(0.95, sum(rate(sms_auth_jwt_refresh_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
                     "legendFormat": "p95",
-                    "range": true,
                     "refId": "B"
                 },
                 {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
-                    "editorMode": "code",
-                    "expr": "histogram_quantile(0.50, sum(rate(sms_auth_jwt_validation_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
-                    "legendFormat": "p50",
-                    "range": true,
-                    "refId": "C"
-                }
-            ],
-            "title": "Token Validation Latency",
-            "type": "timeseries"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "edqp0a73uh2bka"
-            },
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "palette-classic"
-                    },
-                    "custom": {
-                        "axisBorderShow": false,
-                        "axisCenteredZero": false,
-                        "axisColorMode": "text",
-                        "axisLabel": "",
-                        "axisPlacement": "auto",
-                        "barAlignment": 0,
-                        "barWidthFactor": 0.6,
-                        "drawStyle": "line",
-                        "fillOpacity": 0,
-                        "gradientMode": "none",
-                        "hideFrom": {
-                            "legend": false,
-                            "tooltip": false,
-                            "viz": false
-                        },
-                        "insertNulls": false,
-                        "lineInterpolation": "linear",
-                        "lineWidth": 1,
-                        "pointSize": 5,
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "auto",
-                        "showValues": false,
-                        "spanNulls": false,
-                        "stacking": {
-                            "group": "A",
-                            "mode": "none"
-                        },
-                        "thresholdsStyle": {
-                            "mode": "off"
-                        }
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": 0
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
-                            }
-                        ]
-                    },
-                    "unit": "percentunit"
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 0,
-                "y": 32
-            },
-            "id": 11,
-            "options": {
-                "legend": {
-                    "calcs": [
-                        "mean",
-                        "max"
-                    ],
-                    "displayMode": "table",
-                    "placement": "bottom",
-                    "showLegend": true
-                },
-                "tooltip": {
-                    "hideZeros": false,
-                    "mode": "multi",
-                    "sort": "desc"
-                }
-            },
-            "pluginVersion": "12.2.0",
-            "targets": [
-                {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
-                    "editorMode": "code",
-                    "expr": "sum(rate(sms_auth_jwt_tokens_revoked_total{status=\"error\",instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) / clamp_min(sum(rate(sms_auth_jwt_tokens_revoked_total{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])), 1)",
-                    "legendFormat": "Error Rate",
-                    "range": true,
-                    "refId": "A"
-                }
-            ],
-            "title": "Revocation Error Rate",
-            "type": "timeseries"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "edqp0a73uh2bka"
-            },
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "palette-classic"
-                    },
-                    "custom": {
-                        "axisBorderShow": false,
-                        "axisCenteredZero": false,
-                        "axisColorMode": "text",
-                        "axisLabel": "",
-                        "axisPlacement": "auto",
-                        "barAlignment": 0,
-                        "barWidthFactor": 0.6,
-                        "drawStyle": "line",
-                        "fillOpacity": 0,
-                        "gradientMode": "none",
-                        "hideFrom": {
-                            "legend": false,
-                            "tooltip": false,
-                            "viz": false
-                        },
-                        "insertNulls": false,
-                        "lineInterpolation": "linear",
-                        "lineWidth": 1,
-                        "pointSize": 5,
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "auto",
-                        "showValues": false,
-                        "spanNulls": false,
-                        "stacking": {
-                            "group": "A",
-                            "mode": "none"
-                        },
-                        "thresholdsStyle": {
-                            "mode": "off"
-                        }
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": 0
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
-                            }
-                        ]
-                    },
-                    "unit": "s"
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 12,
-                "y": 32
-            },
-            "id": 12,
-            "options": {
-                "legend": {
-                    "calcs": [
-                        "mean",
-                        "max"
-                    ],
-                    "displayMode": "table",
-                    "placement": "bottom",
-                    "showLegend": true
-                },
-                "tooltip": {
-                    "hideZeros": false,
-                    "mode": "multi",
-                    "sort": "desc"
-                }
-            },
-            "pluginVersion": "12.2.0",
-            "targets": [
-                {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
-                    "editorMode": "code",
-                    "expr": "histogram_quantile(0.99, sum(rate(sms_auth_jwt_revocation_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
+                    "expr": "histogram_quantile(0.99, sum(rate(sms_auth_jwt_refresh_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
                     "legendFormat": "p99",
-                    "range": true,
-                    "refId": "A"
-                },
-                {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
-                    "editorMode": "code",
-                    "expr": "histogram_quantile(0.95, sum(rate(sms_auth_jwt_revocation_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
-                    "legendFormat": "p95",
-                    "range": true,
-                    "refId": "B"
-                },
-                {
-                    "datasource": {
-                        "uid": "Prometheus"
-                    },
-                    "editorMode": "code",
-                    "expr": "histogram_quantile(0.50, sum(rate(sms_auth_jwt_revocation_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
-                    "legendFormat": "p50",
-                    "range": true,
                     "refId": "C"
                 }
             ],
-            "title": "Token Revocation Latency",
+            "title": "Token Refresh Latency",
             "type": "timeseries"
         }
     ],
     "preload": false,
-    "refresh": "auto",
+    "refresh": "30s",
     "schemaVersion": 42,
     "tags": [
+        "jwt",
         "auth",
-        "jwt"
+        "sre",
+        "red"
     ],
     "templating": {
         "list": [
@@ -1169,15 +853,11 @@
                     "type": "prometheus",
                     "uid": "edqp0a73uh2bka"
                 },
-                "definition": "label_values(sms_auth_jwt_tokens_issued_total, instance)",
                 "includeAll": true,
                 "multi": true,
                 "name": "instance",
                 "options": [],
-                "query": {
-                    "query": "label_values(sms_auth_jwt_tokens_issued_total, instance)",
-                    "refId": "StandardVariableQuery"
-                },
+                "query": "label_values(sms_auth_jwt_tokens_issued_total, instance)",
                 "refresh": 1,
                 "type": "query"
             },
@@ -1192,15 +872,11 @@
                     "type": "prometheus",
                     "uid": "edqp0a73uh2bka"
                 },
-                "definition": "label_values(sms_auth_jwt_tokens_issued_total, job)",
                 "includeAll": true,
                 "multi": true,
                 "name": "job",
                 "options": [],
-                "query": {
-                    "query": "label_values(sms_auth_jwt_tokens_issued_total, job)",
-                    "refId": "StandardVariableQuery"
-                },
+                "query": "label_values(sms_auth_jwt_tokens_issued_total, job)",
                 "refresh": 1,
                 "type": "query"
             }
@@ -1212,7 +888,7 @@
     },
     "timepicker": {},
     "timezone": "",
-    "title": "JWT Authentication",
-    "uid": "jwt",
+    "title": "JWT Authentication - SRE",
+    "uid": "jwt-sre",
     "version": 3
 }
