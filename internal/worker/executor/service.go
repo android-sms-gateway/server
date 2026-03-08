@@ -15,9 +15,6 @@ type Service struct {
 	tasks  []PeriodicTask
 	locker locker.Locker
 
-	stopChan chan struct{}
-	wg       sync.WaitGroup
-
 	metrics *metrics
 	logger  *zap.Logger
 }
@@ -27,23 +24,13 @@ func NewService(tasks []PeriodicTask, locker locker.Locker, metrics *metrics, lo
 		tasks:  tasks,
 		locker: locker,
 
-		stopChan: make(chan struct{}),
-		wg:       sync.WaitGroup{},
-
 		metrics: metrics,
 		logger:  logger,
 	}
 }
 
-func (s *Service) Start() error {
-	ctx, cancel := context.WithCancel(context.Background())
-
-	s.wg.Add(1)
-	go func() {
-		defer s.wg.Done()
-		<-s.stopChan
-		cancel()
-	}()
+func (s *Service) Run(ctx context.Context) error {
+	var wg sync.WaitGroup
 
 	for index, task := range s.tasks {
 		if task.Interval() <= 0 {
@@ -51,9 +38,9 @@ func (s *Service) Start() error {
 			continue
 		}
 
-		s.wg.Add(1)
+		wg.Add(1)
 		go func(index int, task PeriodicTask) {
-			defer s.wg.Done()
+			defer wg.Done()
 			s.logger.Info(
 				"starting task",
 				zap.Int("index", index),
@@ -64,6 +51,8 @@ func (s *Service) Start() error {
 			s.logger.Info("task stopped", zap.Int("index", index), zap.String("name", task.Name()))
 		}(index, task)
 	}
+
+	wg.Wait()
 
 	return nil
 }
@@ -127,11 +116,4 @@ func (s *Service) execute(ctx context.Context, task PeriodicTask) {
 		s.metrics.ObserveTaskResult(task.Name(), metricsTaskResultSuccess, time.Since(start))
 		logger.Info("task succeeded", zap.Duration("duration", time.Since(start)))
 	}
-}
-
-func (s *Service) Stop() error {
-	close(s.stopChan)
-	s.wg.Wait()
-
-	return nil
 }

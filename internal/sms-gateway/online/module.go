@@ -1,10 +1,9 @@
 package online
 
 import (
-	"context"
-
 	appCache "github.com/android-sms-gateway/server/internal/sms-gateway/cache"
 	"github.com/go-core-fx/cachefx/cache"
+	"github.com/go-core-fx/fxutil"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -20,18 +19,8 @@ func Module() fx.Option {
 		}, fx.Private),
 		fx.Provide(newMetrics),
 		fx.Provide(New),
-		fx.Invoke(func(lc fx.Lifecycle, svc Service) {
-			ctx, cancel := context.WithCancel(context.Background())
-			lc.Append(fx.Hook{
-				OnStart: func(_ context.Context) error {
-					go svc.Run(ctx)
-					return nil
-				},
-				OnStop: func(_ context.Context) error {
-					cancel()
-					return nil
-				},
-			})
-		}),
+		fx.Invoke(
+			fxutil.RegisterRunnable[Service](),
+		),
 	)
 }
