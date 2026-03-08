@@ -7,12 +7,15 @@ import (
 
 // Metric constants.
 const (
-	MetricTokensIssuedTotal         = "jwt_tokens_issued_total"    //nolint:gosec // false positive
-	MetricTokensValidatedTotal      = "jwt_tokens_validated_total" //nolint:gosec // false positive
-	MetricTokensRevokedTotal        = "jwt_tokens_revoked_total"   //nolint:gosec // false positive
+	MetricTokensIssuedTotal    = "jwt_tokens_issued_total"    //nolint:gosec // false positive
+	MetricTokensValidatedTotal = "jwt_tokens_validated_total" //nolint:gosec // false positive
+	MetricTokensRevokedTotal   = "jwt_tokens_revoked_total"   //nolint:gosec // false positive
+	MetricTokensRefreshedTotal = "jwt_tokens_refreshed_total" //nolint:gosec // false positive
+
 	MetricIssuanceDurationSeconds   = "jwt_issuance_duration_seconds"
 	MetricValidationDurationSeconds = "jwt_validation_duration_seconds"
 	MetricRevocationDurationSeconds = "jwt_revocation_duration_seconds"
+	MetricRefreshDurationSeconds    = "jwt_refresh_duration_seconds"
 
 	labelStatus = "status"
 
@@ -25,9 +28,11 @@ type Metrics struct {
 	tokensIssuedCounter         *prometheus.CounterVec
 	tokensValidatedCounter      *prometheus.CounterVec
 	tokensRevokedCounter        *prometheus.CounterVec
+	tokensRefreshedCounter      *prometheus.CounterVec
 	issuanceDurationHistogram   prometheus.Histogram
 	validationDurationHistogram prometheus.Histogram
 	revocationDurationHistogram prometheus.Histogram
+	refreshDurationHistogram    prometheus.Histogram
 }
 
 // NewMetrics creates and initializes all JWT metrics.
@@ -55,6 +60,13 @@ func NewMetrics() *Metrics {
 			Help:      "Total number of JWT tokens revoked",
 		}, []string{labelStatus}),
 
+		tokensRefreshedCounter: promauto.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "sms",
+			Subsystem: "auth",
+			Name:      MetricTokensRefreshedTotal,
+			Help:      "Total number of JWT tokens refreshed",
+		}, []string{labelStatus}),
+
 		issuanceDurationHistogram: promauto.NewHistogram(prometheus.HistogramOpts{
 			Namespace: "sms",
 			Subsystem: "auth",
@@ -78,6 +90,14 @@ func NewMetrics() *Metrics {
 			Help:      "JWT revocation duration in seconds",
 			Buckets:   defBuckets,
 		}),
+
+		refreshDurationHistogram: promauto.NewHistogram(prometheus.HistogramOpts{
+			Namespace: "sms",
+			Subsystem: "auth",
+			Name:      MetricRefreshDurationSeconds,
+			Help:      "JWT refresh duration in seconds",
+			Buckets:   defBuckets,
+		}),
 	}
 }
 
@@ -94,6 +114,11 @@ func (m *Metrics) IncrementTokensValidated(status string) {
 // IncrementTokensRevoked increments the tokens revoked counter.
 func (m *Metrics) IncrementTokensRevoked(status string) {
 	m.tokensRevokedCounter.WithLabelValues(status).Inc()
+}
+
+// IncrementTokensRefreshed increments the tokens refreshed counter.
+func (m *Metrics) IncrementTokensRefreshed(status string) {
+	m.tokensRefreshedCounter.WithLabelValues(status).Inc()
 }
 
 // ObserveIssuance observes issuance duration.
@@ -113,6 +138,13 @@ func (m *Metrics) ObserveValidation(f func()) {
 // ObserveRevocation observes revocation duration.
 func (m *Metrics) ObserveRevocation(f func()) {
 	timer := prometheus.NewTimer(m.revocationDurationHistogram)
+	defer timer.ObserveDuration()
+	f()
+}
+
+// ObserveRefresh observes refresh duration.
+func (m *Metrics) ObserveRefresh(f func()) {
+	timer := prometheus.NewTimer(m.refreshDurationHistogram)
 	defer timer.ObserveDuration()
 	f()
 }
