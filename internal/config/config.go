@@ -86,9 +86,12 @@ type PubSub struct {
 }
 
 type JWT struct {
-	Secret string   `yaml:"secret" envconfig:"JWT__SECRET"`
-	TTL    Duration `yaml:"ttl"    envconfig:"JWT__TTL"`
-	Issuer string   `yaml:"issuer" envconfig:"JWT__ISSUER"`
+	Secret     string   `yaml:"secret"      envconfig:"JWT__SECRET"`
+	AccessTTL  Duration `yaml:"access_ttl"  envconfig:"JWT__ACCESS_TTL"`
+	RefreshTTL Duration `yaml:"refresh_ttl" envconfig:"JWT__REFRESH_TTL"`
+	Issuer     string   `yaml:"issuer"      envconfig:"JWT__ISSUER"`
+
+	TTL Duration `yaml:"ttl" envconfig:"JWT__TTL"` // deprecated, remove after 2027-03-01
 }
 
 type OTP struct {
@@ -129,8 +132,9 @@ func Default() Config {
 			BufferSize: 128,
 		},
 		JWT: JWT{
-			TTL:    Duration(time.Hour * 24),
-			Issuer: "sms-gate.app",
+			AccessTTL:  Duration(time.Minute * 15),
+			RefreshTTL: Duration(time.Hour * 24 * 30),
+			Issuer:     "sms-gate.app",
 		},
 		OTP: OTP{
 			TTL:     300,

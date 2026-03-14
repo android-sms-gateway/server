@@ -1,4 +1,3 @@
-//nolint:revive // ignore package name
 package metrics
 
 import (
