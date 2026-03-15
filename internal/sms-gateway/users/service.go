@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/android-sms-gateway/server/internal/sms-gateway/jwt"
 	"github.com/go-core-fx/cachefx/cache"
 	"go.uber.org/zap"
 )
@@ -14,18 +15,23 @@ type Service struct {
 
 	cache *loginCache
 
+	jwtSvc jwt.Service
+
 	logger *zap.Logger
 }
 
 func NewService(
 	users *repository,
 	cache *loginCache,
+	jwtSvc jwt.Service,
 	logger *zap.Logger,
 ) *Service {
 	return &Service{
 		users: users,
 
 		cache: cache,
+
+		jwtSvc: jwtSvc,
 
 		logger: logger,
 	}
@@ -104,5 +110,13 @@ func (s *Service) ChangePassword(ctx context.Context, username, currentPassword,
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	return s.users.UpdatePassword(username, passwordHash)
+	if updErr := s.users.UpdatePassword(username, passwordHash); updErr != nil {
+		return updErr
+	}
+
+	if revErr := s.jwtSvc.RevokeByUser(ctx, username); revErr != nil {
+		return fmt.Errorf("failed to revoke user tokens: %w", revErr)
+	}
+
+	return nil
 }

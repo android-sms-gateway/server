@@ -183,3 +183,20 @@ func (s *service) RevokeToken(ctx context.Context, userID, jti string) error {
 
 	return err
 }
+
+func (s *service) RevokeByUser(ctx context.Context, userID string) error {
+	var err error
+	var revoked int64
+
+	s.metrics.ObserveRevocation(func() {
+		revoked, err = s.tokens.RevokeByUser(ctx, userID)
+	})
+
+	if err != nil {
+		s.metrics.IncrementTokensRevoked(StatusError, int(revoked))
+	} else {
+		s.metrics.IncrementTokensRevoked(StatusSuccess, int(revoked))
+	}
+
+	return err
+}

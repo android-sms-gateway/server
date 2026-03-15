@@ -11,6 +11,7 @@ type Service interface {
 	GenerateToken(ctx context.Context, userID string, scopes []string, ttl time.Duration) (*TokenInfo, error)
 	ParseToken(ctx context.Context, token string) (*Claims, error)
 	RevokeToken(ctx context.Context, userID, jti string) error
+	RevokeByUser(ctx context.Context, userID string) error
 }
 
 type Claims struct {

@@ -92,7 +92,12 @@ func (m *Metrics) IncrementTokensValidated(status string) {
 }
 
 // IncrementTokensRevoked increments the tokens revoked counter.
-func (m *Metrics) IncrementTokensRevoked(status string) {
+func (m *Metrics) IncrementTokensRevoked(status string, value ...int) {
+	if len(value) > 0 {
+		m.tokensRevokedCounter.WithLabelValues(status).Add(float64(value[0]))
+		return
+	}
+
 	m.tokensRevokedCounter.WithLabelValues(status).Inc()
 }
 
