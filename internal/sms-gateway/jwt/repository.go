@@ -45,3 +45,15 @@ func (r *Repository) IsRevoked(ctx context.Context, jti string) (bool, error) {
 
 	return count > 0, nil
 }
+
+func (r *Repository) RevokeByUser(ctx context.Context, userID string) (int64, error) {
+	var res *gorm.DB
+
+	if res = r.db.WithContext(ctx).Model((*tokenModel)(nil)).
+		Where("user_id = ? and revoked_at is null and expires_at > NOW()", userID).
+		Update("revoked_at", gorm.Expr("NOW()")); res.Error != nil {
+		return 0, fmt.Errorf("can't revoke user tokens: %w", res.Error)
+	}
+
+	return res.RowsAffected, nil
+}

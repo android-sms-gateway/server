@@ -26,3 +26,8 @@ func (d *disabled) ParseToken(_ context.Context, _ string) (*Claims, error) {
 func (d *disabled) RevokeToken(_ context.Context, _, _ string) error {
 	return ErrDisabled
 }
+
+// RevokeByUser implements Service.
+func (d *disabled) RevokeByUser(_ context.Context, _ string) error {
+	return nil
+}
