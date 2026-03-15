@@ -17,6 +17,7 @@ type Service interface {
 	RefreshTokenPair(ctx context.Context, refreshToken string) (*TokenPairInfo, error)
 	ParseToken(ctx context.Context, token string) (*Claims, error)
 	RevokeToken(ctx context.Context, userID, jti string) error
+	RevokeByUser(ctx context.Context, userID string) error
 }
 
 type Claims struct {
