@@ -96,6 +96,56 @@ const docTemplate = `{
                 }
             }
         },
+        "/3rdparty/v1/auth/token/refresh": {
+            "post": {
+                "security": [
+                    {
+                        "JWTAuth": []
+                    }
+                ],
+                "description": "Refresh access token with specified refresh token",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User",
+                    "Auth"
+                ],
+                "summary": "Refresh token",
+                "responses": {
+                    "201": {
+                        "description": "Token",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.TokenResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "501": {
+                        "description": "Not implemented",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/3rdparty/v1/auth/token/{jti}": {
             "delete": {
                 "security": [
@@ -1400,9 +1450,7 @@ const docTemplate = `{
                 "context": {
                     "description": "Additional context information related to the log entry, typically including data relevant to the log event.",
                     "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
+                    "additionalProperties": {}
                 },
                 "createdAt": {
                     "description": "The timestamp when this log entry was created.",
@@ -1510,6 +1558,7 @@ const docTemplate = `{
                     "description": "SIM card number (1-3), if not set - default SIM will be used",
                     "type": "integer",
                     "maximum": 3,
+                    "minimum": 1,
                     "example": 1
                 },
                 "textMessage": {
@@ -1907,10 +1956,15 @@ const docTemplate = `{
                 },
                 "expires_at": {
                     "description": "time at which the access token is no longer valid",
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "id": {
                     "description": "unique identifier for the access token",
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "description": "refresh token",
                     "type": "string"
                 },
                 "token_type": {
@@ -1957,15 +2011,17 @@ const docTemplate = `{
         "smsgateway.WebhookEvent": {
             "type": "string",
             "enum": [
-                "mms:received",
+                "sms:received",
                 "sms:data-received",
+                "sms:sent",
                 "sms:delivered",
                 "sms:failed",
-                "sms:received",
-                "sms:sent",
-                "system:ping"
+                "system:ping",
+                "mms:received",
+                "mms:downloaded"
             ],
             "x-enum-comments": {
+                "WebhookEventMmsDownloaded": "Triggered when an MMS is downloaded.",
                 "WebhookEventMmsReceived": "Triggered when an MMS is received.",
                 "WebhookEventSmsDataReceived": "Triggered when a data SMS is received.",
                 "WebhookEventSmsDelivered": "Triggered when an SMS is delivered.",
@@ -1975,22 +2031,24 @@ const docTemplate = `{
                 "WebhookEventSystemPing": "Triggered when the device pings the server."
             },
             "x-enum-descriptions": [
-                "Triggered when an MMS is received.",
+                "Triggered when an SMS is received.",
                 "Triggered when a data SMS is received.",
+                "Triggered when an SMS is sent.",
                 "Triggered when an SMS is delivered.",
                 "Triggered when an SMS processing fails.",
-                "Triggered when an SMS is received.",
-                "Triggered when an SMS is sent.",
-                "Triggered when the device pings the server."
+                "Triggered when the device pings the server.",
+                "Triggered when an MMS is received.",
+                "Triggered when an MMS is downloaded."
             ],
             "x-enum-varnames": [
-                "WebhookEventMmsReceived",
+                "WebhookEventSmsReceived",
                 "WebhookEventSmsDataReceived",
+                "WebhookEventSmsSent",
                 "WebhookEventSmsDelivered",
                 "WebhookEventSmsFailed",
-                "WebhookEventSmsReceived",
-                "WebhookEventSmsSent",
-                "WebhookEventSystemPing"
+                "WebhookEventSystemPing",
+                "WebhookEventMmsReceived",
+                "WebhookEventMmsDownloaded"
             ]
         }
     },
