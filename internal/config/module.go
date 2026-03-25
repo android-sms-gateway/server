@@ -75,7 +75,8 @@ func Module() fx.Option {
 			return push.Config{
 				Mode: mode,
 				ClientOptions: map[string]string{
-					"credentials": cfg.FCM.CredentialsJSON,
+					"credentials":       cfg.FCM.CredentialsJSON,
+					"upstream_base_url": cfg.Gateway.UpstreamURL,
 				},
 				Debounce: time.Duration(cfg.FCM.DebounceSeconds) * time.Second,
 				Timeout:  time.Duration(cfg.FCM.TimeoutSeconds) * time.Second,

@@ -7,6 +7,8 @@ type GatewayMode string
 const (
 	GatewayModePublic  GatewayMode = "public"
 	GatewayModePrivate GatewayMode = "private"
+
+	DefaultUpstreamURL = "https://api.sms-gate.app/upstream/v1"
 )
 
 type Config struct {
@@ -25,6 +27,7 @@ type Config struct {
 type Gateway struct {
 	Mode         GatewayMode `yaml:"mode"          envconfig:"GATEWAY__MODE"`          // gateway mode: public or private
 	PrivateToken string      `yaml:"private_token" envconfig:"GATEWAY__PRIVATE_TOKEN"` // device registration token in private mode
+	UpstreamURL  string      `yaml:"upstream_url"  envconfig:"GATEWAY__UPSTREAM_URL"`  // upstream server URL for private-mode push notifications
 }
 
 type HTTP struct {
@@ -102,7 +105,10 @@ type OTP struct {
 func Default() Config {
 	//nolint:exhaustruct,mnd // default values
 	return Config{
-		Gateway: Gateway{Mode: GatewayModePublic},
+		Gateway: Gateway{
+			Mode:        GatewayModePublic,
+			UpstreamURL: DefaultUpstreamURL,
+		},
 		HTTP: HTTP{
 			Listen: ":3000",
 		},

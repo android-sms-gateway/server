@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
@@ -15,7 +16,10 @@ import (
 	"github.com/samber/lo"
 )
 
-const baseURL = "https://api.sms-gate.app/upstream/v1"
+const (
+	defaultBaseURL = "https://api.sms-gate.app/upstream/v1"
+	optionBaseURL  = "upstream_base_url"
+)
 
 var ErrInvalidResponse = errors.New("invalid response")
 
@@ -65,7 +69,7 @@ func (c *Client) Send(ctx context.Context, messages []client.Message) ([]error, 
 		return nil, fmt.Errorf("failed to marshal payload: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/push", bytes.NewReader(payloadBytes))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL()+"/push", bytes.NewReader(payloadBytes))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -109,4 +113,12 @@ func (c *Client) Close(_ context.Context) error {
 	c.client = nil
 
 	return nil
+}
+
+func (c *Client) baseURL() string {
+	if value, ok := c.options[optionBaseURL]; ok && value != "" {
+		return strings.TrimSuffix(value, "/")
+	}
+
+	return defaultBaseURL
 }
