@@ -16,6 +16,7 @@ database: # database
 gateway: # gateway config
   mode: private # gateway mode (public - allow anonymous device registration, private - protected registration) [GATEWAY__MODE]
   private_token: 123456789 # access token for device registration in private mode [GATEWAY__PRIVATE_TOKEN]
+  upstream_url: https://api.sms-gate.app/upstream/v1 # upstream server URL for private-mode push notifications [GATEWAY__UPSTREAM_URL]
 http: # http server config
   listen: 127.0.0.1:3000 # listen address [HTTP__LISTEN]
   proxies:

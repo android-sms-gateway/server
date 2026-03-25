@@ -51,17 +51,18 @@ The easiest way to get started with the server is to use the Docker-based setup 
 
 1. Set up MySQL or MariaDB database.
 2. Create config.yml, based on [config.example.yml](configs/config.example.yml). The most important sections are `database`, `http` and `gateway`. Environment variables can be used to override values in the config file.
-   1. In `gateway.mode` section set `private`.
-   2. In `gateway.private_token` section set the access token for device registration in private mode. This token must be set on devices with private mode active.
-   3. (Optional) In `jwt` section configure JWT authentication:
-      - Set `secret` to a secure random string (minimum 32 characters)
-      - Configure `access_ttl` (default: 15m) and `refresh_ttl` (default: 720h)
-      - Set `issuer` to identify your server
+    1. In `gateway.mode` section set `private`.
+    2. In `gateway.private_token` section set the access token for device registration in private mode. This token must be set on devices with private mode active.
+    3. In `gateway.upstream_url` section set the upstream server base URL used for private-mode push notifications. (default: `https://api.sms-gate.app/upstream/v1`).
+    4. (Optional) In `jwt` section configure JWT authentication:
+       - Set `secret` to a secure random string (minimum 32 characters)
+       - Configure `access_ttl` (default: 15m) and `refresh_ttl` (default: 720h)
+       - Set `issuer` to identify your server
 3. Start the server in Docker: `docker run -p 3000:3000 -v ./config.yml:/app/config.yml capcom6/sms-gateway:latest`.
 4. Set up private mode on devices.
 5. Use started private server with the same API as the public server at [api.sms-gate.app](https://api.sms-gate.app).
 
-See also [docker-composee.yml](deployments/docker-compose/docker-compose.yml) for Docker-based setup.
+See also [docker-compose.yml](deployments/docker-compose/docker-compose.yml) for Docker-based setup.
 
 ## Work modes
 
