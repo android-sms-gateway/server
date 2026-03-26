@@ -94,20 +94,16 @@ func Start(p StartParams) error {
 		OnStart: func(_ context.Context) error {
 			p.MessagesService.RunBackgroundTasks(ctx, wg)
 
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				p.PushService.Run(ctx)
-			}()
+			})
 
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				if err := p.Server.Start(); err != nil {
 					p.Logger.Error("Error starting server", zap.Error(err))
 					_ = p.Shut.Shutdown()
 				}
-			}()
+			})
 
 			p.Logger.Info("Service started")
 

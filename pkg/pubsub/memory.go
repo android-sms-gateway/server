@@ -101,8 +101,7 @@ func (m *MemoryPubSub) Subscribe(ctx context.Context, topic string) (*Subscripti
 
 	m.subscribe(id, topic, subscriber{ch: ch, ctx: subCtx})
 
-	m.wg.Add(1)
-	go func() {
+	m.wg.Go(func() {
 		select {
 		case <-subCtx.Done():
 		case <-m.closeCh:
@@ -111,9 +110,7 @@ func (m *MemoryPubSub) Subscribe(ctx context.Context, topic string) (*Subscripti
 		cancel()
 		m.unsubscribe(id, topic)
 		close(ch)
-
-		m.wg.Done()
-	}()
+	})
 
 	return &Subscription{id: id, ctx: subCtx, cancel: cancel, ch: ch}, nil
 }
