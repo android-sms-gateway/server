@@ -63,11 +63,9 @@ func NewService(
 }
 
 func (s *Service) RunBackgroundTasks(ctx context.Context, wg *sync.WaitGroup) {
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		s.hashingWorker.Run(ctx)
-	}()
+	})
 }
 
 func (s *Service) SelectPending(deviceID string, order Order) ([]MessageOut, error) {
