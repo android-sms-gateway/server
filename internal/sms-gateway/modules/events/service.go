@@ -130,7 +130,7 @@ func (s *Service) processEvent(wrapper *eventWrapper) {
 
 	// Process each device
 	for _, device := range devices {
-		if device.PushToken != nil && *device.PushToken != "" {
+		if device.PushToken != nil {
 			// Device has push token, use push service
 			if enqErr := s.pushSvc.Enqueue(*device.PushToken, push.Event{
 				Type: wrapper.Event.EventType,

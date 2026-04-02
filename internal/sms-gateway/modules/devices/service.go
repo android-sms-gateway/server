@@ -9,6 +9,7 @@ import (
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/db"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
@@ -134,7 +135,7 @@ func (s *Service) UpdatePushToken(id string, token string) error {
 		)
 	}
 
-	if err := s.devices.UpdatePushToken(id, token); err != nil {
+	if err := s.devices.UpdatePushToken(id, lo.EmptyableToPtr(token)); err != nil {
 		return err
 	}
 
