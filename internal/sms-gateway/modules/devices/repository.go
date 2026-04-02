@@ -74,7 +74,7 @@ func (r *Repository) Insert(device *models.Device) error {
 	return r.db.Create(device).Error
 }
 
-func (r *Repository) UpdatePushToken(id, token string) error {
+func (r *Repository) UpdatePushToken(id string, token *string) error {
 	res := r.db.Model((*models.Device)(nil)).Where("id = ?", id).Update("push_token", token)
 	if res.Error != nil {
 		return fmt.Errorf("failed to update device: %w", res.Error)
