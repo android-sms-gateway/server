@@ -9,7 +9,7 @@ import (
 	"github.com/capcom6/go-helpers/slices"
 )
 
-func messageToDomain(input Message) (MessageOut, error) {
+func messageToDomain(input messageModel) (Message, error) {
 	var ttl *uint64
 	if input.ValidUntil != nil {
 		secondsUntil := uint64(math.Max(0, time.Until(*input.ValidUntil).Seconds()))
@@ -18,19 +18,21 @@ func messageToDomain(input Message) (MessageOut, error) {
 
 	textContent, err := input.GetTextContent()
 	if err != nil {
-		return MessageOut{}, fmt.Errorf("failed to get text content: %w", err)
+		return Message{}, fmt.Errorf("failed to get text content: %w", err)
 	}
 	dataContent, err := input.GetDataContent()
 	if err != nil {
-		return MessageOut{}, fmt.Errorf("failed to get data content: %w", err)
+		return Message{}, fmt.Errorf("failed to get data content: %w", err)
 	}
 
-	return MessageOut{
-		MessageIn: MessageIn{
-			ID: input.ExtID,
+	return Message{
+		MessageInput: MessageInput{
+			MessageContent: MessageContent{
+				TextContent: textContent,
+				DataContent: dataContent,
+			},
 
-			TextContent: textContent,
-			DataContent: dataContent,
+			ID: input.ExtID,
 
 			PhoneNumbers:       slices.Map(input.Recipients, recipientToDomain),
 			IsEncrypted:        input.IsEncrypted,
@@ -44,6 +46,6 @@ func messageToDomain(input Message) (MessageOut, error) {
 	}, nil
 }
 
-func recipientToDomain(input MessageRecipient) string {
+func recipientToDomain(input messageRecipientModel) string {
 	return input.PhoneNumber
 }

@@ -52,6 +52,7 @@ type SelectOptions struct {
 	WithRecipients bool
 	WithDevice     bool
 	WithStates     bool
+	WithContent    bool
 
 	// OrderBy sets the retrieval order for pending messages.
 	// Empty (zero) value defaults to "lifo".
@@ -88,5 +89,10 @@ func (o *SelectOptions) IncludeDevice() *SelectOptions {
 
 func (o *SelectOptions) IncludeStates() *SelectOptions {
 	o.WithStates = true
+	return o
+}
+
+func (o *SelectOptions) IncludeContent() *SelectOptions {
+	o.WithContent = true
 	return o
 }
