@@ -6,11 +6,25 @@ import (
 	"github.com/android-sms-gateway/client-go/smsgateway"
 )
 
-type MessageIn struct {
-	ID string
+type TextMessageContent = smsgateway.TextMessage
+type DataMessageContent = smsgateway.DataMessage
+type HashedMessageContent = smsgateway.HashedMessage
 
-	TextContent *TextMessageContent
-	DataContent *DataMessageContent
+type MessageContent struct {
+	TextContent *TextMessageContent `json:"textContent,omitempty"`
+	DataContent *DataMessageContent `json:"dataContent,omitempty"`
+}
+
+type MessageStateContent struct {
+	MessageContent
+
+	HashedContent *HashedMessageContent `json:"hashedContent,omitempty"`
+}
+
+type MessageInput struct {
+	MessageContent
+
+	ID string
 
 	PhoneNumbers []string
 	IsEncrypted  bool
@@ -22,23 +36,24 @@ type MessageIn struct {
 	Priority           smsgateway.MessagePriority
 }
 
-type MessageOut struct {
-	MessageIn
+type Message struct {
+	MessageInput
 
 	CreatedAt time.Time
 }
 
-type MessageStateIn struct {
+type MessageStateInput struct {
 	ID         string                      `json:"id"`         // Message ID
 	State      ProcessingState             `json:"state"`      // State
 	Recipients []smsgateway.RecipientState `json:"recipients"` // Recipients states
 	States     map[string]time.Time        `json:"states"`     // History of states
 }
 
-type MessageStateOut struct {
-	MessageStateIn
+type MessageState struct {
+	MessageStateInput
+	MessageStateContent
 
-	DeviceID    string `json:"device_id"`    // Device ID
-	IsHashed    bool   `json:"is_hashed"`    // Hashed
-	IsEncrypted bool   `json:"is_encrypted"` // Encrypted
+	DeviceID    string `json:"deviceId"`    // Device ID
+	IsHashed    bool   `json:"isHashed"`    // Hashed
+	IsEncrypted bool   `json:"isEncrypted"` // Encrypted
 }

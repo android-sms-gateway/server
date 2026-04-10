@@ -27,8 +27,8 @@ func NewRepository(db *gorm.DB) *Repository {
 	}
 }
 
-func (r *Repository) Select(filter SelectFilter, options SelectOptions) ([]Message, int64, error) {
-	query := r.db.Model((*Message)(nil))
+func (r *Repository) list(filter SelectFilter, options SelectOptions) ([]messageModel, int64, error) {
+	query := r.db.Model((*messageModel)(nil))
 
 	// Apply date range filter
 	if !filter.StartDate.IsZero() {
@@ -92,7 +92,12 @@ func (r *Repository) Select(filter SelectFilter, options SelectOptions) ([]Messa
 		query = query.Preload("States")
 	}
 
-	messages := make([]Message, 0, min(options.Limit, int(total)))
+	// Apply content filter
+	if !options.WithContent {
+		query = query.Omit("Content")
+	}
+
+	messages := make([]messageModel, 0, min(options.Limit, int(total)))
 	if err := query.Find(&messages).Error; err != nil {
 		return nil, 0, fmt.Errorf("failed to select messages: %w", err)
 	}
@@ -100,33 +105,33 @@ func (r *Repository) Select(filter SelectFilter, options SelectOptions) ([]Messa
 	return messages, total, nil
 }
 
-func (r *Repository) SelectPending(deviceID string, order Order) ([]Message, error) {
-	messages, _, err := r.Select(
+func (r *Repository) listPending(deviceID string, order Order) ([]messageModel, error) {
+	messages, _, err := r.list(
 		*new(SelectFilter).WithDeviceID(deviceID).WithState(ProcessingStatePending),
-		*new(SelectOptions).IncludeRecipients().WithLimit(maxPendingBatch).WithOrderBy(order),
+		*new(SelectOptions).IncludeContent().IncludeRecipients().WithLimit(maxPendingBatch).WithOrderBy(order),
 	)
 
 	return messages, err
 }
 
-func (r *Repository) Get(filter SelectFilter, options SelectOptions) (Message, error) {
-	messages, _, err := r.Select(filter, options)
+func (r *Repository) get(filter SelectFilter, options SelectOptions) (messageModel, error) {
+	messages, _, err := r.list(filter, options)
 	if err != nil {
-		return Message{}, fmt.Errorf("failed to get message: %w", err)
+		return messageModel{}, fmt.Errorf("failed to get message: %w", err)
 	}
 
 	if len(messages) == 0 {
-		return Message{}, ErrMessageNotFound
+		return messageModel{}, ErrMessageNotFound
 	}
 
 	if len(messages) > 1 {
-		return Message{}, ErrMultipleMessagesFound
+		return messageModel{}, ErrMultipleMessagesFound
 	}
 
 	return messages[0], nil
 }
 
-func (r *Repository) Insert(message *Message) error {
+func (r *Repository) Insert(message *messageModel) error {
 	err := r.db.Omit("Device").Create(message).Error
 	if err == nil {
 		return nil
@@ -139,7 +144,7 @@ func (r *Repository) Insert(message *Message) error {
 	return fmt.Errorf("failed to insert message: %w", err)
 }
 
-func (r *Repository) UpdateState(message *Message) error {
+func (r *Repository) UpdateState(message *messageModel) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(message).Select("State").Updates(message).Error; err != nil {
 			return err
@@ -155,7 +160,7 @@ func (r *Repository) UpdateState(message *Message) error {
 		}
 
 		for _, v := range message.Recipients {
-			if err := tx.Model((*MessageRecipient)(nil)).
+			if err := tx.Model((*messageRecipientModel)(nil)).
 				Where("message_id = ? AND phone_number = ?", message.ID, v.PhoneNumber).
 				Select("state", "error").
 				Updates(map[string]any{"state": v.State, "error": v.Error}).Error; err != nil {
@@ -197,6 +202,6 @@ func (r *Repository) Cleanup(ctx context.Context, until time.Time) (int64, error
 		WithContext(ctx).
 		Where("state <> ?", ProcessingStatePending).
 		Where("created_at < ?", until).
-		Delete(new(Message))
+		Delete(new(messageModel))
 	return res.RowsAffected, res.Error
 }

@@ -68,12 +68,12 @@ func (s *Service) RunBackgroundTasks(ctx context.Context, wg *sync.WaitGroup) {
 	})
 }
 
-func (s *Service) SelectPending(deviceID string, order Order) ([]MessageOut, error) {
+func (s *Service) SelectPending(deviceID string, order Order) ([]Message, error) {
 	if order == "" {
 		order = MessagesOrderLIFO
 	}
 
-	messages, err := s.messages.SelectPending(deviceID, order)
+	messages, err := s.messages.listPending(deviceID, order)
 	if err != nil {
 		return nil, err
 	}
@@ -81,10 +81,10 @@ func (s *Service) SelectPending(deviceID string, order Order) ([]MessageOut, err
 	return slices.MapOrError(messages, messageToDomain) //nolint:wrapcheck // already wrapped
 }
 
-func (s *Service) UpdateState(device *models.Device, message MessageStateIn) error {
-	existing, err := s.messages.Get(
+func (s *Service) UpdateState(device *models.Device, message MessageStateInput) error {
+	existing, err := s.messages.get(
 		*new(SelectFilter).WithExtID(message.ID).WithDeviceID(device.ID),
-		SelectOptions{}, //nolint:exhaustruct // not needed
+		*new(SelectOptions).IncludeContent(),
 	)
 	if err != nil {
 		return err
@@ -97,8 +97,8 @@ func (s *Service) UpdateState(device *models.Device, message MessageStateIn) err
 	existing.State = message.State
 	existing.States = lo.MapToSlice(
 		message.States,
-		func(key string, value time.Time) MessageState {
-			return MessageState{
+		func(key string, value time.Time) messageStateModel {
+			return messageStateModel{
 				ID:        0,
 				MessageID: existing.ID,
 				State:     ProcessingState(key),
@@ -112,11 +112,16 @@ func (s *Service) UpdateState(device *models.Device, message MessageStateIn) err
 		return updErr
 	}
 
+	state, err := existing.toStateDomain()
+	if err != nil {
+		return err
+	}
+
 	if cacheErr := s.cache.Set(
 		context.Background(),
 		device.UserID,
 		existing.ExtID,
-		anys.AsPointer(modelToMessageState(existing)),
+		state,
 	); cacheErr != nil {
 		s.logger.Warn("failed to cache message", zap.String("id", existing.ExtID), zap.Error(cacheErr))
 	}
@@ -130,33 +135,43 @@ func (s *Service) SelectStates(
 	userID string,
 	filter SelectFilter,
 	options SelectOptions,
-) ([]MessageStateOut, int64, error) {
+) ([]MessageState, int64, error) {
 	filter.UserID = userID
 
-	messages, total, err := s.messages.Select(filter, options)
+	messages, total, err := s.messages.list(filter, options)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to select messages: %w", err)
 	}
 
-	return slices.Map(messages, modelToMessageState), total, nil
+	result, err := slices.MapOrError(
+		messages,
+		func(m messageModel) (*MessageState, error) {
+			return m.toStateDomain()
+		},
+	)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to map messages: %w", err)
+	}
+
+	return lo.FromSlicePtr(result), total, nil
 }
 
-func (s *Service) GetState(userID string, id string) (*MessageStateOut, error) {
-	dto, err := s.cache.Get(context.Background(), userID, id)
+func (s *Service) GetState(userID string, id string) (*MessageState, error) {
+	state, err := s.cache.Get(context.Background(), userID, id)
 	if err == nil {
 		s.metrics.IncCache(true)
 
 		// Cache nil entries represent "not found" and prevent repeated lookups
-		if dto == nil {
+		if state == nil {
 			return nil, ErrMessageNotFound
 		}
-		return dto, nil
+		return state, nil
 	}
 	s.metrics.IncCache(false)
 
-	message, err := s.messages.Get(
+	message, err := s.messages.get(
 		*new(SelectFilter).WithExtID(id).WithUserID(userID),
-		*new(SelectOptions).IncludeRecipients().IncludeDevice().IncludeStates(),
+		*new(SelectOptions).IncludeRecipients().IncludeDevice().IncludeStates().IncludeContent(),
 	)
 	if err != nil {
 		if errors.Is(err, ErrMessageNotFound) {
@@ -168,33 +183,27 @@ func (s *Service) GetState(userID string, id string) (*MessageStateOut, error) {
 		return nil, err
 	}
 
-	dto = anys.AsPointer(modelToMessageState(message))
-	if cacheErr := s.cache.Set(context.Background(), userID, id, dto); cacheErr != nil {
+	state, err = message.toStateDomain()
+	if err != nil {
+		return nil, err
+	}
+
+	if cacheErr := s.cache.Set(context.Background(), userID, id, state); cacheErr != nil {
 		s.logger.Warn("failed to cache message", zap.String("id", id), zap.Error(cacheErr))
 	}
 
-	return dto, nil
+	return state, nil
 }
 
-func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueOptions) (*MessageStateOut, error) {
+func (s *Service) Enqueue(device models.Device, message MessageInput, opts EnqueueOptions) (*MessageState, error) {
 	msg, err := s.prepareMessage(device, message, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	state := &MessageStateOut{
-		DeviceID: device.ID,
-		MessageStateIn: MessageStateIn{
-			ID:    msg.ExtID,
-			State: ProcessingStatePending,
-			Recipients: lo.Map(
-				msg.Recipients,
-				func(item MessageRecipient, _ int) smsgateway.RecipientState { return modelToRecipientState(item) },
-			),
-			States: map[string]time.Time{},
-		},
-		IsHashed:    false,
-		IsEncrypted: msg.IsEncrypted,
+	state, err := msg.toStateDomain()
+	if err != nil {
+		return nil, err
 	}
 
 	if insErr := s.messages.Insert(msg); insErr != nil {
@@ -205,7 +214,7 @@ func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueO
 		context.Background(),
 		device.UserID,
 		msg.ExtID,
-		anys.AsPointer(modelToMessageState(*msg)),
+		state,
 	); cacheErr != nil {
 		s.logger.Warn("failed to cache message", zap.String("id", msg.ExtID), zap.Error(cacheErr))
 	}
@@ -225,7 +234,11 @@ func (s *Service) Enqueue(device models.Device, message MessageIn, opts EnqueueO
 	return state, nil
 }
 
-func (s *Service) prepareMessage(device models.Device, message MessageIn, opts EnqueueOptions) (*Message, error) {
+func (s *Service) prepareMessage(
+	device models.Device,
+	message MessageInput,
+	opts EnqueueOptions,
+) (*messageModel, error) {
 	var phone string
 	var err error
 	for i, v := range message.PhoneNumbers {
@@ -248,7 +261,7 @@ func (s *Service) prepareMessage(device models.Device, message MessageIn, opts E
 		)
 	}
 
-	msg := NewMessage(
+	msg := newMessageModel(
 		message.ID,
 		device.ID,
 		message.PhoneNumbers,
@@ -291,8 +304,8 @@ func (s *Service) ExportInbox(device models.Device, since, until time.Time) erro
 
 ///////////////////////////////////////////////////////////////////////////////
 
-func (s *Service) recipientsStateToModel(input []smsgateway.RecipientState, hash bool) []MessageRecipient {
-	output := make([]MessageRecipient, len(input))
+func (s *Service) recipientsStateToModel(input []smsgateway.RecipientState, hash bool) []messageRecipientModel {
+	output := make([]messageRecipientModel, len(input))
 
 	for i, v := range input {
 		phoneNumber := v.PhoneNumber
@@ -317,33 +330,6 @@ func (s *Service) recipientsStateToModel(input []smsgateway.RecipientState, hash
 	}
 
 	return output
-}
-
-func modelToMessageState(input Message) MessageStateOut {
-	return MessageStateOut{
-		DeviceID:    input.DeviceID,
-		IsHashed:    input.IsHashed,
-		IsEncrypted: input.IsEncrypted,
-
-		MessageStateIn: MessageStateIn{
-			ID:         input.ExtID,
-			State:      input.State,
-			Recipients: slices.Map(input.Recipients, modelToRecipientState),
-			States: slices.Associate(
-				input.States,
-				func(state MessageState) string { return string(state.State) },
-				func(state MessageState) time.Time { return state.UpdatedAt },
-			),
-		},
-	}
-}
-
-func modelToRecipientState(input MessageRecipient) smsgateway.RecipientState {
-	return smsgateway.RecipientState{
-		PhoneNumber: input.PhoneNumber,
-		State:       smsgateway.ProcessingState(input.State),
-		Error:       input.Error,
-	}
 }
 
 func cleanPhoneNumber(input string) (string, error) {

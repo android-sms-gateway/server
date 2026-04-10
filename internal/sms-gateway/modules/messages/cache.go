@@ -27,7 +27,7 @@ func newCache(config Config, storage cacheImpl.Cache) *cache {
 	}
 }
 
-func (c *cache) Set(ctx context.Context, userID, id string, message *MessageStateOut) error {
+func (c *cache) Set(ctx context.Context, userID, id string, message *MessageState) error {
 	var (
 		err  error
 		data []byte
@@ -50,7 +50,7 @@ func (c *cache) Set(ctx context.Context, userID, id string, message *MessageStat
 	return nil
 }
 
-func (c *cache) Get(ctx context.Context, userID, id string) (*MessageStateOut, error) {
+func (c *cache) Get(ctx context.Context, userID, id string) (*MessageState, error) {
 	ctx, cancel := context.WithTimeout(ctx, cacheTimeout)
 	defer cancel()
 
@@ -63,7 +63,7 @@ func (c *cache) Get(ctx context.Context, userID, id string) (*MessageStateOut, e
 		return nil, nil //nolint:nilnil //empty cached value is used for caching "Not Found"
 	}
 
-	message := new(MessageStateOut)
+	message := new(MessageState)
 	if jsonErr := json.Unmarshal(data, message); jsonErr != nil {
 		return nil, fmt.Errorf("failed to unmarshal message: %w", jsonErr)
 	}
