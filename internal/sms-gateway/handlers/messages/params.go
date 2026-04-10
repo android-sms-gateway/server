@@ -13,12 +13,13 @@ type thirdPartyPostQueryParams struct {
 }
 
 type thirdPartyGetQueryParams struct {
-	StartDate string `query:"from"     validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
-	EndDate   string `query:"to"       validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
-	State     string `query:"state"    validate:"omitempty,oneof=Pending Processed Sent Delivered Failed"`
-	DeviceID  string `query:"deviceId" validate:"omitempty,len=21"`
-	Limit     int    `query:"limit"    validate:"omitempty,min=1,max=100"`
-	Offset    int    `query:"offset"   validate:"omitempty,min=0"`
+	StartDate      string `query:"from"           validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
+	EndDate        string `query:"to"             validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
+	State          string `query:"state"          validate:"omitempty,oneof=Pending Processed Sent Delivered Failed"`
+	DeviceID       string `query:"deviceId"       validate:"omitempty,len=21"`
+	Limit          int    `query:"limit"          validate:"omitempty,min=1,max=100"`
+	Offset         int    `query:"offset"         validate:"omitempty,min=0"`
+	IncludeContent bool   `query:"includeContent"`
 }
 
 func (p *thirdPartyGetQueryParams) Validate() error {
@@ -61,6 +62,7 @@ func (p *thirdPartyGetQueryParams) ToOptions() messages.SelectOptions {
 	var options messages.SelectOptions
 	options.WithRecipients = true
 	options.WithStates = true
+	options.WithContent = p.IncludeContent
 
 	if p.Limit > 0 {
 		options.Limit = min(p.Limit, maxLimit)

@@ -114,11 +114,13 @@ func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "No message content provided")
 	}
 
-	msg := messages.MessageIn{
-		ID: req.ID,
+	msg := messages.MessageInput{
+		MessageContent: messages.MessageContent{
+			TextContent: textContent,
+			DataContent: dataContent,
+		},
 
-		TextContent: textContent,
-		DataContent: dataContent,
+		ID: req.ID,
 
 		PhoneNumbers: req.PhoneNumbers,
 		IsEncrypted:  req.IsEncrypted,
@@ -160,15 +162,7 @@ func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusAccepted).
-		JSON(smsgateway.GetMessageResponse{
-			ID:          state.ID,
-			DeviceID:    state.DeviceID,
-			State:       smsgateway.ProcessingState(state.State),
-			IsHashed:    state.IsHashed,
-			IsEncrypted: state.IsEncrypted,
-			Recipients:  state.Recipients,
-			States:      state.States,
-		})
+		JSON(smsgateway.GetMessageResponse(converters.MessageStateToDTO(*state)))
 }
 
 //	@Summary		Get messages
@@ -177,17 +171,18 @@ func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 //	@Security		JWTAuth
 //	@Tags			User, Messages
 //	@Produce		json
-//	@Param			from		query		string							false	"Start date in RFC3339 format"			Format(date-time)
-//	@Param			to			query		string							false	"End date in RFC3339 format"			Format(date-time)
-//	@Param			state		query		string							false	"Filter messages by processing state"	Enum(Pending, Processed, Sent, Delivered, Failed)
-//	@Param			deviceId	query		string							false	"Filter by device ID"					min(21)		max(21)
-//	@Param			limit		query		int								false	"Pagination limit"						default(50)	min(1)	max(100)
-//	@Param			offset		query		int								false	"Pagination offset"						default(0)
-//	@Success		200			{object}	smsgateway.GetMessagesResponse	"A list of messages"
-//	@Failure		400			{object}	smsgateway.ErrorResponse		"Invalid request"
-//	@Failure		401			{object}	smsgateway.ErrorResponse		"Unauthorized"
-//	@Failure		403			{object}	smsgateway.ErrorResponse		"Forbidden"
-//	@Failure		500			{object}	smsgateway.ErrorResponse		"Internal server error"
+//	@Param			from			query		string							false	"Start date in RFC3339 format"													Format(date-time)
+//	@Param			to				query		string							false	"End date in RFC3339 format"													Format(date-time)
+//	@Param			state			query		string							false	"Filter messages by processing state"											Enum(Pending, Processed, Sent, Delivered, Failed)
+//	@Param			deviceId		query		string							false	"Filter by device ID"															min(21)		max(21)
+//	@Param			limit			query		int								false	"Pagination limit"																default(50)	min(1)	max(100)
+//	@Param			offset			query		int								false	"Pagination offset"																default(0)
+//	@Param			includeContent	query		bool							false	"Include textMessage/dataMessage content for each message. Default is false"	default(false)
+//	@Success		200				{object}	smsgateway.GetMessagesResponse	"A list of messages"
+//	@Failure		400				{object}	smsgateway.ErrorResponse		"Invalid request"
+//	@Failure		401				{object}	smsgateway.ErrorResponse		"Unauthorized"
+//	@Failure		403				{object}	smsgateway.ErrorResponse		"Forbidden"
+//	@Failure		500				{object}	smsgateway.ErrorResponse		"Internal server error"
 //	@Router			/3rdparty/v1/messages [get]
 //
 // Get message history.

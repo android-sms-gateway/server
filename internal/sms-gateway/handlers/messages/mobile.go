@@ -97,7 +97,7 @@ func (h *MobileController) patch(device models.Device, c *fiber.Ctx) error {
 	}
 
 	for _, v := range req {
-		messageState := messages.MessageStateIn{
+		messageState := messages.MessageStateInput{
 			ID:         v.ID,
 			State:      messages.ProcessingState(v.State),
 			Recipients: v.Recipients,

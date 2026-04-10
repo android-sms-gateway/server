@@ -55,8 +55,13 @@ init-dev: init
 ngrok:
 	ngrok http 3000
 
-air:
-	air
+air: ## Run development server
+	@command -v air >/dev/null 2>&1 || { \
+      echo "Please install air: go install github.com/air-verse/air@latest"; \
+      exit 1; \
+    }
+	@echo "Starting development server with air..."
+	TZ=UTC DEBUG=1 air
 
 db-upgrade:
 	go run ./cmd/$(project_name)/main.go db:migrate
