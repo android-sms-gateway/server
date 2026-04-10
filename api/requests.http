@@ -35,8 +35,8 @@ Authorization: Basic {{credentials}}
 ###
 POST {{baseUrl}}/3rdparty/v1/messages HTTP/1.1
 Content-Type: application/json
-# Authorization: Basic {{credentials}}
-Authorization: Bearer {{jwtToken}}
+Authorization: Basic {{credentials}}
+# Authorization: Bearer {{jwtToken}}
 
 {
     "textMessage": {
@@ -63,6 +63,7 @@ Authorization: Basic {{credentials}}
 }
 
 ###
+# @name enqueueMessage
 POST {{baseUrl}}/3rdparty/v1/messages HTTP/1.1
 Content-Type: application/json
 Authorization: Basic {{credentials}}
@@ -79,14 +80,20 @@ Authorization: Basic {{credentials}}
 }
 
 ###
-GET {{baseUrl}}/3rdparty/v1/messages/Fc10ZyTRDVlqPjIm9Jbly HTTP/1.1
-# Authorization: Basic {{credentials}}
-Authorization: Bearer {{jwtToken}}
+@messageId={{enqueueMessage.response.body.$.id}}
+GET {{baseUrl}}/3rdparty/v1/messages/{{messageId}} HTTP/1.1
+Authorization: Basic {{credentials}}
+# Authorization: Bearer {{jwtToken}}
 
 ###
 GET {{baseUrl}}/3rdparty/v1/messages HTTP/1.1
-# Authorization: Basic {{credentials}}
-Authorization: Bearer {{jwtToken}}
+Authorization: Basic {{credentials}}
+# Authorization: Bearer {{jwtToken}}
+
+###
+GET {{baseUrl}}/3rdparty/v1/messages?includeContent=true HTTP/1.1
+Authorization: Basic {{credentials}}
+# Authorization: Bearer {{jwtToken}}
 
 ###
 GET {{baseUrl}}/3rdparty/v1/messages?from=2025-01-01T00:00:00.000Z&to=2025-12-31T23:59:59Z&state=Pending&deviceId=fL2m4IirEvh9BvTf6TIB0&limit=50&offset=0 HTTP/1.1
@@ -105,8 +112,8 @@ Content-Type: application/json
 
 ###
 GET {{baseUrl}}/3rdparty/v1/devices HTTP/1.1
-# Authorization: Basic {{credentials}}
-Authorization: Bearer {{jwtToken}}
+Authorization: Basic {{credentials}}
+# Authorization: Bearer {{jwtToken}}
 
 
 ###

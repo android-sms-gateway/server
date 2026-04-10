@@ -7,8 +7,8 @@ import (
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/converters"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
-	"github.com/capcom6/go-helpers/anys"
 	"github.com/go-playground/assert/v2"
+	"github.com/samber/lo"
 )
 
 func TestMessageToDTO(t *testing.T) {
@@ -18,21 +18,24 @@ func TestMessageToDTO(t *testing.T) {
 	// Define test cases
 	tests := []struct {
 		name     string
-		input    messages.MessageOut
+		input    messages.Message
 		expected smsgateway.MobileMessage
 	}{
 		{
 			name: "Full message with all fields",
-			input: messages.MessageOut{
-				MessageIn: messages.MessageIn{
+			input: messages.Message{
+				MessageInput: messages.MessageInput{
+					MessageContent: messages.MessageContent{
+						TextContent: &messages.TextMessageContent{Text: "Test message content"},
+					},
+
 					ID:                 "msg-123",
-					TextContent:        &messages.TextMessageContent{Text: "Test message content"},
 					PhoneNumbers:       []string{"+1234567890", "+9876543210"},
 					IsEncrypted:        true,
-					SimNumber:          anys.AsPointer(uint8(2)),
-					WithDeliveryReport: anys.AsPointer(true),
-					TTL:                anys.AsPointer(uint64(3600)),
-					ValidUntil:         anys.AsPointer(now.Add(24 * time.Hour)),
+					SimNumber:          lo.ToPtr(uint8(2)),
+					WithDeliveryReport: lo.ToPtr(true),
+					TTL:                lo.ToPtr(uint64(3600)),
+					ValidUntil:         lo.ToPtr(now.Add(24 * time.Hour)),
 					Priority:           100,
 				},
 				CreatedAt: now,
@@ -44,10 +47,10 @@ func TestMessageToDTO(t *testing.T) {
 					TextMessage:        &smsgateway.TextMessage{Text: "Test message content"},
 					PhoneNumbers:       []string{"+1234567890", "+9876543210"},
 					IsEncrypted:        true,
-					SimNumber:          anys.AsPointer(uint8(2)),
-					WithDeliveryReport: anys.AsPointer(true),
-					TTL:                anys.AsPointer(uint64(3600)),
-					ValidUntil:         anys.AsPointer(now.Add(24 * time.Hour)),
+					SimNumber:          lo.ToPtr(uint8(2)),
+					WithDeliveryReport: lo.ToPtr(true),
+					TTL:                lo.ToPtr(uint64(3600)),
+					ValidUntil:         lo.ToPtr(now.Add(24 * time.Hour)),
 					Priority:           100,
 				},
 				CreatedAt: now,
@@ -55,10 +58,13 @@ func TestMessageToDTO(t *testing.T) {
 		},
 		{
 			name: "Minimal message with required fields only",
-			input: messages.MessageOut{
-				MessageIn: messages.MessageIn{
+			input: messages.Message{
+				MessageInput: messages.MessageInput{
+					MessageContent: messages.MessageContent{
+						TextContent: &messages.TextMessageContent{Text: "Another test message"},
+					},
+
 					ID:           "msg-456",
-					TextContent:  &messages.TextMessageContent{Text: "Another test message"},
 					PhoneNumbers: []string{"+1122334455"},
 				},
 				CreatedAt: now,

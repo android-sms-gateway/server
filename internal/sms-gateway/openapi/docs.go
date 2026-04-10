@@ -483,6 +483,13 @@ const docTemplate = `{
                         "description": "Pagination offset",
                         "name": "offset",
                         "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Include textMessage/dataMessage content for each message. Default is false",
+                        "name": "includeContent",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1064,10 +1071,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "Webhook deleted",
-                        "schema": {
-                            "type": "object"
-                        }
+                        "description": "Successfully removed"
                     },
                     "401": {
                         "description": "Unauthorized",
@@ -1308,11 +1312,27 @@ const docTemplate = `{
                 "state"
             ],
             "properties": {
+                "dataMessage": {
+                    "description": "Present only when ` + "`" + `includeContent=true` + "`" + ` and the message type is data.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.DataMessage"
+                        }
+                    ]
+                },
                 "deviceId": {
                     "description": "Device ID",
                     "type": "string",
                     "maxLength": 21,
                     "example": "PyDmBQZZXYmyxMwED8Fzy"
+                },
+                "hashedMessage": {
+                    "description": "Hashed message content, if isHashed is true",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.HashedMessage"
+                        }
+                    ]
                 },
                 "id": {
                     "description": "Message ID",
@@ -1353,6 +1373,26 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "string"
                     }
+                },
+                "textMessage": {
+                    "description": "Present only when ` + "`" + `includeContent=true` + "`" + ` and the message type is text.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.TextMessage"
+                        }
+                    ]
+                }
+            }
+        },
+        "smsgateway.HashedMessage": {
+            "type": "object",
+            "required": [
+                "hash"
+            ],
+            "properties": {
+                "hash": {
+                    "type": "string",
+                    "example": "1d4b6e3b1b6e3b1b6e3b1b6e3b1b6e3b1b6e3b1b"
                 }
             }
         },
@@ -1454,7 +1494,8 @@ const docTemplate = `{
                 },
                 "createdAt": {
                     "description": "The timestamp when this log entry was created.",
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "id": {
                     "description": "A unique identifier for the log entry.",
@@ -1621,11 +1662,27 @@ const docTemplate = `{
                 "state"
             ],
             "properties": {
+                "dataMessage": {
+                    "description": "Present only when ` + "`" + `includeContent=true` + "`" + ` and the message type is data.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.DataMessage"
+                        }
+                    ]
+                },
                 "deviceId": {
                     "description": "Device ID",
                     "type": "string",
                     "maxLength": 21,
                     "example": "PyDmBQZZXYmyxMwED8Fzy"
+                },
+                "hashedMessage": {
+                    "description": "Hashed message content, if isHashed is true",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.HashedMessage"
+                        }
+                    ]
                 },
                 "id": {
                     "description": "Message ID",
@@ -1666,6 +1723,14 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "string"
                     }
+                },
+                "textMessage": {
+                    "description": "Present only when ` + "`" + `includeContent=true` + "`" + ` and the message type is text.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.TextMessage"
+                        }
+                    ]
                 }
             }
         },

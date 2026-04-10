@@ -101,8 +101,8 @@ func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 //	@Security		JWTAuth
 //	@Tags			User, Webhooks
 //	@Produce		json
-//	@Param			id	path		string						true	"Webhook ID"
-//	@Success		204	{object}	object						"Webhook deleted"
+//	@Param			id	path	string	true	"Webhook ID"
+//	@Success		204	"Successfully removed"
 //	@Failure		401	{object}	smsgateway.ErrorResponse	"Unauthorized"
 //	@Failure		403	{object}	smsgateway.ErrorResponse	"Forbidden"
 //	@Failure		500	{object}	smsgateway.ErrorResponse	"Internal server error"

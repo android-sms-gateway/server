@@ -86,6 +86,14 @@ Authorization: Basic {{localCredentials}}
 }
 
 ###
+GET {{localUrl}}/messages HTTP/1.1
+Authorization: Basic {{localCredentials}}
+
+###
+GET {{localUrl}}/messages?includeContent=true HTTP/1.1
+Authorization: Basic {{localCredentials}}
+
+###
 GET {{localUrl}}/message/8GN2Pz-fzu73NL3398ROE HTTP/1.1
 Authorization: Basic {{localCredentials}}
 
