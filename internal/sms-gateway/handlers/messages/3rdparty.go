@@ -134,6 +134,7 @@ func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 		WithDeliveryReport: req.WithDeliveryReport,
 		TTL:                req.TTL,
 		ValidUntil:         req.ValidUntil,
+		ScheduleAt:         req.ScheduleAt,
 		Priority:           req.Priority,
 	}
 	state, err := h.messagesSvc.Enqueue(

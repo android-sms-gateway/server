@@ -17,6 +17,23 @@ GET {{baseUrl}}/3rdparty/v1/health/ready HTTP/1.1
 GET {{baseUrl}}/3rdparty/v1/health/live HTTP/1.1
 
 ###
+# Schedule a message for future delivery
+POST {{baseUrl}}/3rdparty/v1/messages HTTP/1.1
+Content-Type: application/json
+Authorization: Basic {{credentials}}
+
+{
+    "message": "This message is scheduled for the future",
+    "scheduleAt": "2027-04-11T04:30:00Z",
+    "phoneNumbers": [
+        "{{phone}}"
+    ],
+    "withDeliveryReport": true,
+    "priority": 0,
+    "simNumber": 1
+}
+
+###
 POST {{baseUrl}}/3rdparty/v1/messages?skipPhoneValidation=false&deviceActiveWithin=240 HTTP/1.1
 Content-Type: application/json
 Authorization: Basic {{credentials}}

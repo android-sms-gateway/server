@@ -40,6 +40,7 @@ func messageToDomain(input messageModel) (Message, error) {
 			WithDeliveryReport: &input.WithDeliveryReport,
 			TTL:                ttl,
 			ValidUntil:         input.ValidUntil,
+			ScheduleAt:         input.ScheduleAt,
 			Priority:           smsgateway.MessagePriority(input.Priority),
 		},
 		CreatedAt: input.CreatedAt,

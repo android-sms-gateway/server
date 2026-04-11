@@ -37,6 +37,7 @@ func MessageToMobileDTO(m messages.Message) smsgateway.MobileMessage {
 			PhoneNumbers:       m.PhoneNumbers,
 			TTL:                m.TTL,
 			ValidUntil:         m.ValidUntil,
+			ScheduleAt:         m.ScheduleAt,
 			Priority:           m.Priority,
 		},
 		CreatedAt: m.CreatedAt,

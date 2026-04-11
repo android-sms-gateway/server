@@ -35,6 +35,7 @@ type messageModel struct {
 	Content            string          `gorm:"not null;type:text"`
 	State              ProcessingState `gorm:"not null;type:enum('Pending','Sent','Processed','Delivered','Failed');default:Pending;index:idx_messages_device_state"`
 	ValidUntil         *time.Time      `gorm:"type:datetime"`
+	ScheduleAt         *time.Time      `gorm:"type:datetime"`
 	SimNumber          *uint8          `gorm:"type:tinyint(1) unsigned"`
 	WithDeliveryReport bool            `gorm:"not null;type:tinyint(1) unsigned"`
 	Priority           int8            `gorm:"not null;type:tinyint;default:0"`
@@ -54,6 +55,7 @@ func newMessageModel(
 	priority int8,
 	simNumber *uint8,
 	validUntil *time.Time,
+	scheduleAt *time.Time,
 	withDeliveryReport bool,
 	isEncrypted bool,
 ) *messageModel {
@@ -67,6 +69,7 @@ func newMessageModel(
 		Priority:           priority,
 		SimNumber:          simNumber,
 		ValidUntil:         validUntil,
+		ScheduleAt:         scheduleAt,
 		WithDeliveryReport: withDeliveryReport,
 		IsEncrypted:        isEncrypted,
 
