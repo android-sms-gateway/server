@@ -261,6 +261,10 @@ func (s *Service) prepareMessage(
 		)
 	}
 
+	if message.ScheduleAt != nil && validUntil != nil && message.ScheduleAt.After(*validUntil) {
+		return nil, ValidationError("scheduleAt must be less than or equal to validUntil")
+	}
+
 	msg := newMessageModel(
 		message.ID,
 		device.ID,
@@ -268,6 +272,7 @@ func (s *Service) prepareMessage(
 		int8(message.Priority),
 		message.SimNumber,
 		validUntil,
+		message.ScheduleAt,
 		anys.OrDefault(message.WithDeliveryReport, true),
 		message.IsEncrypted,
 	)

@@ -33,6 +33,7 @@ type MessageInput struct {
 	WithDeliveryReport *bool
 	TTL                *uint64
 	ValidUntil         *time.Time
+	ScheduleAt         *time.Time
 	Priority           smsgateway.MessagePriority
 }
 

@@ -87,6 +87,21 @@ Authorization: Basic {{localCredentials}}
 }
 
 ###
+# Scheduled message - will be sent at the specified time
+POST {{localUrl}}/messages HTTP/1.1
+Content-Type: application/json
+Authorization: Basic {{localCredentials}}
+
+{
+    "message": "Scheduled message test #3",
+    "scheduleAt": "2026-04-26T02:00:00Z",
+    "phoneNumbers": [
+        "{{phone}}"
+    ],
+    "withDeliveryReport": true
+}
+
+###
 GET {{localUrl}}/messages HTTP/1.1
 Authorization: Basic {{localCredentials}}
 

@@ -1872,6 +1872,12 @@ const docTemplate = `{
                     ],
                     "example": 0
                 },
+                "scheduleAt": {
+                    "description": "Schedule message delivery at (must be in the future)",
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2020-01-01T08:30:00Z"
+                },
                 "simNumber": {
                     "description": "SIM card number (1-3), if not set - default SIM will be used",
                     "type": "integer",
@@ -1896,6 +1902,7 @@ const docTemplate = `{
                 "validUntil": {
                     "description": "Valid until (conflicts with ` + "`" + `TTL` + "`" + `)",
                     "type": "string",
+                    "format": "date-time",
                     "example": "2020-01-01T00:00:00Z"
                 },
                 "withDeliveryReport": {
