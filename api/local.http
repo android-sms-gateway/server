@@ -8,11 +8,12 @@ GET {{localUrl}}/health HTTP/1.1
 
 ###
 GET {{localUrl}}/device HTTP/1.1
-# Authorization: Basic {{localCredentials}}
-Authorization: Bearer {{localToken}}
+Authorization: Basic {{localCredentials}}
 
 ###
-POST {{localUrl}}/message?skipPhoneValidation=false HTTP/1.1
+# @name sendMessage
+@messageId={{sendMessage.response.body.$.id}}
+POST {{localUrl}}/messages?skipPhoneValidation=false HTTP/1.1
 Content-Type: application/json
 Authorization: Basic {{localCredentials}}
 
@@ -22,12 +23,12 @@ Authorization: Basic {{localCredentials}}
     "phoneNumbers": [
         "{{phone}}"
     ],
-    "simNumber": 1,
+    "simNumber": {{$randomInt 0 3}},
     "withDeliveryReport": true
 }
 
 ###
-POST {{localUrl}}/message HTTP/1.1
+POST {{localUrl}}/messages HTTP/1.1
 Content-Type: application/json
 Authorization: Basic {{localCredentials}}
 
@@ -41,7 +42,7 @@ Authorization: Basic {{localCredentials}}
 }
 
 ###
-POST {{localUrl}}/message HTTP/1.1
+POST {{localUrl}}/messages HTTP/1.1
 Content-Type: application/json
 Authorization: Basic {{localCredentials}}
 
@@ -56,7 +57,7 @@ Authorization: Basic {{localCredentials}}
 }
 
 ###
-POST {{localUrl}}/message HTTP/1.1
+POST {{localUrl}}/messages HTTP/1.1
 Content-Type: application/json
 Authorization: Basic {{localCredentials}}
 
@@ -70,7 +71,7 @@ Authorization: Basic {{localCredentials}}
 }
 
 ###
-POST {{localUrl}}/message HTTP/1.1
+POST {{localUrl}}/messages HTTP/1.1
 Content-Type: application/json
 Authorization: Basic {{localCredentials}}
 
@@ -94,18 +95,18 @@ GET {{localUrl}}/messages?includeContent=true HTTP/1.1
 Authorization: Basic {{localCredentials}}
 
 ###
-GET {{localUrl}}/message/8GN2Pz-fzu73NL3398ROE HTTP/1.1
+GET {{localUrl}}/messages/{{messageId}} HTTP/1.1
 Authorization: Basic {{localCredentials}}
 
 ###
 GET {{localUrl}}/webhooks HTTP/1.1
-# Authorization: Basic {{localCredentials}}
-Authorization: Bearer {{localToken}}
+Authorization: Basic {{localCredentials}}
 
 ###
+# @name createWebhook
+@webhookId={{createWebhook.response.body.$.id}}
 POST {{localUrl}}/webhooks HTTP/1.1
-# Authorization: Basic {{localCredentials}}
-Authorization: Bearer {{localToken}}
+Authorization: Basic {{localCredentials}}
 Content-Type: application/json
 
 {
@@ -115,7 +116,7 @@ Content-Type: application/json
 }
 
 ###
-DELETE {{localUrl}}/webhooks/LreFUt-Z3sSq0JufY9uWB HTTP/1.1
+DELETE {{localUrl}}/webhooks/{{webhookId}} HTTP/1.1
 Authorization: Basic {{localCredentials}}
 
 ###
@@ -177,6 +178,8 @@ Content-Type: application/json
 
 ###
 # @name issueToken
+@jti={{issueToken.response.body.$.id}}
+@accessToken={{issueToken.response.body.$.access_token}}
 POST {{localUrl}}/auth/token HTTP/1.1
 Authorization: Basic {{localCredentials}}
 Content-Type: application/json
@@ -189,6 +192,5 @@ Content-Type: application/json
 }
 
 ###
-@jti={{issueToken.response.body.$.id}}
 DELETE {{localUrl}}/auth/token/{{jti}} HTTP/1.1
 Authorization: Basic {{localCredentials}}
