@@ -292,16 +292,6 @@ func (s *Service) prepareMessage(
 	return msg, nil
 }
 
-func (s *Service) ExportInbox(device models.Device, since, until time.Time) error {
-	event := events.NewMessagesExportRequestedEvent(since, until)
-
-	if err := s.eventsSvc.Notify(device.UserID, &device.ID, event); err != nil {
-		return fmt.Errorf("failed to notify device: %w", err)
-	}
-
-	return nil
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 
 func (s *Service) recipientsStateToModel(input []smsgateway.RecipientState, hash bool) []messageRecipientModel {

@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/devices"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/inbox"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/logs"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/messages"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/jwtauth"
@@ -28,6 +29,7 @@ type thirdPartyHandler struct {
 	webhooksHandler *webhooks.ThirdPartyController
 	devicesHandler  *devices.ThirdPartyController
 	settingsHandler *settings.ThirdPartyController
+	inboxHandler    *inbox.ThirdPartyController
 	logsHandler     *logs.ThirdPartyController
 	authHandler     *thirdparty.AuthHandler
 }
@@ -41,6 +43,7 @@ func newThirdPartyHandler(
 	webhooksHandler *webhooks.ThirdPartyController,
 	devicesHandler *devices.ThirdPartyController,
 	settingsHandler *settings.ThirdPartyController,
+	inboxHandler *inbox.ThirdPartyController,
 	logsHandler *logs.ThirdPartyController,
 	authHandler *thirdparty.AuthHandler,
 
@@ -61,6 +64,7 @@ func newThirdPartyHandler(
 		webhooksHandler: webhooksHandler,
 		devicesHandler:  devicesHandler,
 		settingsHandler: settingsHandler,
+		inboxHandler:    inboxHandler,
 		logsHandler:     logsHandler,
 		authHandler:     authHandler,
 	}
@@ -86,6 +90,7 @@ func (h *thirdPartyHandler) Register(router fiber.Router) {
 	h.devicesHandler.Register(router.Group("/devices"))
 
 	h.settingsHandler.Register(router.Group("/settings"))
+	h.inboxHandler.Register(router.Group("/inbox"))
 
 	h.webhooksHandler.Register(router.Group("/webhooks"))
 

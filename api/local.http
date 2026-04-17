@@ -194,3 +194,23 @@ Content-Type: application/json
 ###
 DELETE {{localUrl}}/auth/token/{{jti}} HTTP/1.1
 Authorization: Basic {{localCredentials}}
+
+###
+# @name getInbox
+@inboxMessageId={{getInbox.response.body.$.0.id}}
+GET {{localUrl}}/inbox HTTP/1.1
+Authorization: Basic {{localCredentials}}
+
+###
+GET {{localUrl}}/inbox?type=SMS&limit=1&offset={{$randomInt 0 100}}&from=2026-01-01T00:00:00.000Z&to=2026-12-31T23:59:59Z HTTP/1.1
+Authorization: Basic {{localCredentials}}
+
+###
+POST {{localUrl}}/inbox/refresh HTTP/1.1
+Authorization: Basic {{localCredentials}}
+Content-Type: application/json
+
+{
+  "since": "2026-01-01T00:00:00.000Z",
+  "until": "2026-12-31T23:59:59Z"
+}

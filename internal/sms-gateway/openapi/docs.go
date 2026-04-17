@@ -352,6 +352,198 @@ const docTemplate = `{
                 }
             }
         },
+        "/3rdparty/v1/inbox": {
+            "get": {
+                "security": [
+                    {
+                        "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
+                    }
+                ],
+                "description": "Retrieves incoming messages with filtering and pagination.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User",
+                    "Inbox"
+                ],
+                "summary": "Get incoming messages",
+                "parameters": [
+                    {
+                        "enum": [
+                            "SMS",
+                            "DATA_SMS",
+                            "MMS",
+                            "MMS_DOWNLOADED"
+                        ],
+                        "type": "string",
+                        "description": "Filter incoming messages by type",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 500,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Maximum number of messages to return",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Number of messages to skip",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Start of date range (ISO 8601)",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "End of date range (ISO 8601)",
+                        "name": "to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Device ID",
+                        "name": "deviceId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "A list of incoming messages",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/smsgateway.IncomingMessage"
+                            }
+                        },
+                        "headers": {
+                            "X-Total-Count": {
+                                "type": "integer",
+                                "description": "Total number of items available"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "501": {
+                        "description": "Not implemented",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/3rdparty/v1/inbox/refresh": {
+            "post": {
+                "security": [
+                    {
+                        "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
+                    }
+                ],
+                "description": "Refreshes inbox messages. Webhooks will not be triggered.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User",
+                    "Inbox"
+                ],
+                "summary": "Request inbox messages refresh",
+                "parameters": [
+                    {
+                        "description": "Export inbox request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.MessagesExportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Inbox refresh request accepted",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "501": {
+                        "description": "Not implemented",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/3rdparty/v1/logs": {
             "get": {
                 "security": [
@@ -499,6 +691,12 @@ const docTemplate = `{
                             "type": "array",
                             "items": {
                                 "$ref": "#/definitions/smsgateway.MessageState"
+                            }
+                        },
+                        "headers": {
+                            "X-Total-Count": {
+                                "type": "integer",
+                                "description": "Total number of items available"
                             }
                         }
                     },
@@ -1467,6 +1665,85 @@ const docTemplate = `{
                 "HealthStatusPass",
                 "HealthStatusWarn",
                 "HealthStatusFail"
+            ]
+        },
+        "smsgateway.IncomingMessage": {
+            "type": "object",
+            "required": [
+                "contentPreview",
+                "createdAt",
+                "id",
+                "sender",
+                "type"
+            ],
+            "properties": {
+                "contentPreview": {
+                    "description": "Message body preview or metadata",
+                    "type": "string",
+                    "example": "Hello World!"
+                },
+                "createdAt": {
+                    "description": "Message received timestamp",
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2020-01-01T00:00:00Z"
+                },
+                "id": {
+                    "description": "Incoming message ID",
+                    "type": "string",
+                    "example": "PyDmBQZZXYmyxMwED8Fzy"
+                },
+                "recipient": {
+                    "description": "Recipient phone number on the device",
+                    "type": "string",
+                    "example": "+79990001234"
+                },
+                "sender": {
+                    "description": "Incoming sender phone number",
+                    "type": "string",
+                    "example": "+79990001234"
+                },
+                "simNumber": {
+                    "description": "SIM slot number",
+                    "type": "integer",
+                    "example": 1
+                },
+                "type": {
+                    "description": "Message type",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.IncomingMessageType"
+                        }
+                    ],
+                    "example": "SMS"
+                }
+            }
+        },
+        "smsgateway.IncomingMessageType": {
+            "type": "string",
+            "enum": [
+                "SMS",
+                "DATA_SMS",
+                "MMS",
+                "MMS_DOWNLOADED"
+            ],
+            "x-enum-comments": {
+                "IncomingMessageTypeDataSMS": "Data SMS message",
+                "IncomingMessageTypeMMS": "MMS message",
+                "IncomingMessageTypeMmsDownloaded": "Downloaded MMS message",
+                "IncomingMessageTypeSMS": "SMS message"
+            },
+            "x-enum-descriptions": [
+                "SMS message",
+                "Data SMS message",
+                "MMS message",
+                "Downloaded MMS message"
+            ],
+            "x-enum-varnames": [
+                "IncomingMessageTypeSMS",
+                "IncomingMessageTypeDataSMS",
+                "IncomingMessageTypeMMS",
+                "IncomingMessageTypeMmsDownloaded"
             ]
         },
         "smsgateway.LimitPeriod": {

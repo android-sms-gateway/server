@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/events"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/inbox"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/logs"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/messages"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/settings"
@@ -34,6 +35,7 @@ func Module() fx.Option {
 			devices.NewThirdPartyController,
 			settings.NewThirdPartyController,
 			settings.NewMobileController,
+			inbox.NewThirdPartyController,
 			logs.NewThirdPartyController,
 			events.NewMobileController,
 			fx.Private,
