@@ -179,6 +179,7 @@ func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 //	@Param			offset			query		int								false	"Pagination offset"																default(0)
 //	@Param			includeContent	query		bool							false	"Include textMessage/dataMessage content for each message. Default is false"	default(false)
 //	@Success		200				{object}	smsgateway.GetMessagesResponse	"A list of messages"
+//	@Header			200				{integer}	X-Total-Count					"Total number of items available"
 //	@Failure		400				{object}	smsgateway.ErrorResponse		"Invalid request"
 //	@Failure		401				{object}	smsgateway.ErrorResponse		"Unauthorized"
 //	@Failure		403				{object}	smsgateway.ErrorResponse		"Forbidden"
