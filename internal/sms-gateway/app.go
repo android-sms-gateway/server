@@ -7,6 +7,7 @@ import (
 	appconfig "github.com/android-sms-gateway/server/internal/config"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/cache"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/inbox"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/jwt"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	appdb "github.com/android-sms-gateway/server/internal/sms-gateway/modules/db"
@@ -63,6 +64,7 @@ func Module() fx.Option {
 		online.Module(),
 		jwt.Module(),
 		otp.Module(),
+		inbox.Module(),
 	)
 }
 

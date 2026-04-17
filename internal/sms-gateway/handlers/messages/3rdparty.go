@@ -11,6 +11,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/converters"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/permissions"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/inbox"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 	"github.com/capcom6/go-helpers/slices"
@@ -29,6 +30,7 @@ type thirdPartyControllerParams struct {
 
 	MessagesSvc *messages.Service
 	DevicesSvc  *devices.Service
+	InboxSvc    *inbox.Service
 
 	Validator *validator.Validate
 	Logger    *zap.Logger
@@ -39,6 +41,7 @@ type ThirdPartyController struct {
 
 	messagesSvc *messages.Service
 	devicesSvc  *devices.Service
+	inboxSvc    *inbox.Service
 }
 
 func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyController {
@@ -47,8 +50,10 @@ func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyContr
 			Logger:    params.Logger,
 			Validator: params.Validator,
 		},
+
 		messagesSvc: params.MessagesSvc,
 		devicesSvc:  params.DevicesSvc,
+		inboxSvc:    params.InboxSvc,
 	}
 }
 
@@ -258,19 +263,8 @@ func (h *ThirdPartyController) postInboxExport(userID string, c *fiber.Ctx) erro
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	device, err := h.devicesSvc.Get(userID, devices.WithID(req.DeviceID))
-	if err != nil {
-		if errors.Is(err, devices.ErrNotFound) {
-			return fiber.NewError(fiber.StatusBadRequest, "Invalid device ID")
-		}
-
-		h.Logger.Error("failed to get device", zap.Error(err), zap.String("user_id", userID))
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to get device")
-	}
-
-	if expErr := h.messagesSvc.ExportInbox(device, req.Since, req.Until); expErr != nil {
-		h.Logger.Error("failed to export inbox", zap.Error(expErr), zap.String("user_id", userID))
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to export inbox")
+	if err := h.inboxSvc.Refresh(userID, &req.DeviceID, req.Since, req.Until); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
 	return c.SendStatus(fiber.StatusAccepted)
