@@ -8,11 +8,11 @@ ifeq ($(OS),Windows_NT)
 endif
 
 .PHONY: \
-	all fmt lint test coverage benchmark deps release clean help \
+	all fmt lint test coverage benchmark deps gen release clean help \
 	init init-dev ngrok air db-upgrade db-upgrade-raw run test-e2e build install \
 	docker-build docker docker-dev docker-clean
 
-all: fmt lint coverage ## Run all tests and checks
+all: gen fmt lint coverage ## Run all tests and checks
 
 fmt: ## Format the code
 	golangci-lint fmt
@@ -32,6 +32,9 @@ benchmark: ## Run benchmarks
 
 deps: ## Install dependencies
 	go mod download
+
+gen: ## Generate code
+	go generate ./...
 
 release: ## Create release
 	DOCKER_REGISTRY=$(registry_name) RELEASE_ID=0 goreleaser release --snapshot --clean
