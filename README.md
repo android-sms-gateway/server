@@ -162,19 +162,21 @@ Authorization: Bearer <access_token>
 
 The following scopes are available for token generation:
 
-- `messages:send` - Send SMS messages
-- `messages:read` - Read individual messages
-- `messages:list` - List messages
-- `messages:export` - Export messages
-- `devices:list` - List connected devices
 - `devices:delete` - Delete devices
-- `webhooks:list` - List webhooks
-- `webhooks:write` - Create and update webhooks
-- `webhooks:delete` - Delete webhooks
+- `devices:list` - List connected devices
+- `inbox:list` - List incoming messages with filters
+- `inbox:read` - Read incoming messages
+- `logs:read` - Read server logs
+- `messages:export` - Export messages
+- `messages:list` - List messages
+- `messages:read` - Read individual messages
+- `messages:send` - Send SMS messages
 - `settings:read` - Read server settings
 - `settings:write` - Modify server settings
-- `logs:read` - Read server logs
 - `tokens:manage` - Generate and revoke tokens
+- `webhooks:delete` - Delete webhooks
+- `webhooks:list` - List webhooks
+- `webhooks:write` - Create and update webhooks
 
 ## Contributing
 
