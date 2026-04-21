@@ -128,6 +128,8 @@ Content-Type: application/json
 }
 
 ###
+# @name getDevices
+@deviceId={{getDevices.response.body.$.0.id}}
 GET {{baseUrl}}/3rdparty/v1/devices HTTP/1.1
 Authorization: Basic {{credentials}}
 # Authorization: Bearer {{jwtToken}}
@@ -252,6 +254,28 @@ Authorization: Bearer {{refreshToken}}
 DELETE {{baseUrl}}/3rdparty/v1/auth/token/{{jti}} HTTP/1.1
 Authorization: Basic {{credentials}}
 Content-Type: application/json
+
+###
+# @name getInbox
+@inboxMessageId={{getInbox.response.body.$.0.id}}
+GET {{baseUrl}}/3rdparty/v1/inbox HTTP/1.1
+Authorization: Basic {{credentials}}
+
+###
+GET {{baseUrl}}/3rdparty/v1/inbox?type=SMS&limit=1&offset={{$randomInt 0 100}}&from=2026-01-01T00:00:00.000Z&to=2026-12-31T23:59:59Z HTTP/1.1
+Authorization: Basic {{credentials}}
+
+###
+POST {{baseUrl}}/3rdparty/v1/inbox/refresh HTTP/1.1
+Authorization: Basic {{credentials}}
+Content-Type: application/json
+
+{
+    "deviceId": "{{deviceId}}",
+    "since": "2026-01-01T00:00:00.000Z",
+    "until": "2026-12-31T23:59:59Z",
+    "messageTypes": ["SMS", "MMS"]
+}
 
 ###
 GET http://localhost:3000/metrics HTTP/1.1
