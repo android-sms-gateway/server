@@ -481,7 +481,7 @@ const docTemplate = `{
                         "JWTAuth": []
                     }
                 ],
-                "description": "Refreshes inbox messages. Webhooks will not be triggered.",
+                "description": "Refreshes inbox messages. Webhooks are triggered when triggerWebhooks is true.",
                 "consumes": [
                     "application/json"
                 ],
@@ -495,21 +495,18 @@ const docTemplate = `{
                 "summary": "Request inbox messages refresh",
                 "parameters": [
                     {
-                        "description": "Export inbox request",
+                        "description": "Refresh inbox request",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/smsgateway.MessagesExportRequest"
+                            "$ref": "#/definitions/smsgateway.InboxRefreshRequest"
                         }
                     }
                 ],
                 "responses": {
                     "202": {
-                        "description": "Inbox refresh request accepted",
-                        "schema": {
-                            "type": "object"
-                        }
+                        "description": "Inbox refresh request accepted"
                     },
                     "400": {
                         "description": "Invalid request",
@@ -531,12 +528,6 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/smsgateway.ErrorResponse"
-                        }
-                    },
-                    "501": {
-                        "description": "Not implemented",
                         "schema": {
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
@@ -817,73 +808,6 @@ const docTemplate = `{
                     },
                     "503": {
                         "description": "Queue limits exceeded; ensure device is online",
-                        "schema": {
-                            "$ref": "#/definitions/smsgateway.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/3rdparty/v1/messages/inbox/export": {
-            "post": {
-                "security": [
-                    {
-                        "ApiAuth": []
-                    },
-                    {
-                        "JWTAuth": []
-                    }
-                ],
-                "description": "Initiates process of inbox messages export via webhooks. For each message the ` + "`" + `sms:received` + "`" + ` webhook will be triggered. The webhooks will be triggered without specific order.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User",
-                    "Messages"
-                ],
-                "summary": "Request inbox messages export",
-                "parameters": [
-                    {
-                        "description": "Export inbox request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/smsgateway.MessagesExportRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "202": {
-                        "description": "Inbox export request accepted",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request",
-                        "schema": {
-                            "$ref": "#/definitions/smsgateway.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/smsgateway.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/smsgateway.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
@@ -1673,6 +1597,46 @@ const docTemplate = `{
                 "HealthStatusFail"
             ]
         },
+        "smsgateway.InboxRefreshRequest": {
+            "type": "object",
+            "required": [
+                "since",
+                "until"
+            ],
+            "properties": {
+                "deviceId": {
+                    "description": "ID of the device to refresh messages for.",
+                    "type": "string",
+                    "maxLength": 21,
+                    "example": "PyDmBQZZXYmyxMwED8Fzy"
+                },
+                "messageTypes": {
+                    "description": "List of message types to refresh. By default, SMS messages are refreshed.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/smsgateway.IncomingMessageType"
+                    }
+                },
+                "since": {
+                    "description": "Start of the time range to refresh.",
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "triggerWebhooks": {
+                    "description": "Indicates whether to trigger webhooks for the refreshed messages.",
+                    "type": "boolean",
+                    "example": true
+                },
+                "until": {
+                    "description": "End of the time range to refresh.",
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2024-01-01T23:59:59Z"
+                }
+            }
+        },
         "smsgateway.IncomingMessage": {
             "type": "object",
             "required": [
@@ -1750,6 +1714,43 @@ const docTemplate = `{
                 "IncomingMessageTypeDataSMS",
                 "IncomingMessageTypeMMS",
                 "IncomingMessageTypeMmsDownloaded"
+            ]
+        },
+        "smsgateway.JWTScope": {
+            "type": "string",
+            "enum": [
+                "devices:list",
+                "devices:delete",
+                "inbox:list",
+                "inbox:refresh",
+                "logs:read",
+                "messages:send",
+                "messages:read",
+                "messages:list",
+                "messages:export",
+                "settings:read",
+                "settings:write",
+                "tokens:manage",
+                "webhooks:list",
+                "webhooks:write",
+                "webhooks:delete"
+            ],
+            "x-enum-varnames": [
+                "ScopeDevicesList",
+                "ScopeDevicesDelete",
+                "ScopeInboxList",
+                "ScopeInboxRefresh",
+                "ScopeLogsRead",
+                "ScopeMessagesSend",
+                "ScopeMessagesRead",
+                "ScopeMessagesList",
+                "ScopeMessagesExport",
+                "ScopeSettingsRead",
+                "ScopeSettingsWrite",
+                "ScopeTokensManage",
+                "ScopeWebhooksList",
+                "ScopeWebhooksWrite",
+                "ScopeWebhooksDelete"
             ]
         },
         "smsgateway.LimitPeriod": {
@@ -2024,32 +2025,6 @@ const docTemplate = `{
                 }
             }
         },
-        "smsgateway.MessagesExportRequest": {
-            "type": "object",
-            "required": [
-                "deviceId",
-                "since",
-                "until"
-            ],
-            "properties": {
-                "deviceId": {
-                    "description": "DeviceID is the ID of the device to export messages for.",
-                    "type": "string",
-                    "maxLength": 21,
-                    "example": "PyDmBQZZXYmyxMwED8Fzy"
-                },
-                "since": {
-                    "description": "Since is the start of the time range to export.",
-                    "type": "string",
-                    "example": "2024-01-01T00:00:00Z"
-                },
-                "until": {
-                    "description": "Until is the end of the time range to export.",
-                    "type": "string",
-                    "example": "2024-01-01T23:59:59Z"
-                }
-            }
-        },
         "smsgateway.MessagesProcessingOrder": {
             "type": "string",
             "enum": [
@@ -2293,7 +2268,7 @@ const docTemplate = `{
                     "type": "array",
                     "minItems": 1,
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/smsgateway.JWTScope"
                     }
                 },
                 "ttl": {
