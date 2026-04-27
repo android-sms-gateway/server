@@ -20,31 +20,34 @@ type metrics struct {
 }
 
 func newMetrics() *metrics {
+	const namespace = "sms"
+	const subsystem = "push"
+
 	return &metrics{
 		enqueuedCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "push",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      "enqueued_total",
 			Help:      "Total number of messages enqueued",
 		}, []string{"event"}),
 
 		retriesCounter: promauto.NewCounter(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "push",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      "retries_total",
 			Help:      "Total retry attempts",
 		}),
 
 		blacklistCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "push",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      "blacklist_total",
 			Help:      "Blacklist operations",
 		}, []string{"operation"}),
 
 		errorsCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "push",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      "errors_total",
 			Help:      "Total number of errors",
 		}, []string{}),

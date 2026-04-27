@@ -35,22 +35,25 @@ type metrics struct {
 
 // newMetrics creates and initializes all events metrics.
 func newMetrics() *metrics {
+	const namespace = "sms"
+	const subsystem = "events"
+
 	return &metrics{
 		enqueuedCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "events",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      MetricEnqueuedTotal,
 			Help:      "Total number of events enqueued",
 		}, []string{LabelEvent}),
 		sentCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "events",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      MetricSentTotal,
 			Help:      "Total number of events sent",
 		}, []string{LabelEvent, LabelDeliveryType}),
 		failedCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "events",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      MetricFailedTotal,
 			Help:      "Total number of failed notifications",
 		}, []string{LabelEvent, LabelDeliveryType, LabelReason}),

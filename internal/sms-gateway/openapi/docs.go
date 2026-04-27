@@ -814,6 +814,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
+                    },
+                    "503": {
+                        "description": "Queue limits exceeded; ensure device is online",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
                     }
                 }
             }

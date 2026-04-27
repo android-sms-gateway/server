@@ -1,0 +1,28 @@
+groups:
+  - name: messages-alerts
+    rules:
+      - alert: LimiterQueryErrors
+        expr: sum(increase(sms_messages_limiter_query_errors_total[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Limiter database query errors detected"
+          description: "Limiter is encountering database errors while checking limits ({{
+            $value }} errors in 5m). Rate limiting may not function correctly."
+          runbook: "Check database connectivity and investigate query failures in the
+            messages limiter logs"
+
+      - alert: HighRateLimitingActivity
+        expr: sum(increase(sms_messages_limiter_checks_total{result="limited"}[5m])) >
+          100
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate limiting activity detected"
+          description: "Devices are being rate-limited at a high rate ({{ $value }}
+            limited checks in 5m). Review queue capacity configuration or
+            investigate potential abuse."
+          runbook: "Check the Messages dashboard for batch size and query error panels.
+            Review QueueConfig settings (MaxPending, MaxPendingAge, MaxFailed)."

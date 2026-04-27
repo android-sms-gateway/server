@@ -114,6 +114,15 @@ func Module() fx.Option {
 			return messages.Config{
 				CacheTTL:        time.Duration(cfg.Messages.CacheTTLSeconds) * time.Second,
 				HashingInterval: time.Duration(cfg.Messages.HashingIntervalSeconds) * time.Second,
+				Queue: messages.QueueConfig{
+					MaxPending:    int64(cfg.Messages.Queue.MaxPending),
+					MaxPendingAge: cfg.Messages.Queue.MaxPendingAge.Duration(),
+					MaxFailed:     cfg.Messages.Queue.MaxFailed,
+					MaxFailedAge:  cfg.Messages.Queue.MaxFailedAge.Duration(),
+
+					StatsRefreshInterval: cfg.Messages.Queue.StatsRefreshInterval.Duration(),
+					StatsCacheTTL:        cfg.Messages.Queue.StatsCacheTTL.Duration(),
+				},
 			}
 		}),
 		fx.Provide(func(_ Config) devices.Config {

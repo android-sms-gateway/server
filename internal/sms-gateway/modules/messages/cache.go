@@ -13,21 +13,21 @@ const (
 	cacheTimeout = 100 * time.Millisecond
 )
 
-type cache struct {
+type stateCache struct {
 	ttl time.Duration
 
 	storage cacheImpl.Cache
 }
 
-func newCache(config Config, storage cacheImpl.Cache) *cache {
-	return &cache{
+func newCache(config Config, storage cacheImpl.Cache) *stateCache {
+	return &stateCache{
 		ttl: config.CacheTTL,
 
 		storage: storage,
 	}
 }
 
-func (c *cache) Set(ctx context.Context, userID, id string, message *MessageState) error {
+func (c *stateCache) Set(ctx context.Context, userID, id string, message *MessageState) error {
 	var (
 		err  error
 		data []byte
@@ -50,7 +50,7 @@ func (c *cache) Set(ctx context.Context, userID, id string, message *MessageStat
 	return nil
 }
 
-func (c *cache) Get(ctx context.Context, userID, id string) (*MessageState, error) {
+func (c *stateCache) Get(ctx context.Context, userID, id string) (*MessageState, error) {
 	ctx, cancel := context.WithTimeout(ctx, cacheTimeout)
 	defer cancel()
 

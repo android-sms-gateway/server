@@ -26,12 +26,13 @@ type EnqueueOptions struct {
 type Service struct {
 	config Config
 
-	metrics       *metrics
-	cache         *cache
-	messages      *Repository
-	hashingWorker *hashingWorker
-
+	limiter   *Limiter
+	messages  *Repository
 	eventsSvc *events.Service
+
+	metrics       *metrics
+	cache         *stateCache
+	hashingWorker *hashingWorker
 
 	logger *zap.Logger
 	idgen  func() string
@@ -39,23 +40,28 @@ type Service struct {
 
 func NewService(
 	config Config,
-	metrics *metrics,
-	cache *cache,
+
+	limiter *Limiter,
 	messages *Repository,
 	eventsSvc *events.Service,
+
+	metrics *metrics,
+	cache *stateCache,
 	hashingTask *hashingWorker,
+
 	logger *zap.Logger,
 	idgen db.IDGen,
 ) *Service {
 	return &Service{
 		config: config,
 
+		limiter:   limiter,
+		messages:  messages,
+		eventsSvc: eventsSvc,
+
 		metrics:       metrics,
 		cache:         cache,
-		messages:      messages,
 		hashingWorker: hashingTask,
-
-		eventsSvc: eventsSvc,
 
 		logger: logger,
 		idgen:  idgen,
@@ -65,6 +71,9 @@ func NewService(
 func (s *Service) RunBackgroundTasks(ctx context.Context, wg *sync.WaitGroup) {
 	wg.Go(func() {
 		s.hashingWorker.Run(ctx)
+	})
+	wg.Go(func() {
+		s.limiter.Run(ctx)
 	})
 }
 
@@ -195,7 +204,21 @@ func (s *Service) GetState(userID string, id string) (*MessageState, error) {
 	return state, nil
 }
 
-func (s *Service) Enqueue(device models.Device, message MessageInput, opts EnqueueOptions) (*MessageState, error) {
+func (s *Service) Enqueue(
+	ctx context.Context,
+	device models.Device,
+	message MessageInput,
+	opts EnqueueOptions,
+) (*MessageState, error) {
+	// Trigger async queue stats refresh for this device
+	if err := s.limiter.Refresh(ctx, device.ID); err != nil {
+		s.logger.Error("failed to refresh queue stats", zap.String("device_id", device.ID), zap.Error(err))
+	}
+
+	if err := s.limiter.Check(ctx, device.ID); err != nil {
+		return nil, err
+	}
+
 	msg, err := s.prepareMessage(device, message, opts)
 	if err != nil {
 		return nil, err
@@ -297,7 +320,7 @@ func (s *Service) prepareMessage(
 	return msg, nil
 }
 
-///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 
 func (s *Service) recipientsStateToModel(input []smsgateway.RecipientState, hash bool) []messageRecipientModel {
 	output := make([]messageRecipientModel, len(input))
