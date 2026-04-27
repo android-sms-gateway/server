@@ -75,8 +75,19 @@ type SSE struct {
 }
 
 type Messages struct {
-	CacheTTLSeconds        uint16 `yaml:"cache_ttl_seconds"        envconfig:"MESSAGES__CACHE_TTL_SECONDS"`        // cache ttl in seconds
-	HashingIntervalSeconds uint16 `yaml:"hashing_interval_seconds" envconfig:"MESSAGES__HASHING_INTERVAL_SECONDS"` // hashing interval in seconds
+	CacheTTLSeconds        uint16              `yaml:"cache_ttl_seconds"        envconfig:"MESSAGES__CACHE_TTL_SECONDS"`
+	HashingIntervalSeconds uint16              `yaml:"hashing_interval_seconds" envconfig:"MESSAGES__HASHING_INTERVAL_SECONDS"`
+	Queue                  messagesQueueConfig `yaml:"queue"`
+}
+
+type messagesQueueConfig struct {
+	MaxPending    int      `yaml:"max_pending"     envconfig:"MESSAGES__QUEUE__MAX_PENDING"`
+	MaxPendingAge Duration `yaml:"max_pending_age" envconfig:"MESSAGES__QUEUE__MAX_PENDING_AGE"`
+	MaxFailed     int      `yaml:"max_failed"      envconfig:"MESSAGES__QUEUE__MAX_FAILED"`
+	MaxFailedAge  Duration `yaml:"max_failed_age"  envconfig:"MESSAGES__QUEUE__MAX_FAILED_AGE"`
+
+	StatsRefreshInterval Duration `yaml:"stats_refresh_interval" envconfig:"MESSAGES__QUEUE__STATS_REFRESH_INTERVAL"`
+	StatsCacheTTL        Duration `yaml:"stats_cache_ttl"        envconfig:"MESSAGES__QUEUE__STATS_CACHE_TTL"`
 }
 
 type Cache struct {
@@ -103,7 +114,7 @@ type OTP struct {
 }
 
 func Default() Config {
-	//nolint:exhaustruct,mnd // default values
+	//nolint:exhaustruct,mnd,goconst // default values
 	return Config{
 		Gateway: Gateway{
 			Mode:        GatewayModePublic,
@@ -129,6 +140,15 @@ func Default() Config {
 		Messages: Messages{
 			CacheTTLSeconds:        300, // 5 minutes
 			HashingIntervalSeconds: 60,
+			Queue: messagesQueueConfig{
+				MaxPending:    0,
+				MaxPendingAge: 0,
+				MaxFailed:     0,
+				MaxFailedAge:  0,
+
+				StatsRefreshInterval: Duration(time.Second * 5),
+				StatsCacheTTL:        Duration(time.Second * 60),
+			},
 		},
 		Cache: Cache{
 			URL: "memory://",

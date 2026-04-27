@@ -73,6 +73,7 @@ func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyContr
 //	@Failure		403					{object}	smsgateway.ErrorResponse		"Forbidden"
 //	@Failure		409					{object}	smsgateway.ErrorResponse		"Message with such ID already exists"
 //	@Failure		500					{object}	smsgateway.ErrorResponse		"Internal server error"
+//	@Failure		503					{object}	smsgateway.ErrorResponse		"Queue limits exceeded; ensure device is online"
 //	@Header			202					{string}	Location						"Get message state URL"
 //	@Router			/3rdparty/v1/messages [post]
 //
@@ -138,6 +139,7 @@ func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 		Priority:           req.Priority,
 	}
 	state, err := h.messagesSvc.Enqueue(
+		c.Context(),
 		*device,
 		msg,
 		messages.EnqueueOptions{SkipPhoneValidation: params.SkipPhoneValidation},
@@ -265,7 +267,7 @@ func (h *ThirdPartyController) postInboxExport(userID string, c *fiber.Ctx) erro
 	}
 
 	if err := h.inboxSvc.Refresh(userID, &req.DeviceID, req.Since, req.Until); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return fmt.Errorf("failed to refresh inbox: %w", err)
 	}
 
 	return c.SendStatus(fiber.StatusAccepted)
@@ -305,6 +307,9 @@ func (h *ThirdPartyController) errorHandler(c *fiber.Ctx) error {
 		fallthrough
 	case errors.Is(err, devices.ErrMoreThanOne):
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+
+	case errors.Is(err, messages.ErrQueueLimitExceeded):
+		return fiber.NewError(fiber.StatusServiceUnavailable, err.Error())
 	}
 
 	h.Logger.Error("failed to handle request", zap.Error(err))

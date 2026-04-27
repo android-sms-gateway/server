@@ -37,63 +37,67 @@ type Metrics struct {
 
 // NewMetrics creates and initializes all JWT metrics.
 func NewMetrics() *Metrics {
+	const namespace = "sms"
+	const subsystem = "auth"
+
 	var defBuckets = []float64{.0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1}
+
 	return &Metrics{
 		tokensIssuedCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "auth",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      MetricTokensIssuedTotal,
 			Help:      "Total number of JWT tokens issued",
 		}, []string{labelStatus}),
 
 		tokensValidatedCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "auth",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      MetricTokensValidatedTotal,
 			Help:      "Total number of JWT tokens validated",
 		}, []string{labelStatus}),
 
 		tokensRevokedCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "auth",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      MetricTokensRevokedTotal,
 			Help:      "Total number of JWT tokens revoked",
 		}, []string{labelStatus}),
 
 		tokensRefreshedCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "auth",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      MetricTokensRefreshedTotal,
 			Help:      "Total number of JWT tokens refreshed",
 		}, []string{labelStatus}),
 
 		issuanceDurationHistogram: promauto.NewHistogram(prometheus.HistogramOpts{
-			Namespace: "sms",
-			Subsystem: "auth",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      MetricIssuanceDurationSeconds,
 			Help:      "JWT issuance duration in seconds",
 			Buckets:   defBuckets,
 		}),
 
 		validationDurationHistogram: promauto.NewHistogram(prometheus.HistogramOpts{
-			Namespace: "sms",
-			Subsystem: "auth",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      MetricValidationDurationSeconds,
 			Help:      "JWT validation duration in seconds",
 			Buckets:   defBuckets,
 		}),
 
 		revocationDurationHistogram: promauto.NewHistogram(prometheus.HistogramOpts{
-			Namespace: "sms",
-			Subsystem: "auth",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      MetricRevocationDurationSeconds,
 			Help:      "JWT revocation duration in seconds",
 			Buckets:   defBuckets,
 		}),
 
 		refreshDurationHistogram: promauto.NewHistogram(prometheus.HistogramOpts{
-			Namespace: "sms",
-			Subsystem: "auth",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      MetricRefreshDurationSeconds,
 			Help:      "JWT refresh duration in seconds",
 			Buckets:   defBuckets,

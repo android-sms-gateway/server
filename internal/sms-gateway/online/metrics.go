@@ -36,50 +36,52 @@ type metrics struct {
 
 // newMetrics creates and initializes all online metrics.
 func newMetrics() *metrics {
+	const namespace = "sms"
+	const subsystem = "online"
 	var memBuckets = []float64{1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, .001, .005, .01, .05, .1}
 	var dbBuckets = []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10}
 
 	return &metrics{
 		statusSetCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "online",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      metricStatusSetTotal,
 			Help:      "Total number of online status updates",
 		}, []string{labelStatus}),
 
 		cacheOperations: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "online",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      metricCacheOperations,
 			Help:      "Total cache operations by type",
 		}, []string{labelOperation, labelStatus}),
 
 		cacheLatency: promauto.NewHistogram(prometheus.HistogramOpts{
-			Namespace: "sms",
-			Subsystem: "online",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      metricCacheLatency,
 			Help:      "Cache operation latency in seconds",
 			Buckets:   memBuckets,
 		}),
 
 		persistenceLatency: promauto.NewHistogram(prometheus.HistogramOpts{
-			Namespace: "sms",
-			Subsystem: "online",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      metricPersistenceLatency,
 			Help:      "Persistence operation latency in seconds",
 			Buckets:   dbBuckets,
 		}),
 
 		persistenceErrors: promauto.NewCounter(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "online",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      metricPersistenceErrors,
 			Help:      "Total persistence errors by type",
 		}),
 
 		batchSize: promauto.NewGauge(prometheus.GaugeOpts{
-			Namespace: "sms",
-			Subsystem: "online",
+			Namespace: namespace,
+			Subsystem: subsystem,
 			Name:      metricBatchSize,
 			Help:      "Current batch size",
 		}),
