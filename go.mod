@@ -8,6 +8,7 @@ require (
 	github.com/ansrivas/fiberprometheus/v2 v2.6.1
 	github.com/capcom6/go-helpers v0.3.0
 	github.com/capcom6/go-infra-fx v0.5.2
+	github.com/fiorix/go-smpp/v2 v2.1.0
 	github.com/go-core-fx/cachefx v0.0.1
 	github.com/go-core-fx/fiberfx v0.0.1
 	github.com/go-core-fx/fxutil v0.0.1
@@ -118,14 +119,14 @@ require (
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.uber.org/dig v1.19.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/mod v0.33.0 // indirect
+	golang.org/x/mod v0.34.0 // indirect
 	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
-	golang.org/x/tools v0.42.0 // indirect
+	golang.org/x/tools v0.43.0 // indirect
 	google.golang.org/appengine/v2 v2.0.6 // indirect
 	google.golang.org/genproto v0.0.0-20260319201613-d00831a3d3e7 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260319201613-d00831a3d3e7 // indirect

@@ -48,6 +48,18 @@ otp: # otp config
   ttl: 300 # otp ttl in seconds [OTP__TTL]
   retries: 3 # otp generation retries (collision handling) [OTP__RETRIES]
 
+smpp: # smpp server config
+  bind_address: 0.0.0.0:2775 # SMPP bind address [SMPP__BIND_ADDRESS]
+  tls_bind_address: 0.0.0.0:2776 # TLS bind address [SMPP__TLS_BIND_ADDRESS]
+  tls_cert: # TLS certificate file path [SMPP__TLS_CERT]
+  tls_key: # TLS key file path [SMPP__TLS_KEY]
+  api_base_url: http://localhost:8080 # Gateway API base URL [SMPP__API_BASE_URL]
+  webhook_base_url: http://localhost:2777 # Webhook base URL for delivery receipts [SMPP__WEBHOOK_BASE_URL]
+  source_ton: 1 # Source Type of Number [SMPP__SOURCE_TON]
+  source_npi: 1 # Source Number Plan Indicator [SMPP__SOURCE_NPI]
+  dest_ton: 1 # Destination Type of Number [SMPP__DEST_TON]
+  dest_npi: 1 # Destination Number Plan Indicator [SMPP__DEST_NPI]
+
 ## Worker Config ##
 
 tasks: # tasks config

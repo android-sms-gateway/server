@@ -22,6 +22,7 @@ type Config struct {
 	PubSub   PubSub    `yaml:"pubsub"`   // pubsub (memory or redis) config
 	JWT      JWT       `yaml:"jwt"`      // jwt config
 	OTP      OTP       `yaml:"otp"`      // one-time password config
+	SMPP     SMPP      `yaml:"smpp"`     // smpp server config
 }
 
 type Gateway struct {
@@ -102,6 +103,19 @@ type OTP struct {
 	Retries uint8  `yaml:"retries" envconfig:"OTP__RETRIES"`
 }
 
+type SMPP struct {
+	BindAddress    string `yaml:"bind_address"     envconfig:"SMPP__BIND_ADDRESS"`     // SMPP bind address (default: 0.0.0.0:2775)
+	TLSBindAddress string `yaml:"tls_bind_address" envconfig:"SMPP__TLS_BIND_ADDRESS"` // TLS bind address (default: 0.0.0.0:2776)
+	TLSCert        string `yaml:"tls_cert"         envconfig:"SMPP__TLS_CERT"`         // TLS certificate file path
+	TLSKey         string `yaml:"tls_key"          envconfig:"SMPP__TLS_KEY"`          // TLS key file path
+	APIBaseURL     string `yaml:"api_base_url"     envconfig:"SMPP__API_BASE_URL"`     // Gateway API base URL
+	WebhookBaseURL string `yaml:"webhook_base_url" envconfig:"SMPP__WEBHOOK_BASE_URL"` // Webhook base URL for delivery receipts
+	SourceTON      uint8  `yaml:"source_ton"       envconfig:"SMPP__SOURCE_TON"`       // Source Type of Number
+	SourceNPI      uint8  `yaml:"source_npi"       envconfig:"SMPP__SOURCE_NPI"`       // Source Number Plan Indicator
+	DestTON        uint8  `yaml:"dest_ton"         envconfig:"SMPP__DEST_TON"`         // Destination Type of Number
+	DestNPI        uint8  `yaml:"dest_npi"         envconfig:"SMPP__DEST_NPI"`         // Destination Number Plan Indicator
+}
+
 func Default() Config {
 	//nolint:exhaustruct,mnd // default values
 	return Config{
@@ -145,6 +159,16 @@ func Default() Config {
 		OTP: OTP{
 			TTL:     300,
 			Retries: 3,
+		},
+		SMPP: SMPP{
+			BindAddress:    "0.0.0.0:2775",
+			TLSBindAddress: "0.0.0.0:2776",
+			APIBaseURL:     "http://localhost:8080",
+			WebhookBaseURL: "http://localhost:2777",
+			SourceTON:      1,
+			SourceNPI:      1,
+			DestTON:        1,
+			DestNPI:        1,
 		},
 	}
 }
