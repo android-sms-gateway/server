@@ -7,6 +7,9 @@ import (
 
 // Metric constants.
 const (
+	metricsNamespace = "sms"
+	metricsSubsystem = "online"
+
 	metricStatusSetTotal     = "status_set_total"
 	metricCacheOperations    = "cache_operations_total"
 	metricCacheLatency       = "cache_latency_seconds"
@@ -41,45 +44,45 @@ func newMetrics() *metrics {
 
 	return &metrics{
 		statusSetCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "online",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      metricStatusSetTotal,
 			Help:      "Total number of online status updates",
 		}, []string{labelStatus}),
 
 		cacheOperations: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "online",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      metricCacheOperations,
 			Help:      "Total cache operations by type",
 		}, []string{labelOperation, labelStatus}),
 
 		cacheLatency: promauto.NewHistogram(prometheus.HistogramOpts{
-			Namespace: "sms",
-			Subsystem: "online",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      metricCacheLatency,
 			Help:      "Cache operation latency in seconds",
 			Buckets:   memBuckets,
 		}),
 
 		persistenceLatency: promauto.NewHistogram(prometheus.HistogramOpts{
-			Namespace: "sms",
-			Subsystem: "online",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      metricPersistenceLatency,
 			Help:      "Persistence operation latency in seconds",
 			Buckets:   dbBuckets,
 		}),
 
 		persistenceErrors: promauto.NewCounter(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "online",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      metricPersistenceErrors,
 			Help:      "Total persistence errors by type",
 		}),
 
 		batchSize: promauto.NewGauge(prometheus.GaugeOpts{
-			Namespace: "sms",
-			Subsystem: "online",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      metricBatchSize,
 			Help:      "Current batch size",
 		}),

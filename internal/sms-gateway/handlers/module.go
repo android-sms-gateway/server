@@ -22,6 +22,7 @@ func Module() fx.Option {
 		}),
 		fx.Provide(
 			http.AsRootHandler(newRootHandler),
+			http.AsRootHandler(newAPICatalogHandler),
 			http.AsApiHandler(newThirdPartyHandler),
 			http.AsApiHandler(newMobileHandler),
 			http.AsApiHandler(newUpstreamHandler),

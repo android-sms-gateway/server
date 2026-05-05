@@ -103,7 +103,7 @@ type OTP struct {
 }
 
 func Default() Config {
-	//nolint:exhaustruct,mnd // default values
+	//nolint:exhaustruct,mnd,goconst // default values
 	return Config{
 		Gateway: Gateway{
 			Mode:        GatewayModePublic,

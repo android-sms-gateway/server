@@ -7,6 +7,9 @@ import (
 
 // Metric constants.
 const (
+	metricsNamespace = "sms"
+	metricsSubsystem = "sse"
+
 	MetricActiveConnections = "active_connections"
 	MetricEventsSent        = "events_sent_total"
 	MetricConnectionErrors  = "connection_errors_total"
@@ -37,33 +40,33 @@ func newMetrics() *metrics {
 
 	metrics := &metrics{
 		activeConnections: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "sms",
-			Subsystem: "sse",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      MetricActiveConnections,
 			Help:      "Current number of active SSE connections",
 		}, []string{}),
 		eventsSent: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "sse",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      MetricEventsSent,
 			Help:      "Total number of SSE events sent, labeled by event type",
 		}, []string{LabelEventType}),
 		connectionErrors: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "sse",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      MetricConnectionErrors,
 			Help:      "Total number of SSE connection errors, labeled by error type",
 		}, []string{LabelErrorType}),
 		eventDeliveryLatency: promauto.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: "sms",
-			Subsystem: "sse",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      MetricEventLatency,
 			Help:      "Event delivery latency in seconds",
 			Buckets:   defBuckets,
 		}, []string{}),
 		keepalivesSent: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "sse",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      MetricKeepalivesSent,
 			Help:      "Total keepalive messages sent",
 		}, []string{}),
