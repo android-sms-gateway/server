@@ -7,6 +7,9 @@ import (
 
 // Metric constants.
 const (
+	metricsNamespace = "sms"
+	metricsSubsystem = "sse"
+
 	MetricActiveConnections = "active_connections"
 	MetricEventsSent        = "events_sent_total"
 	MetricConnectionErrors  = "connection_errors_total"
@@ -33,39 +36,37 @@ type metrics struct {
 
 // newMetrics creates and initializes all SSE metrics.
 func newMetrics() *metrics {
-	const namespace = "sms"
-	const subsystem = "sse"
 	var defBuckets = []float64{1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, .001, .005, .01, .05, .1}
 
 	metrics := &metrics{
 		activeConnections: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      MetricActiveConnections,
 			Help:      "Current number of active SSE connections",
 		}, []string{}),
 		eventsSent: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      MetricEventsSent,
 			Help:      "Total number of SSE events sent, labeled by event type",
 		}, []string{LabelEventType}),
 		connectionErrors: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      MetricConnectionErrors,
 			Help:      "Total number of SSE connection errors, labeled by error type",
 		}, []string{LabelErrorType}),
 		eventDeliveryLatency: promauto.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      MetricEventLatency,
 			Help:      "Event delivery latency in seconds",
 			Buckets:   defBuckets,
 		}, []string{}),
 		keepalivesSent: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      MetricKeepalivesSent,
 			Help:      "Total keepalive messages sent",
 		}, []string{}),
