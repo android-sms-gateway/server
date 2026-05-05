@@ -82,7 +82,7 @@ func (c *loginCache) Set(ctx context.Context, username, password string, user Us
 
 func (c *loginCache) Delete(ctx context.Context, username, password string) error {
 	err := c.storage.Delete(ctx, c.makeKey(username, password))
-	if err == nil || errors.Is(err, cache.ErrKeyNotFound) || errors.Is(err, cache.ErrKeyExpired) {
+	if err == nil || errors.Is(err, cache.ErrKeyNotFound) {
 		return nil
 	}
 

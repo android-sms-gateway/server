@@ -13,10 +13,6 @@ import (
 
 const maxPendingBatch = 100
 
-var ErrMessageNotFound = errors.New("message not found")
-var ErrMessageAlreadyExists = errors.New("duplicate id")
-var ErrMultipleMessagesFound = errors.New("multiple messages found")
-
 type Repository struct {
 	db *gorm.DB
 }
@@ -204,4 +200,57 @@ func (r *Repository) Cleanup(ctx context.Context, until time.Time) (int64, error
 		Where("created_at < ?", until).
 		Delete(new(messageModel))
 	return res.RowsAffected, res.Error
+}
+
+func (r *Repository) CountPending(ctx context.Context, deviceID string) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model((*messageModel)(nil)).
+		Where("device_id = ?", deviceID).
+		Where("state = ?", ProcessingStatePending).
+		Where("schedule_at IS NULL OR schedule_at <= ?", time.Now()).
+		Count(&count).Error
+	if err != nil {
+		return 0, fmt.Errorf("failed to count pending messages: %w", err)
+	}
+	return count, nil
+}
+
+func (r *Repository) GetOldestPendingTime(ctx context.Context, deviceID string) (*time.Time, error) {
+	var msg messageModel
+	err := r.db.WithContext(ctx).
+		Model((*messageModel)(nil)).
+		Select("created_at").
+		Where("device_id = ?", deviceID).
+		Where("state = ?", ProcessingStatePending).
+		Where("schedule_at IS NULL OR schedule_at <= ?", time.Now()).
+		Order("id ASC").
+		First(&msg).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil //nolint:nilnil // special meaning
+		}
+		return nil, fmt.Errorf("failed to get oldest pending message: %w", err)
+	}
+	return &msg.CreatedAt, nil
+}
+
+func (r *Repository) GetStatesInTimeWindow(
+	ctx context.Context,
+	deviceID string,
+	since time.Time,
+	limit int,
+) ([]ProcessingState, error) {
+	var states []ProcessingState
+	err := r.db.WithContext(ctx).
+		Model((*messageModel)(nil)).
+		Select("state").
+		Where("device_id = ? AND created_at >= ?", deviceID, since).
+		Order("id DESC").
+		Limit(limit).
+		Pluck("state", &states).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get failed message states in time window: %w", err)
+	}
+	return states, nil
 }
