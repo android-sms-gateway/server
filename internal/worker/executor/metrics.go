@@ -10,6 +10,9 @@ import (
 type metricsTaskResult string
 
 const (
+	metricsNamespace = "worker"
+	metricsSubsystem = "executor"
+
 	metricsTaskResultSuccess metricsTaskResult = "success"
 	metricsTaskResultError   metricsTaskResult = "error"
 )
@@ -21,27 +24,24 @@ type metrics struct {
 }
 
 func newMetrics() *metrics {
-	const namespace = "worker"
-	const subsystem = "executor"
-
 	var defBuckets = []float64{.01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25}
 
 	return &metrics{
 		activeTasksCounter: promauto.NewGauge(prometheus.GaugeOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      "active_tasks",
 			Help:      "Number of active tasks",
 		}),
 		taskResult: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      "task_result_total",
 			Help:      "Task result, labeled by task name and result",
 		}, []string{"task", "result"}),
 		taskDuration: promauto.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      "task_duration_seconds",
 			Help:      "Task duration in seconds",
 			Buckets:   defBuckets,
