@@ -8,6 +8,9 @@ import (
 type BlacklistOperation string
 
 const (
+	metricsNamespace = "sms"
+	metricsSubsystem = "push"
+
 	BlacklistOperationAdded   BlacklistOperation = "added"
 	BlacklistOperationSkipped BlacklistOperation = "skipped"
 )
@@ -22,29 +25,29 @@ type metrics struct {
 func newMetrics() *metrics {
 	return &metrics{
 		enqueuedCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "push",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      "enqueued_total",
 			Help:      "Total number of messages enqueued",
 		}, []string{"event"}),
 
 		retriesCounter: promauto.NewCounter(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "push",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      "retries_total",
 			Help:      "Total retry attempts",
 		}),
 
 		blacklistCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "push",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      "blacklist_total",
 			Help:      "Blacklist operations",
 		}, []string{"operation"}),
 
 		errorsCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "push",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      "errors_total",
 			Help:      "Total number of errors",
 		}, []string{}),

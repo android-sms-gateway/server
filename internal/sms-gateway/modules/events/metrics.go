@@ -7,6 +7,9 @@ import (
 
 // Metric constants.
 const (
+	metricsNamespace = "sms"
+	metricsSubsystem = "events"
+
 	MetricEnqueuedTotal = "enqueued_total"
 	MetricSentTotal     = "sent_total"
 	MetricFailedTotal   = "failed_total"
@@ -37,20 +40,20 @@ type metrics struct {
 func newMetrics() *metrics {
 	return &metrics{
 		enqueuedCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "events",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      MetricEnqueuedTotal,
 			Help:      "Total number of events enqueued",
 		}, []string{LabelEvent}),
 		sentCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "events",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      MetricSentTotal,
 			Help:      "Total number of events sent",
 		}, []string{LabelEvent, LabelDeliveryType}),
 		failedCounter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "sms",
-			Subsystem: "events",
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
 			Name:      MetricFailedTotal,
 			Help:      "Total number of failed notifications",
 		}, []string{LabelEvent, LabelDeliveryType, LabelReason}),

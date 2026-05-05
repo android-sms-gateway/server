@@ -23,6 +23,11 @@ func newAPICatalogHandler(cfg Config, logger *zap.Logger) *APICatalogHandler {
 }
 
 func (h *APICatalogHandler) get(c *fiber.Ctx) error {
+	const (
+		fieldHref = "href"
+		fieldType = "type"
+	)
+
 	c.Set(fiber.HeaderContentType, `application/linkset+json; profile="https://www.rfc-editor.org/info/rfc9727"`)
 	c.Set(fiber.HeaderLink, `</.well-known/api-catalog>; rel="api-catalog"`)
 	c.Set(fiber.HeaderCacheControl, "public, max-age=3600")
@@ -35,20 +40,20 @@ func (h *APICatalogHandler) get(c *fiber.Ctx) error {
 				"anchor": fmt.Sprintf("https://%s/%s/3rdparty/v1", host, path),
 				"service-desc": []fiber.Map{
 					{
-						"href": fmt.Sprintf("https://%s/%s/docs/doc.json", host, path),
-						"type": "application/json",
+						fieldHref: fmt.Sprintf("https://%s/%s/docs/doc.json", host, path),
+						fieldType: "application/json",
 					},
 				},
 				"service-doc": []fiber.Map{
 					{
-						"href": "https://docs.sms-gate.app/",
-						"type": "text/html",
+						fieldHref: "https://docs.sms-gate.app/",
+						fieldType: "text/html",
 					},
 				},
 				"status": []fiber.Map{
 					{
-						"href": fmt.Sprintf("https://%s/%s/3rdparty/v1/health/ready", host, path),
-						"type": "application/json",
+						fieldHref: fmt.Sprintf("https://%s/%s/3rdparty/v1/health/ready", host, path),
+						fieldType: "application/json",
 					},
 				},
 			},
