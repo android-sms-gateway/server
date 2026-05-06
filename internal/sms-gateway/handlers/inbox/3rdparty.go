@@ -1,6 +1,7 @@
 package inbox
 
 import (
+	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/permissions"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
@@ -63,22 +64,37 @@ func (h *ThirdPartyController) list(_ string, _ *fiber.Ctx) error {
 }
 
 //	@Summary		Request inbox messages refresh
-//	@Description	Refreshes inbox messages. Webhooks will not be triggered.
+//	@Description	Refreshes inbox messages. Webhooks are triggered when triggerWebhooks is true.
 //	@Security		ApiAuth
 //	@Security		JWTAuth
 //	@Tags			User, Inbox
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		smsgateway.MessagesExportRequest	true	"Export inbox request"
-//	@Success		202		{object}	object								"Inbox refresh request accepted"
-//	@Failure		400		{object}	smsgateway.ErrorResponse			"Invalid request"
-//	@Failure		401		{object}	smsgateway.ErrorResponse			"Unauthorized"
-//	@Failure		403		{object}	smsgateway.ErrorResponse			"Forbidden"
-//	@Failure		500		{object}	smsgateway.ErrorResponse			"Internal server error"
-//	@Failure		501		{object}	smsgateway.ErrorResponse			"Not implemented"
+//	@Param			request	body	smsgateway.InboxRefreshRequest	true	"Refresh inbox request"
+//	@Success		202		"Inbox refresh request accepted"
+//	@Failure		400		{object}	smsgateway.ErrorResponse	"Invalid request"
+//	@Failure		401		{object}	smsgateway.ErrorResponse	"Unauthorized"
+//	@Failure		403		{object}	smsgateway.ErrorResponse	"Forbidden"
+//	@Failure		500		{object}	smsgateway.ErrorResponse	"Internal server error"
 //	@Router			/3rdparty/v1/inbox/refresh [post]
 //
 // Request inbox refresh.
-func (h *ThirdPartyController) refresh(_ string, _ *fiber.Ctx) error {
-	return fiber.NewError(fiber.StatusNotImplemented, "Inbox API is not implemented yet")
+func (h *ThirdPartyController) refresh(userID string, c *fiber.Ctx) error {
+	req := new(smsgateway.InboxRefreshRequest)
+	if err := h.BodyParserValidator(c, req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	if err := h.inboxSvc.Refresh(
+		userID,
+		&req.DeviceID,
+		req.Since,
+		req.Until,
+		req.MessageTypes,
+		&req.TriggerWebhooks,
+	); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	return c.SendStatus(fiber.StatusAccepted)
 }

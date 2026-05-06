@@ -17,6 +17,7 @@ import (
 	"github.com/capcom6/go-helpers/slices"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/samber/lo"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -242,32 +243,27 @@ func (h *ThirdPartyController) get(userID string, c *fiber.Ctx) error {
 	return c.JSON(converters.MessageStateToDTO(*state))
 }
 
-//	@Summary		Request inbox messages export
-//	@Description	Initiates process of inbox messages export via webhooks. For each message the `sms:received` webhook will be triggered. The webhooks will be triggered without specific order.
-//	@Security		ApiAuth
-//	@Security		JWTAuth
-//	@Tags			User, Messages
-//	@Accept			json
-//	@Produce		json
-//	@Param			request	body		smsgateway.MessagesExportRequest	true	"Export inbox request"
-//	@Success		202		{object}	object								"Inbox export request accepted"
-//	@Failure		400		{object}	smsgateway.ErrorResponse			"Invalid request"
-//	@Failure		401		{object}	smsgateway.ErrorResponse			"Unauthorized"
-//	@Failure		403		{object}	smsgateway.ErrorResponse			"Forbidden"
-//	@Failure		500		{object}	smsgateway.ErrorResponse			"Internal server error"
-//	@Router			/3rdparty/v1/messages/inbox/export [post]
-//
 // Export inbox.
+//
+// Deprecated: use /3rdparty/v1/inbox/refresh instead.
 func (h *ThirdPartyController) postInboxExport(userID string, c *fiber.Ctx) error {
 	req := new(smsgateway.MessagesExportRequest)
 	if err := h.BodyParserValidator(c, req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	if err := h.inboxSvc.Refresh(userID, &req.DeviceID, req.Since, req.Until); err != nil {
+	if err := h.inboxSvc.Refresh(
+		userID,
+		&req.DeviceID,
+		req.Since,
+		req.Until,
+		[]smsgateway.IncomingMessageType{smsgateway.IncomingMessageTypeSMS},
+		lo.ToPtr(true),
+	); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
+	c.Set("Deprecation", "true")
 	return c.SendStatus(fiber.StatusAccepted)
 }
 
