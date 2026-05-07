@@ -1330,32 +1330,39 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "createdAt": {
-                    "description": "Created at (read only)",
+                    "description": "Time at which the device was created, read only.",
                     "type": "string",
                     "example": "2020-01-01T00:00:00Z"
                 },
                 "deletedAt": {
-                    "description": "Deleted at (read only)",
+                    "description": "Time at which the device was deleted, read only.",
                     "type": "string",
                     "example": "2020-01-01T00:00:00Z"
                 },
                 "id": {
-                    "description": "ID",
+                    "description": "Device ID, read only.",
                     "type": "string",
                     "example": "PyDmBQZZXYmyxMwED8Fzy"
                 },
                 "lastSeen": {
-                    "description": "Last seen at (read only)",
+                    "description": "Time at which the device was last seen, read only.",
                     "type": "string",
                     "example": "2020-01-01T00:00:00Z"
                 },
                 "name": {
-                    "description": "Name",
+                    "description": "Device name.",
                     "type": "string",
                     "example": "My Device"
                 },
+                "simCards": {
+                    "description": "List of SIM cards in the device.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/smsgateway.SimCard"
+                    }
+                },
                 "updatedAt": {
-                    "description": "Updated at (read only)",
+                    "description": "Time at which the device was last updated, read only.",
                     "type": "string",
                     "example": "2020-01-01T00:00:00Z"
                 }
@@ -2226,6 +2233,31 @@ const docTemplate = `{
                 "signing_key": {
                     "description": "SigningKey is the secret key used for signing webhook payloads. Must not be used with Cloud Server.",
                     "type": "string"
+                }
+            }
+        },
+        "smsgateway.SimCard": {
+            "type": "object",
+            "properties": {
+                "carrierName": {
+                    "description": "Carrier/network operator name (may be null).",
+                    "type": "string"
+                },
+                "iccid": {
+                    "description": "Integrated Circuit Card Identifier (may be null).",
+                    "type": "string"
+                },
+                "phoneNumber": {
+                    "description": "Phone number associated with the SIM.",
+                    "type": "string"
+                },
+                "simNumber": {
+                    "description": "1-based slot number (1, 2, or 3).",
+                    "type": "integer"
+                },
+                "slotIndex": {
+                    "description": "0-based physical slot index.",
+                    "type": "integer"
                 }
             }
         },

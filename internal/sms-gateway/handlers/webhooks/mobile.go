@@ -5,7 +5,7 @@ import (
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/deviceauth"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/webhooks"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -43,7 +43,7 @@ func NewMobileController(
 //	@Router			/mobile/v1/webhooks [get]
 //
 // List webhooks.
-func (h *MobileController) get(device models.Device, c *fiber.Ctx) error {
+func (h *MobileController) get(device devices.Device, c *fiber.Ctx) error {
 	items, err := h.webhooksSvc.Select(device.UserID, webhooks.WithDeviceID(device.ID, false))
 	if err != nil {
 		return fmt.Errorf("failed to select webhooks: %w", err)

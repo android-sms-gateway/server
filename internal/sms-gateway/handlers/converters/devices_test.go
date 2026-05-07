@@ -6,9 +6,9 @@ import (
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/converters"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
-	"github.com/capcom6/go-helpers/anys"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/go-playground/assert/v2"
+	"github.com/samber/lo"
 )
 
 func TestDeviceToDTO(t *testing.T) {
@@ -18,26 +18,27 @@ func TestDeviceToDTO(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		device   models.Device
+		device   devices.Device
 		expected smsgateway.Device
 	}{
 		{
 			name:     "empty device",
-			device:   models.Device{},
+			device:   devices.Device{},
 			expected: smsgateway.Device{},
 		},
 		{
 			name: "non-empty device",
-			device: models.Device{
-				ID:       "test-id",
-				Name:     anys.AsPointer("test-name"),
-				LastSeen: lastSeenAt,
-				SoftDeletableModel: models.SoftDeletableModel{
-					TimedModel: models.TimedModel{
-						CreatedAt: createdAt,
-						UpdatedAt: updatedAt,
+			device: devices.Device{
+				DeviceInput: devices.DeviceInput{
+					DeviceInfo: devices.DeviceInfo{
+						DeviceUpdate: devices.DeviceUpdate{},
+						Name:         lo.ToPtr("test-name"),
 					},
+					ID: "test-id",
 				},
+				LastSeen:  lastSeenAt,
+				CreatedAt: createdAt,
+				UpdatedAt: updatedAt,
 			},
 			expected: smsgateway.Device{
 				ID:        "test-id",
@@ -49,13 +50,50 @@ func TestDeviceToDTO(t *testing.T) {
 		},
 		{
 			name: "device with nil name",
-			device: models.Device{
-				ID:   "test-id",
-				Name: nil,
+			device: devices.Device{
+				DeviceInput: devices.DeviceInput{
+					DeviceInfo: devices.DeviceInfo{
+						Name: nil,
+					},
+					ID: "test-id",
+				},
 			},
 			expected: smsgateway.Device{
 				ID:   "test-id",
 				Name: "",
+			},
+		},
+		{
+			name: "device with sim cards",
+			device: devices.Device{
+				DeviceInput: devices.DeviceInput{
+					DeviceInfo: devices.DeviceInfo{
+						DeviceUpdate: devices.DeviceUpdate{
+							SimCards: []devices.SimCard{
+								{
+									SlotIndex:   0,
+									SimNumber:   1,
+									PhoneNumber: lo.ToPtr("+79990001234"),
+									CarrierName: lo.ToPtr("Carrier"),
+									ICCID:       lo.ToPtr("8901260000000000000"),
+								},
+							},
+						},
+					},
+					ID: "test-id",
+				},
+			},
+			expected: smsgateway.Device{
+				ID: "test-id",
+				SimCards: []smsgateway.SimCard{
+					{
+						SlotIndex:   0,
+						SimNumber:   1,
+						PhoneNumber: lo.ToPtr("+79990001234"),
+						CarrierName: lo.ToPtr("Carrier"),
+						ICCID:       lo.ToPtr("8901260000000000000"),
+					},
+				},
 			},
 		},
 	}

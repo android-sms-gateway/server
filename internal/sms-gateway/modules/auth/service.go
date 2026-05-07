@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/online"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/otp"
@@ -61,13 +60,14 @@ func (s *Service) GenerateUserCode(ctx context.Context, userID string) (*otp.Cod
 	return code, nil
 }
 
-func (s *Service) RegisterDevice(userID string, name, pushToken *string) (*models.Device, error) {
-	device := models.NewDevice(
-		name,
-		pushToken,
-	)
+func (s *Service) RegisterDevice(
+	ctx context.Context,
+	userID string,
+	info devices.DeviceInfo,
+) (*devices.Device, error) {
+	device, err := s.devicesSvc.Insert(ctx, userID, info)
 
-	if err := s.devicesSvc.Insert(userID, device); err != nil {
+	if err != nil {
 		return device, fmt.Errorf("failed to create device: %w", err)
 	}
 
@@ -90,17 +90,18 @@ func (s *Service) AuthorizeRegistration(token string) error {
 	return ErrAuthorizationFailed
 }
 
-func (s *Service) AuthorizeDevice(token string) (models.Device, error) {
-	device, err := s.devicesSvc.GetByToken(token)
+func (s *Service) AuthorizeDevice(ctx context.Context, token string) (*devices.Device, error) {
+	device, err := s.devicesSvc.GetByToken(ctx, token)
 	if err != nil {
 		return device, fmt.Errorf("%w: %w", ErrAuthorizationFailed, err)
 	}
 
+	//nolint:gosec // background online-update goroutine
 	go func(id string) {
 		const timeout = 5 * time.Second
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		subCtx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
-		s.onlineSvc.SetOnline(ctx, id)
+		s.onlineSvc.SetOnline(subCtx, id)
 	}(device.ID)
 
 	device.LastSeen = time.Now()

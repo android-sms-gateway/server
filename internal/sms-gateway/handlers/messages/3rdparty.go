@@ -91,6 +91,7 @@ func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 	}
 
 	device, err := h.devicesSvc.GetAny(
+		c.Context(),
 		userID,
 		req.DeviceID,
 		time.Duration(params.DeviceActiveWithin)*time.Hour,
@@ -249,14 +250,14 @@ func (h *ThirdPartyController) get(userID string, c *fiber.Ctx) error {
 //
 // Deprecated: use /3rdparty/v1/inbox/refresh instead.
 func (h *ThirdPartyController) postInboxExport(userID string, c *fiber.Ctx) error {
-	req := new(smsgateway.MessagesExportRequest)
+	req := new(smsgateway.InboxRefreshRequest)
 	if err := h.BodyParserValidator(c, req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	if err := h.inboxSvc.Refresh(
 		userID,
-		&req.DeviceID,
+		req.DeviceID,
 		req.Since,
 		req.Until,
 		[]smsgateway.IncomingMessageType{smsgateway.IncomingMessageTypeSMS},
