@@ -7,9 +7,7 @@ import (
 	"math/rand/v2"
 	"time"
 
-	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/db"
-	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
@@ -42,19 +40,22 @@ func NewService(
 	}
 }
 
-func (s *Service) Insert(userID string, device *models.Device) error {
-	device.ID = s.idGen()
-	device.AuthToken = s.idGen()
-	device.UserID = userID
+func (s *Service) Insert(ctx context.Context, userID string, device DeviceInfo) (*Device, error) {
+	input := DeviceInput{
+		DeviceInfo: device,
+		ID:         s.idGen(),
+		UserID:     userID,
+		AuthToken:  s.idGen(),
+	}
 
-	return s.devices.Insert(device)
+	return s.devices.Insert(ctx, input)
 }
 
 // Select returns a list of devices for a specific user that match the provided filters.
-func (s *Service) Select(userID string, filter ...SelectFilter) ([]models.Device, error) {
+func (s *Service) Select(ctx context.Context, userID string, filter ...SelectFilter) ([]Device, error) {
 	filter = append(filter, WithUserID(userID))
 
-	return s.devices.Select(filter...)
+	return s.devices.Select(ctx, filter...)
 }
 
 // Exists checks if there exists a device that matches the provided filters.
@@ -62,23 +63,23 @@ func (s *Service) Select(userID string, filter ...SelectFilter) ([]models.Device
 // If the device does not exist, it returns false and nil error. If there is an
 // error during the query, it returns false and the error. Otherwise, it returns
 // true and nil error.
-func (s *Service) Exists(userID string, filter ...SelectFilter) (bool, error) {
+func (s *Service) Exists(ctx context.Context, userID string, filter ...SelectFilter) (bool, error) {
 	filter = append(filter, WithUserID(userID))
 
-	return s.devices.Exists(filter...)
+	return s.devices.Exists(ctx, filter...)
 }
 
 // Get returns a single device based on the provided filters for a specific user.
 // It ensures that the filter includes the user's ID. If no device matches the
 // criteria, it returns ErrNotFound. If more than one device matches, it returns
 // ErrMoreThanOne.
-func (s *Service) Get(userID string, filter ...SelectFilter) (models.Device, error) {
+func (s *Service) Get(ctx context.Context, userID string, filter ...SelectFilter) (*Device, error) {
 	filter = append(filter, WithUserID(userID))
 
-	return s.devices.Get(filter...)
+	return s.devices.Get(ctx, filter...)
 }
 
-func (s *Service) GetAny(userID string, deviceID string, duration time.Duration) (*models.Device, error) {
+func (s *Service) GetAny(ctx context.Context, userID string, deviceID string, duration time.Duration) (*Device, error) {
 	filter := []SelectFilter{
 		WithUserID(userID),
 	}
@@ -89,7 +90,7 @@ func (s *Service) GetAny(userID string, deviceID string, duration time.Duration)
 		filter = append(filter, ActiveWithin(duration))
 	}
 
-	devices, err := s.devices.Select(filter...)
+	devices, err := s.devices.Select(ctx, filter...)
 	if err != nil {
 		return nil, err
 	}
@@ -111,32 +112,34 @@ func (s *Service) GetAny(userID string, deviceID string, duration time.Duration)
 //
 // This method is used to retrieve a device by its auth token. If the device
 // does not exist, it returns ErrNotFound.
-func (s *Service) GetByToken(token string) (models.Device, error) {
+func (s *Service) GetByToken(ctx context.Context, token string) (*Device, error) {
 	device, err := s.cache.GetByToken(token)
-	if err != nil {
-		device, err = s.devices.Get(WithToken(token))
-		if err != nil {
-			return device, err
-		}
-
-		if setErr := s.cache.Set(device); setErr != nil {
-			s.logger.Error("failed to cache device", zap.String("device_id", device.ID), zap.Error(setErr))
-		}
+	if err == nil {
+		return &device, nil
 	}
 
-	return device, nil
+	devicePtr, err := s.devices.Get(ctx, WithToken(token))
+	if err != nil {
+		return nil, err
+	}
+
+	if setErr := s.cache.Set(*devicePtr); setErr != nil {
+		s.logger.Error("failed to cache device", zap.String("device_id", devicePtr.ID), zap.Error(setErr))
+	}
+
+	return devicePtr, nil
 }
 
-func (s *Service) UpdatePushToken(id string, token string) error {
-	if err := s.cache.DeleteByID(id); err != nil {
-		s.logger.Error("failed to invalidate cache",
-			zap.String("device_id", id),
-			zap.Error(err),
-		)
+func (s *Service) Update(ctx context.Context, id string, device DeviceUpdate) error {
+	if err := s.devices.Update(ctx, id, device); err != nil {
+		return err
 	}
 
-	if err := s.devices.UpdatePushToken(id, lo.EmptyableToPtr(token)); err != nil {
-		return err
+	if cacheErr := s.cache.DeleteByID(id); cacheErr != nil {
+		s.logger.Error("failed to invalidate cache",
+			zap.String("device_id", id),
+			zap.Error(cacheErr),
+		)
 	}
 
 	return nil
@@ -166,10 +169,10 @@ func (s *Service) SetLastSeen(ctx context.Context, batch map[string]time.Time) e
 
 // Remove removes devices for a specific user that match the provided filters.
 // It ensures that the filter includes the user's ID.
-func (s *Service) Remove(userID string, filter ...SelectFilter) error {
+func (s *Service) Remove(ctx context.Context, userID string, filter ...SelectFilter) error {
 	filter = append(filter, WithUserID(userID))
 
-	devices, err := s.devices.Select(filter...)
+	devices, err := s.devices.Select(ctx, filter...)
 	if err != nil {
 		return err
 	}
@@ -186,7 +189,7 @@ func (s *Service) Remove(userID string, filter ...SelectFilter) error {
 		}
 	}
 
-	if rmErr := s.devices.Remove(filter...); rmErr != nil {
+	if rmErr := s.devices.Remove(ctx, filter...); rmErr != nil {
 		return rmErr
 	}
 

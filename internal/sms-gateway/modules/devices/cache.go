@@ -5,25 +5,24 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	cacheImpl "github.com/capcom6/go-helpers/cache"
 )
 
 type cache struct {
-	byID    *cacheImpl.Cache[*models.Device]
-	byToken *cacheImpl.Cache[*models.Device]
+	byID    *cacheImpl.Cache[*Device]
+	byToken *cacheImpl.Cache[*Device]
 }
 
 func newCache() *cache {
 	const ttl = 10 * time.Minute
 
 	return &cache{
-		byID:    cacheImpl.New[*models.Device](cacheImpl.Config{TTL: ttl}),
-		byToken: cacheImpl.New[*models.Device](cacheImpl.Config{TTL: ttl}),
+		byID:    cacheImpl.New[*Device](cacheImpl.Config{TTL: ttl}),
+		byToken: cacheImpl.New[*Device](cacheImpl.Config{TTL: ttl}),
 	}
 }
 
-func (c *cache) Set(device models.Device) error {
+func (c *cache) Set(device Device) error {
 	err := errors.Join(c.byID.Set(device.ID, &device), c.byToken.Set(device.AuthToken, &device))
 	if err != nil {
 		return fmt.Errorf("failed to cache device: %w", err)
@@ -32,19 +31,19 @@ func (c *cache) Set(device models.Device) error {
 	return nil
 }
 
-func (c *cache) GetByID(id string) (models.Device, error) {
+func (c *cache) GetByID(id string) (Device, error) {
 	device, err := c.byID.Get(id)
 	if err != nil {
-		return models.Device{}, fmt.Errorf("failed to get device by ID: %w", err)
+		return Device{}, fmt.Errorf("failed to get device by ID: %w", err)
 	}
 
 	return *device, nil
 }
 
-func (c *cache) GetByToken(token string) (models.Device, error) {
+func (c *cache) GetByToken(token string) (Device, error) {
 	device, err := c.byToken.Get(token)
 	if err != nil {
-		return models.Device{}, fmt.Errorf("failed to get device by token: %w", err)
+		return Device{}, fmt.Errorf("failed to get device by token: %w", err)
 	}
 
 	return *device, nil

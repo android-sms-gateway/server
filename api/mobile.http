@@ -29,6 +29,7 @@ Authorization: Bearer {{mobileToken}}
 Content-Type: application/json
 
 {
+  "id": "LGWvvI23l1DerKrwdr35t",
   "name": "Android Phone"
 }
 

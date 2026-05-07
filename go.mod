@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	firebase.google.com/go/v4 v4.19.0
-	github.com/android-sms-gateway/client-go v1.12.9-0.20260519005959-eae21b02f80f
+	github.com/android-sms-gateway/client-go v1.12.10-0.20260524050942-22cc236032cd
 	github.com/ansrivas/fiberprometheus/v2 v2.6.1
 	github.com/capcom6/go-helpers v0.3.0
 	github.com/capcom6/go-infra-fx v0.5.2
@@ -14,7 +14,7 @@ require (
 	github.com/go-core-fx/logger v0.0.0-20251028014216-c34d2fb15ca2
 	github.com/go-playground/assert/v2 v2.2.0
 	github.com/go-playground/validator/v10 v10.28.0
-	github.com/go-sql-driver/mysql v1.7.1
+	github.com/go-sql-driver/mysql v1.8.1
 	github.com/gofiber/fiber/v2 v2.52.12
 	github.com/gofiber/swagger v1.1.1
 	github.com/golang-jwt/jwt/v5 v5.3.0
@@ -30,7 +30,8 @@ require (
 	golang.org/x/crypto v0.49.0
 	google.golang.org/api v0.273.0
 	gopkg.in/yaml.v3 v3.0.1
-	gorm.io/gorm v1.25.7-0.20240204074919-46816ad31dde
+	gorm.io/datatypes v1.2.7
+	gorm.io/gorm v1.30.0
 )
 
 require (
@@ -44,6 +45,7 @@ require (
 	cloud.google.com/go/longrunning v0.8.0 // indirect
 	cloud.google.com/go/monitoring v1.24.3 // indirect
 	cloud.google.com/go/storage v1.61.3 // indirect
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.31.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.55.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.55.0 // indirect
@@ -134,7 +136,7 @@ require (
 	google.golang.org/grpc v1.79.3 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gorm.io/driver/mysql v1.5.2 // indirect
+	gorm.io/driver/mysql v1.5.6 // indirect
 	gorm.io/driver/postgres v1.5.6 // indirect
 	gorm.io/driver/sqlite v1.5.5 // indirect
 	moul.io/zapgorm2 v1.3.0 // indirect

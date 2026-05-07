@@ -1,6 +1,7 @@
 package webhooks
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
@@ -69,7 +70,7 @@ func (s *Service) Select(userID string, filters ...SelectFilter) ([]smsgateway.W
 
 // Replace creates or updates a webhook for a given user. After replacing the webhook,
 // it asynchronously notifies all the user's devices. Returns an error if the operation fails.
-func (s *Service) Replace(userID string, webhook *smsgateway.Webhook) error {
+func (s *Service) Replace(ctx context.Context, userID string, webhook *smsgateway.Webhook) error {
 	if !smsgateway.IsValidWebhookEvent(webhook.Event) {
 		return newValidationError("event", webhook.Event, ErrInvalidEvent)
 	}
@@ -80,7 +81,7 @@ func (s *Service) Replace(userID string, webhook *smsgateway.Webhook) error {
 
 	// Check device ownership if deviceID is provided
 	if webhook.DeviceID != nil {
-		ok, err := s.devicesSvc.Exists(userID, devices.WithID(*webhook.DeviceID))
+		ok, err := s.devicesSvc.Exists(ctx, userID, devices.WithID(*webhook.DeviceID))
 		if err != nil {
 			return fmt.Errorf("failed to verify device ownership: %w", err)
 		}

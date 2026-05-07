@@ -7,6 +7,7 @@ import (
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/samber/lo"
 	"gorm.io/gorm"
 )
@@ -43,7 +44,7 @@ type messageModel struct {
 	IsHashed    bool `gorm:"not null;type:tinyint(1) unsigned;default:0"`
 	IsEncrypted bool `gorm:"not null;type:tinyint(1) unsigned;default:0"`
 
-	Device     models.Device           `gorm:"foreignKey:DeviceID;constraint:OnDelete:CASCADE"`
+	Device     devices.DeviceModel     `gorm:"foreignKey:DeviceID;constraint:OnDelete:CASCADE"`
 	Recipients []messageRecipientModel `gorm:"foreignKey:MessageID;constraint:OnDelete:CASCADE"`
 	States     []messageStateModel     `gorm:"foreignKey:MessageID;constraint:OnDelete:CASCADE"`
 }
