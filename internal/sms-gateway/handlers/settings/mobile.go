@@ -3,7 +3,6 @@ package settings
 import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/deviceauth"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/settings"
 	"github.com/go-playground/validator/v10"
@@ -14,12 +13,10 @@ import (
 type MobileController struct {
 	base.Handler
 
-	devicesSvc  *devices.Service
 	settingsSvc *settings.Service
 }
 
 func NewMobileController(
-	devicesSvc *devices.Service,
 	settingsSvc *settings.Service,
 	logger *zap.Logger,
 	validator *validator.Validate,
@@ -29,7 +26,6 @@ func NewMobileController(
 			Logger:    logger,
 			Validator: validator,
 		},
-		devicesSvc:  devicesSvc,
 		settingsSvc: settingsSvc,
 	}
 }
@@ -45,7 +41,7 @@ func NewMobileController(
 //	@Router			/mobile/v1/settings [get]
 //
 // Get settings.
-func (h *MobileController) get(device models.Device, c *fiber.Ctx) error {
+func (h *MobileController) get(device devices.Device, c *fiber.Ctx) error {
 	settings, err := h.settingsSvc.GetSettings(device.UserID, false)
 	if err != nil {
 		h.Logger.Error(

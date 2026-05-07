@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/db"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/events"
 	"github.com/capcom6/go-helpers/anys"
 	"github.com/capcom6/go-helpers/slices"
@@ -90,7 +90,7 @@ func (s *Service) SelectPending(deviceID string, order Order) ([]Message, error)
 	return slices.MapOrError(messages, messageToDomain) //nolint:wrapcheck // already wrapped
 }
 
-func (s *Service) UpdateState(device *models.Device, message MessageStateInput) error {
+func (s *Service) UpdateState(device *devices.Device, message MessageStateInput) error {
 	existing, err := s.messages.get(
 		*new(SelectFilter).WithExtID(message.ID).WithDeviceID(device.ID),
 		*new(SelectOptions).IncludeContent(),
@@ -206,7 +206,7 @@ func (s *Service) GetState(userID string, id string) (*MessageState, error) {
 
 func (s *Service) Enqueue(
 	ctx context.Context,
-	device models.Device,
+	device devices.Device,
 	message MessageInput,
 	opts EnqueueOptions,
 ) (*MessageState, error) {
@@ -258,7 +258,7 @@ func (s *Service) Enqueue(
 }
 
 func (s *Service) prepareMessage(
-	device models.Device,
+	device devices.Device,
 	message MessageInput,
 	opts EnqueueOptions,
 ) (*messageModel, error) {

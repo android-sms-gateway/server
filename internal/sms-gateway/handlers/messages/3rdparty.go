@@ -90,6 +90,7 @@ func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 	}
 
 	device, err := h.devicesSvc.GetAny(
+		c.Context(),
 		userID,
 		req.DeviceID,
 		time.Duration(params.DeviceActiveWithin)*time.Hour,
@@ -251,17 +252,17 @@ func (h *ThirdPartyController) get(userID string, c *fiber.Ctx) error {
 //	@Tags			User, Messages
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		smsgateway.MessagesExportRequest	true	"Export inbox request"
-//	@Success		202		{object}	object								"Inbox export request accepted"
-//	@Failure		400		{object}	smsgateway.ErrorResponse			"Invalid request"
-//	@Failure		401		{object}	smsgateway.ErrorResponse			"Unauthorized"
-//	@Failure		403		{object}	smsgateway.ErrorResponse			"Forbidden"
-//	@Failure		500		{object}	smsgateway.ErrorResponse			"Internal server error"
+//	@Param			request	body		smsgateway.InboxRefreshRequest	true	"Export inbox request"
+//	@Success		202		{object}	object							"Inbox export request accepted"
+//	@Failure		400		{object}	smsgateway.ErrorResponse		"Invalid request"
+//	@Failure		401		{object}	smsgateway.ErrorResponse		"Unauthorized"
+//	@Failure		403		{object}	smsgateway.ErrorResponse		"Forbidden"
+//	@Failure		500		{object}	smsgateway.ErrorResponse		"Internal server error"
 //	@Router			/3rdparty/v1/messages/inbox/export [post]
 //
 // Export inbox.
 func (h *ThirdPartyController) postInboxExport(userID string, c *fiber.Ctx) error {
-	req := new(smsgateway.MessagesExportRequest)
+	req := new(smsgateway.InboxRefreshRequest)
 	if err := h.BodyParserValidator(c, req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}

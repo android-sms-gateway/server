@@ -84,7 +84,7 @@ func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	if err := h.webhooksSvc.Replace(userID, dto); err != nil {
+	if err := h.webhooksSvc.Replace(c.Context(), userID, dto); err != nil {
 		if webhooks.IsValidationError(err) {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}

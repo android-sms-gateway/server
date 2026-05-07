@@ -4,14 +4,15 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/converters"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/permissions"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/userauth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
-	"github.com/capcom6/go-helpers/slices"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
@@ -50,14 +51,17 @@ func NewThirdPartyController(
 //
 // List devices.
 func (h *ThirdPartyController) get(userID string, c *fiber.Ctx) error {
-	devices, err := h.devicesSvc.Select(userID)
+	items, err := h.devicesSvc.Select(c.Context(), userID)
 	if err != nil {
 		return fmt.Errorf("failed to select devices: %w", err)
 	}
 
-	response := slices.Map(devices, converters.DeviceToDTO)
-
-	return c.JSON(response)
+	return c.JSON(lo.Map(
+		items,
+		func(device devices.Device, _ int) smsgateway.Device {
+			return converters.DeviceToDTO(device)
+		},
+	))
 }
 
 //	@Summary		Remove device
@@ -79,7 +83,7 @@ func (h *ThirdPartyController) get(userID string, c *fiber.Ctx) error {
 func (h *ThirdPartyController) remove(userID string, c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	err := h.devicesSvc.Remove(userID, devices.WithID(id))
+	err := h.devicesSvc.Remove(c.Context(), userID, devices.WithID(id))
 	if errors.Is(err, devices.ErrNotFound) {
 		return fiber.NewError(fiber.StatusNotFound, err.Error())
 	}
