@@ -1,6 +1,8 @@
 package devices
 
+import "github.com/android-sms-gateway/client-go/smsgateway"
+
 const (
-	ScopeList   = "devices:list"
-	ScopeDelete = "devices:delete"
+	ScopeList   = smsgateway.ScopeDevicesList
+	ScopeDelete = smsgateway.ScopeDevicesDelete
 )
