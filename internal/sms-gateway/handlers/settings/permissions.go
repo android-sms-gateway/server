@@ -1,6 +1,8 @@
 package settings
 
+import "github.com/android-sms-gateway/client-go/smsgateway"
+
 const (
-	ScopeRead  = "settings:read"
-	ScopeWrite = "settings:write"
+	ScopeRead  = smsgateway.ScopeSettingsRead
+	ScopeWrite = smsgateway.ScopeSettingsWrite
 )
