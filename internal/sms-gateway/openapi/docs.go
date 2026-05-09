@@ -1752,6 +1752,43 @@ const docTemplate = `{
                 "IncomingMessageTypeMmsDownloaded"
             ]
         },
+        "smsgateway.JWTScope": {
+            "type": "string",
+            "enum": [
+                "devices:list",
+                "devices:delete",
+                "inbox:list",
+                "inbox:refresh",
+                "logs:read",
+                "messages:send",
+                "messages:read",
+                "messages:list",
+                "messages:export",
+                "settings:read",
+                "settings:write",
+                "tokens:manage",
+                "webhooks:list",
+                "webhooks:write",
+                "webhooks:delete"
+            ],
+            "x-enum-varnames": [
+                "ScopeDevicesList",
+                "ScopeDevicesDelete",
+                "ScopeInboxList",
+                "ScopeInboxRefresh",
+                "ScopeLogsRead",
+                "ScopeMessagesSend",
+                "ScopeMessagesRead",
+                "ScopeMessagesList",
+                "ScopeMessagesExport",
+                "ScopeSettingsRead",
+                "ScopeSettingsWrite",
+                "ScopeTokensManage",
+                "ScopeWebhooksList",
+                "ScopeWebhooksWrite",
+                "ScopeWebhooksDelete"
+            ]
+        },
         "smsgateway.LimitPeriod": {
             "type": "string",
             "enum": [
@@ -2033,19 +2070,34 @@ const docTemplate = `{
             ],
             "properties": {
                 "deviceId": {
-                    "description": "DeviceID is the ID of the device to export messages for.",
+                    "description": "ID of the device to refresh messages for.",
                     "type": "string",
                     "maxLength": 21,
                     "example": "PyDmBQZZXYmyxMwED8Fzy"
                 },
+                "messageTypes": {
+                    "description": "List of message types to refresh. By default, SMS messages are refreshed.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/smsgateway.IncomingMessageType"
+                    }
+                },
                 "since": {
-                    "description": "Since is the start of the time range to export.",
+                    "description": "Start of the time range to refresh.",
                     "type": "string",
+                    "format": "date-time",
                     "example": "2024-01-01T00:00:00Z"
                 },
+                "triggerWebhooks": {
+                    "description": "Indicates whether to trigger webhooks for the refreshed messages.",
+                    "type": "boolean",
+                    "example": true
+                },
                 "until": {
-                    "description": "Until is the end of the time range to export.",
+                    "description": "End of the time range to refresh.",
                     "type": "string",
+                    "format": "date-time",
                     "example": "2024-01-01T23:59:59Z"
                 }
             }
@@ -2293,7 +2345,7 @@ const docTemplate = `{
                     "type": "array",
                     "minItems": 1,
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/smsgateway.JWTScope"
                     }
                 },
                 "ttl": {
