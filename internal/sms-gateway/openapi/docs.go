@@ -853,7 +853,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/smsgateway.MessagesExportRequest"
+                            "$ref": "#/definitions/smsgateway.InboxRefreshRequest"
                         }
                     }
                 ],
@@ -1406,32 +1406,39 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "createdAt": {
-                    "description": "Created at (read only)",
+                    "description": "Time at which the device was created, read only.",
                     "type": "string",
                     "example": "2020-01-01T00:00:00Z"
                 },
                 "deletedAt": {
-                    "description": "Deleted at (read only)",
+                    "description": "Time at which the device was deleted, read only.",
                     "type": "string",
                     "example": "2020-01-01T00:00:00Z"
                 },
                 "id": {
-                    "description": "ID",
+                    "description": "Device ID, read only.",
                     "type": "string",
                     "example": "PyDmBQZZXYmyxMwED8Fzy"
                 },
                 "lastSeen": {
-                    "description": "Last seen at (read only)",
+                    "description": "Time at which the device was last seen, read only.",
                     "type": "string",
                     "example": "2020-01-01T00:00:00Z"
                 },
                 "name": {
-                    "description": "Name",
+                    "description": "Device name.",
                     "type": "string",
                     "example": "My Device"
                 },
+                "simCards": {
+                    "description": "List of SIM cards in the device.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/smsgateway.SimCard"
+                    }
+                },
                 "updatedAt": {
-                    "description": "Updated at (read only)",
+                    "description": "Time at which the device was last updated, read only.",
                     "type": "string",
                     "example": "2020-01-01T00:00:00Z"
                 }
@@ -1672,6 +1679,45 @@ const docTemplate = `{
                 "HealthStatusWarn",
                 "HealthStatusFail"
             ]
+        },
+        "smsgateway.InboxRefreshRequest": {
+            "type": "object",
+            "required": [
+                "deviceId",
+                "since",
+                "until"
+            ],
+            "properties": {
+                "deviceId": {
+                    "description": "DeviceID is the ID of the device to export messages for.",
+                    "type": "string",
+                    "maxLength": 21,
+                    "example": "PyDmBQZZXYmyxMwED8Fzy"
+                },
+                "messageTypes": {
+                    "description": "MessageTypes is the list of message types to export. By default, SMS messages are exported.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/smsgateway.IncomingMessageType"
+                    }
+                },
+                "since": {
+                    "description": "Since is the start of the time range to export.",
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "triggerWebhooks": {
+                    "description": "TriggerWebhooks indicates whether to trigger webhooks for the exported messages.",
+                    "type": "boolean",
+                    "example": true
+                },
+                "until": {
+                    "description": "Until is the end of the time range to export.",
+                    "type": "string",
+                    "example": "2024-01-01T23:59:59Z"
+                }
+            }
         },
         "smsgateway.IncomingMessage": {
             "type": "object",
@@ -2038,10 +2084,23 @@ const docTemplate = `{
                     "maxLength": 21,
                     "example": "PyDmBQZZXYmyxMwED8Fzy"
                 },
+                "messageTypes": {
+                    "description": "MessageTypes is the list of message types to export. By default, SMS messages are exported.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/smsgateway.IncomingMessageType"
+                    }
+                },
                 "since": {
                     "description": "Since is the start of the time range to export.",
                     "type": "string",
                     "example": "2024-01-01T00:00:00Z"
+                },
+                "triggerWebhooks": {
+                    "description": "TriggerWebhooks indicates whether to trigger webhooks for the exported messages.",
+                    "type": "boolean",
+                    "example": true
                 },
                 "until": {
                     "description": "Until is the end of the time range to export.",
@@ -2251,6 +2310,31 @@ const docTemplate = `{
                 "signing_key": {
                     "description": "SigningKey is the secret key used for signing webhook payloads. Must not be used with Cloud Server.",
                     "type": "string"
+                }
+            }
+        },
+        "smsgateway.SimCard": {
+            "type": "object",
+            "properties": {
+                "carrierName": {
+                    "description": "Carrier/network operator name (may be null).",
+                    "type": "string"
+                },
+                "iccid": {
+                    "description": "Integrated Circuit Card Identifier (may be null).",
+                    "type": "string"
+                },
+                "phoneNumber": {
+                    "description": "Phone number associated with the SIM.",
+                    "type": "string"
+                },
+                "simNumber": {
+                    "description": "1-based slot number (1, 2, or 3).",
+                    "type": "integer"
+                },
+                "slotIndex": {
+                    "description": "0-based physical slot index.",
+                    "type": "integer"
                 }
             }
         },

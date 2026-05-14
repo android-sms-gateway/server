@@ -8,7 +8,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/converters"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/middlewares/deviceauth"
-	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 	"github.com/capcom6/go-helpers/slices"
 	"github.com/go-playground/validator/v10"
@@ -55,7 +55,7 @@ func NewMobileController(params mobileControllerParams) *MobileController {
 //	@Router			/mobile/v1/message [get]
 //
 // Get messages for sending.
-func (h *MobileController) list(device models.Device, c *fiber.Ctx) error {
+func (h *MobileController) list(device devices.Device, c *fiber.Ctx) error {
 	// Get and validate order parameter
 	params := new(mobileGetQueryParams)
 	if err := h.QueryParserValidator(c, params); err != nil {
@@ -90,7 +90,7 @@ func (h *MobileController) list(device models.Device, c *fiber.Ctx) error {
 //	@Router			/mobile/v1/message [patch]
 //
 // Update message state.
-func (h *MobileController) patch(device models.Device, c *fiber.Ctx) error {
+func (h *MobileController) patch(device devices.Device, c *fiber.Ctx) error {
 	req := smsgateway.MobilePatchMessageRequest{}
 	if err := h.BodyParserValidator(c, &req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/android-sms-gateway/server/internal/sms-gateway/models"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/gofiber/fiber/v2"
@@ -29,7 +28,7 @@ func New(authSvc *auth.Service) fiber.Handler {
 		// Get the token
 		token := auth[7:]
 
-		device, err := authSvc.AuthorizeDevice(token)
+		device, err := authSvc.AuthorizeDevice(c.Context(), token)
 		if errors.Is(err, devices.ErrNotFound) {
 			return c.Next()
 		}
@@ -37,7 +36,7 @@ func New(authSvc *auth.Service) fiber.Handler {
 			return fiber.NewError(fiber.StatusUnauthorized, err.Error())
 		}
 
-		c.Locals(LocalsDevice, device)
+		c.Locals(LocalsDevice, *device)
 
 		return c.Next()
 	}
@@ -52,10 +51,10 @@ func HasDevice(c *fiber.Ctx) bool {
 
 // GetDevice returns the device stored in the Locals under the key LocalsDevice.
 // If the Locals do not contain a device, it returns an empty device.
-func GetDevice(c *fiber.Ctx) models.Device {
-	device, ok := c.Locals(LocalsDevice).(models.Device)
+func GetDevice(c *fiber.Ctx) devices.Device {
+	device, ok := c.Locals(LocalsDevice).(devices.Device)
 	if !ok {
-		return models.Device{}
+		return devices.Device{}
 	}
 
 	return device
@@ -80,7 +79,7 @@ func DeviceRequired() fiber.Handler {
 //
 // It is a convenience function that wraps the call to GetDevice and calls the
 // handler with the device as the first argument.
-func WithDevice(handler func(models.Device, *fiber.Ctx) error) fiber.Handler {
+func WithDevice(handler func(devices.Device, *fiber.Ctx) error) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		return handler(GetDevice(c), c)
 	}

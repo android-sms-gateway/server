@@ -6,6 +6,5 @@ import (
 
 //nolint:gochecknoinits // framework-specific
 func init() {
-	db.RegisterMigration(Migrate)
 	db.RegisterGoose(migrations)
 }

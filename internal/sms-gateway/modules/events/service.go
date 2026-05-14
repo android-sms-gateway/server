@@ -105,19 +105,19 @@ func (s *Service) Run(ctx context.Context) error {
 				s.logger.Error("failed to deserialize event wrapper", zap.Error(jsonErr))
 				continue
 			}
-			s.processEvent(wrapper)
+			s.processEvent(ctx, wrapper)
 		}
 	}
 }
 
-func (s *Service) processEvent(wrapper *eventWrapper) {
+func (s *Service) processEvent(ctx context.Context, wrapper *eventWrapper) {
 	// Load devices from database
 	filters := []devices.SelectFilter{}
 	if wrapper.DeviceID != nil {
 		filters = append(filters, devices.WithID(*wrapper.DeviceID))
 	}
 
-	devices, err := s.deviceSvc.Select(wrapper.UserID, filters...)
+	devices, err := s.deviceSvc.Select(ctx, wrapper.UserID, filters...)
 	if err != nil {
 		s.logger.Error("failed to select devices", zap.String("user_id", wrapper.UserID), zap.Error(err))
 		return
