@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	firebase.google.com/go/v4 v4.19.0
-	github.com/android-sms-gateway/client-go v1.12.5
+	github.com/android-sms-gateway/client-go v1.12.9-0.20260519005959-eae21b02f80f
 	github.com/ansrivas/fiberprometheus/v2 v2.6.1
 	github.com/capcom6/go-helpers v0.3.0
 	github.com/capcom6/go-infra-fx v0.5.2
