@@ -1,6 +1,8 @@
 package inbox
 
+import "github.com/android-sms-gateway/client-go/smsgateway"
+
 const (
-	ScopeList    = "inbox:list"
-	ScopeRefresh = "inbox:refresh"
+	ScopeList    = smsgateway.ScopeInboxList
+	ScopeRefresh = smsgateway.ScopeInboxRefresh
 )
