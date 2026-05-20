@@ -69,7 +69,7 @@ func (h *APICatalogHandler) get(c *fiber.Ctx) error {
 
 func (h *APICatalogHandler) head(c *fiber.Ctx) error {
 	c.Set(fiber.HeaderContentType, `application/linkset+json; profile="https://www.rfc-editor.org/info/rfc9727"`)
-	c.Set("Link", `</.well-known/api-catalog>; rel="api-catalog"`)
+	c.Set(fiber.HeaderLink, `</.well-known/api-catalog>; rel="api-catalog"`)
 	c.Set(fiber.HeaderCacheControl, "public, max-age=3600")
 	return c.SendStatus(fiber.StatusOK)
 }
@@ -81,7 +81,7 @@ func (h *APICatalogHandler) getHost(c *fiber.Ctx) string {
 	return c.Hostname()
 }
 
-func (h *APICatalogHandler) getPath() any {
+func (h *APICatalogHandler) getPath() string {
 	return strings.Trim(h.config.PublicPath, "/")
 }
 
