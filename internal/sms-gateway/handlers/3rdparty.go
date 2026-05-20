@@ -73,6 +73,12 @@ func newThirdPartyHandler(
 func (h *thirdPartyHandler) Register(router fiber.Router) {
 	router = router.Group("/3rdparty/v1")
 
+	// Add Link header pointing to api-catalog (RFC 9727 Section 3)
+	router.Use(func(c *fiber.Ctx) error {
+		c.Set(fiber.HeaderLink, `</.well-known/api-catalog>; rel="api-catalog"`)
+		return c.Next()
+	})
+
 	h.healthHandler.Register(router)
 
 	router.Use(
