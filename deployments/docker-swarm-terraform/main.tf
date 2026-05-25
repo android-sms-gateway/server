@@ -159,6 +159,19 @@ resource "docker_service" "app" {
     label = "traefik.http.routers.${var.app-name}-new.tls.certresolver"
     value = "le"
   }
+
+  labels {
+    label = "traefik.http.routers.${var.app-name}-wellknown.rule"
+    value = "Host(`api.sms-gate.app`) && PathPrefix(`/.well-known`) && Method(`GET`,`HEAD`)"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}-wellknown.entrypoints"
+    value = "https"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}-wellknown.tls.certresolver"
+    value = "le"
+  }
   #endregion
 
   #region Primary Limited

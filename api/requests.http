@@ -290,7 +290,7 @@ GET http://localhost:3000/health/ready HTTP/1.1
 GET http://localhost:3000/health/live HTTP/1.1
 
 ###
-HEAD http://localhost:3000/.well-known/api-catalog HTTP/1.1
+HEAD {{baseUrl}}/.well-known/api-catalog HTTP/1.1
 
 ###
-GET http://localhost:3000/.well-known/api-catalog HTTP/1.1
+GET {{baseUrl}}/.well-known/api-catalog HTTP/1.1
