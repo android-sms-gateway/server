@@ -14,9 +14,6 @@ jobs:
     name: Validate Terraform
     runs-on: ubuntu-latest
     if: github.actor != 'dependabot[bot]'
-    env:
-      AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
-      AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,7 +25,7 @@ jobs:
 
       - name: Initialize Terraform
         working-directory: deployments/docker-swarm-terraform
-        run: terraform init
+        run: terraform init -backend=false
 
       - name: Validate Terraform
         working-directory: deployments/docker-swarm-terraform
