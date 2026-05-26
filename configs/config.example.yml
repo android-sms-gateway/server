@@ -59,3 +59,6 @@ tasks: # tasks config
   devices_cleanup:
     interval: 24h # task execution interval [TASKS__DEVICES_CLEANUP__INTERVAL]
     max_age: 8760h # inactive devices max age [TASKS__DEVICES_CLEANUP__MAX_AGE]
+  tokens_cleanup:
+    interval: 24h # task execution interval [TASKS__TOKENS_CLEANUP__INTERVAL]
+    max_age: 1h # grace period past expiration before deletion [TASKS__TOKENS_CLEANUP__MAX_AGE]
