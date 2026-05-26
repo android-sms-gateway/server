@@ -106,6 +106,14 @@ func (r *Repository) persistTokens(tx *gorm.DB, tokens ...tokenModel) error {
 	return nil
 }
 
+func (r *Repository) Cleanup(ctx context.Context, before time.Time) (int64, error) {
+	res := r.db.WithContext(ctx).
+		Where("expires_at < ?", before).
+		Delete(new(tokenModel))
+
+	return res.RowsAffected, res.Error
+}
+
 func (r *Repository) RevokeByUser(ctx context.Context, userID string) (int64, error) {
 	var res *gorm.DB
 
