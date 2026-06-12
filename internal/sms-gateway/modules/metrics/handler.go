@@ -9,7 +9,7 @@ type HTTPHandler struct {
 }
 
 func (h *HTTPHandler) Register(app *fiber.App) {
-	promhandler := fiberprometheus.New("")
+	promhandler := fiberprometheus.NewWithDefaultRegistry("")
 	promhandler.RegisterAt(app, "/metrics")
 
 	app.Use(promhandler.Middleware)
