@@ -51,6 +51,9 @@ The following table lists the configurable parameters of the SMSGate chart and t
 | `database.port`                                 | Database port                         | `3306`                                                                              |
 | `database.user`                                 | Database user                         | `sms`                                                                               |
 | `database.password`                             | Database password                     | `""`                                                                                |
+| `database.existingSecret`                             | Existing secret for database                     | `{}`                                                                                |
+| `database.existingSecret.secretName`                             | Existing secret name                     | `""`                                                                                |
+| `database.existingSecret.passwordKey`                             | Existing secret password key                     | `""`                                                                                |
 | `database.name`                                 | Database name                         | `sms`                                                                               |
 | `database.deployInternal`                       | Deploy internal MariaDB               | `true`                                                                              |
 | `gateway.privateToken`                          | Private token for device registration | `""`                                                                                |

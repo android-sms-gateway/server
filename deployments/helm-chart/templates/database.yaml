@@ -35,8 +35,8 @@ spec:
             - name: MARIADB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "sms-gateway.fullname" . }}-db-secrets
-                  key: database-password
+                  name: {{ .Values.database.existingSecret.secretName | default (printf "%s-db-secrets" (include "sms-gateway.fullname" .)) }}
+                  key: {{ .Values.database.existingSecret.passwordKey | default ("database-password") }}
           ports:
             - name: mysql
               containerPort: 3306
@@ -92,7 +92,9 @@ metadata:
 type: Opaque
 data:
   root-password: {{ .Values.database.mariadb.rootPassword | b64enc | quote }}
+{{- if not .Values.database.existingSecret }}
   database-password: {{ .Values.database.password | b64enc | quote }}
+{{- end }}
 
 ---
 # Database Persistent Volume Claim

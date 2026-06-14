@@ -81,6 +81,9 @@ database:
   user: sms
   password: "" # REQUIRED: Set a strong password for the database user
   name: sms
+  existingSecret: {}
+  #   secretName: existing-secret-name
+  #   passwordKey: password
   # Set to true to deploy a MariaDB instance with the chart
   deployInternal: true
   mariadb:
