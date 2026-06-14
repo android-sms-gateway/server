@@ -66,8 +66,8 @@ spec:
             - name: DATABASE__PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "sms-gateway.fullname" . }}-secrets
-                  key: database-password
+                  name: {{ .Values.database.existingSecret.secretName | default (printf "%s-secret" (include "sms-gateway.fullname" .)) }}
+                  key: {{ .Values.database.existingSecret.passwordKey | default ("database-password") }}
             {{- if .Values.gateway.privateToken }}
             - name: GATEWAY__MODE
               value: "private"
