@@ -59,7 +59,7 @@ spec:
             - name: DATABASE__HOST
               value: {{ .Values.database.host }}
             {{- end }}
-            - name: DATABASE__NAME
+            - name: DATABASE__DATABASE
               value: {{ .Values.database.name }}
             - name: DATABASE__USER
               value: {{ .Values.database.user }}
@@ -197,15 +197,15 @@ spec:
             - name: DATABASE__HOST
               value: {{ .Values.database.host }}
             {{- end }}
-            - name: DATABASE__NAME
+            - name: DATABASE__DATABASE
               value: {{ .Values.database.name }}
             - name: DATABASE__USER
               value: {{ .Values.database.user }}
             - name: DATABASE__PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "sms-gateway.fullname" . }}-secrets
-                  key: database-password
+                  name: {{ .Values.database.existingSecret.secretName | default (printf "%s-secret" (include "sms-gateway.fullname" .)) }}
+                  key: {{ .Values.database.existingSecret.passwordKey | default ("database-password") }}
             {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
               value: {{ $value | quote }}
