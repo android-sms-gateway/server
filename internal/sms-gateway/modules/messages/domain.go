@@ -40,6 +40,7 @@ type MessageInput struct {
 type Message struct {
 	MessageInput
 
+	State     ProcessingState
 	CreatedAt time.Time
 }
 

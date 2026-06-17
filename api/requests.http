@@ -103,6 +103,11 @@ Authorization: Basic {{credentials}}
 # Authorization: Bearer {{jwtToken}}
 
 ###
+DELETE {{baseUrl}}/3rdparty/v1/messages/{{messageId}} HTTP/1.1
+Authorization: Basic {{credentials}}
+# Authorization: Bearer {{jwtToken}}
+
+###
 GET {{baseUrl}}/3rdparty/v1/messages HTTP/1.1
 Authorization: Basic {{credentials}}
 # Authorization: Bearer {{jwtToken}}
@@ -234,6 +239,7 @@ Content-Type: application/json
     "scopes": [
         "messages:send",
         "messages:read",
+        "messages:cancel",
         "devices:list",
         "devices:write",
         "webhooks:list",

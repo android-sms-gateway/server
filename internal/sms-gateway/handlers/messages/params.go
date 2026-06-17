@@ -15,7 +15,7 @@ type thirdPartyPostQueryParams struct {
 type thirdPartyGetQueryParams struct {
 	StartDate      string `query:"from"           validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
 	EndDate        string `query:"to"             validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
-	State          string `query:"state"          validate:"omitempty,oneof=Pending Processed Sent Delivered Failed"`
+	State          string `query:"state"          validate:"omitempty,oneof=Pending Cancelling Cancelled Processed Sent Delivered Failed"`
 	DeviceID       string `query:"deviceId"       validate:"omitempty,len=21"`
 	Limit          int    `query:"limit"          validate:"omitempty,min=1,max=100"`
 	Offset         int    `query:"offset"         validate:"omitempty,min=0"`
@@ -46,7 +46,7 @@ func (p *thirdPartyGetQueryParams) ToFilter() messages.SelectFilter {
 	}
 
 	if p.State != "" {
-		filter.State = messages.ProcessingState(p.State)
+		filter.State = append(filter.State, messages.ProcessingState(p.State))
 	}
 
 	if p.DeviceID != "" {
