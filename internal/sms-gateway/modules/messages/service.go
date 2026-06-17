@@ -204,6 +204,40 @@ func (s *Service) GetState(userID string, id string) (*MessageState, error) {
 	return state, nil
 }
 
+// CancelMessage transitions a pending message to Cancelling state.
+// Returns an error if the message is not in Pending state.
+func (s *Service) CancelMessage(userID string, id string) (*MessageState, error) {
+	message, err := s.messages.get(
+		*new(SelectFilter).WithExtID(id).WithUserID(userID),
+		*new(SelectOptions).IncludeDevice().IncludeStates(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if cancelErr := s.messages.CancelMessage(userID, id); cancelErr != nil {
+		return nil, cancelErr
+	}
+
+	if cacheErr := s.cache.Delete(context.Background(), userID, id); cacheErr != nil {
+		s.logger.Warn("failed to invalidate message cache", zap.String("id", id), zap.Error(cacheErr))
+	}
+
+	// Notify device about cancellation
+	go func(userID, deviceID, messageID string) {
+		if ntfErr := s.eventsSvc.Notify(userID, &deviceID, events.NewMessageCancelledEvent(messageID)); ntfErr != nil {
+			s.logger.Error(
+				"failed to notify device about cancellation",
+				zap.Error(ntfErr),
+				zap.String("user_id", userID),
+				zap.String("device_id", deviceID),
+			)
+		}
+	}(userID, message.DeviceID, id)
+
+	return s.GetState(userID, id)
+}
+
 func (s *Service) Enqueue(
 	ctx context.Context,
 	device devices.Device,

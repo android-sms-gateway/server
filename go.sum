@@ -38,10 +38,8 @@ github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
 github.com/MicahParks/keyfunc v1.9.0 h1:lhKd5xrFHLNOWrDc4Tyb/Q1AJ4LCzQ48GVJyVIID3+o=
 github.com/MicahParks/keyfunc v1.9.0/go.mod h1:IdnCilugA0O/99dW+/MkvlyrsX8+L8+x95xuVNtM5jw=
-github.com/android-sms-gateway/client-go v1.13.2-0.20260626014509-89d2208e1948 h1:q/x54LvDLVMMfsypcc0DZEIdxVLgdvO84t754Q0RlUI=
-github.com/android-sms-gateway/client-go v1.13.2-0.20260626014509-89d2208e1948/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
-github.com/android-sms-gateway/client-go v1.13.2 h1:GQUlN4O9d/UEd50AJ01p2ssC4t8qUv3yALR5+tNtzEI=
-github.com/android-sms-gateway/client-go v1.13.2/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
+github.com/android-sms-gateway/client-go v1.14.0 h1:CyKb8NgmOJZ+xOpBjY+Qv5Cj3vSSy6MoaDuI6G5oRLY=
+github.com/android-sms-gateway/client-go v1.14.0/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
 github.com/andybalholm/brotli v1.2.1 h1:R+f5xP285VArJDRgowrfb9DqL18yVK0gKAW/F+eTWro=
 github.com/andybalholm/brotli v1.2.1/go.mod h1:rzTDkvFWvIrjDXZHkuS16NPggd91W3kUSvPlQ1pLaKY=
 github.com/ansrivas/fiberprometheus/v2 v2.17.0 h1:p0gqs5LsSCWGoSFF44fCJkyU+XcE6TLRqEMu80b2iCo=

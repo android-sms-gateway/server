@@ -16,11 +16,13 @@ type ProcessingState string
 type MessageType string
 
 const (
-	ProcessingStatePending   ProcessingState = "Pending"
-	ProcessingStateProcessed ProcessingState = "Processed"
-	ProcessingStateSent      ProcessingState = "Sent"
-	ProcessingStateDelivered ProcessingState = "Delivered"
-	ProcessingStateFailed    ProcessingState = "Failed"
+	ProcessingStatePending    ProcessingState = "Pending"
+	ProcessingStateCancelling ProcessingState = "Cancelling"
+	ProcessingStateCancelled  ProcessingState = "Cancelled"
+	ProcessingStateProcessed  ProcessingState = "Processed"
+	ProcessingStateSent       ProcessingState = "Sent"
+	ProcessingStateDelivered  ProcessingState = "Delivered"
+	ProcessingStateFailed     ProcessingState = "Failed"
 
 	MessageTypeText MessageType = "Text"
 	MessageTypeData MessageType = "Data"
@@ -34,7 +36,7 @@ type messageModel struct {
 	ExtID              string          `gorm:"not null;type:varchar(36);uniqueIndex:unq_messages_id_device,priority:1"`
 	Type               MessageType     `gorm:"not null;type:enum('Text','Data');default:Text"`
 	Content            string          `gorm:"not null;type:text"`
-	State              ProcessingState `gorm:"not null;type:enum('Pending','Sent','Processed','Delivered','Failed');default:Pending;index:idx_messages_device_state"`
+	State              ProcessingState `gorm:"not null;type:enum('Pending','Cancelling','Cancelled','Processed','Sent','Delivered','Failed');default:Pending;index:idx_messages_device_state"`
 	ValidUntil         *time.Time      `gorm:"type:datetime"`
 	ScheduleAt         *time.Time      `gorm:"type:datetime"`
 	SimNumber          *uint8          `gorm:"type:tinyint(1) unsigned"`
@@ -197,7 +199,7 @@ type messageRecipientModel struct {
 	ID          uint64          `gorm:"primaryKey;type:BIGINT UNSIGNED;autoIncrement"`
 	MessageID   uint64          `gorm:"uniqueIndex:unq_message_recipients_message_id_phone_number,priority:1;type:BIGINT UNSIGNED"`
 	PhoneNumber string          `gorm:"uniqueIndex:unq_message_recipients_message_id_phone_number,priority:2;type:varchar(128)"`
-	State       ProcessingState `gorm:"not null;type:enum('Pending','Sent','Processed','Delivered','Failed');default:Pending"`
+	State       ProcessingState `gorm:"not null;type:enum('Pending','Cancelling','Cancelled','Processed','Sent','Delivered','Failed');default:Pending"`
 	Error       *string         `gorm:"type:varchar(256)"`
 }
 
@@ -226,7 +228,7 @@ func (m *messageRecipientModel) toDomain() smsgateway.RecipientState {
 type messageStateModel struct {
 	ID        uint64          `gorm:"primaryKey;type:BIGINT UNSIGNED;autoIncrement"`
 	MessageID uint64          `gorm:"not null;type:BIGINT UNSIGNED;uniqueIndex:unq_message_states_message_id_state,priority:1"`
-	State     ProcessingState `gorm:"not null;type:enum('Pending','Sent','Processed','Delivered','Failed');uniqueIndex:unq_message_states_message_id_state,priority:2"`
+	State     ProcessingState `gorm:"not null;type:enum('Pending','Cancelling','Cancelled','Processed','Sent','Delivered','Failed');uniqueIndex:unq_message_states_message_id_state,priority:2"`
 	UpdatedAt time.Time       `gorm:"<-:create;not null;autoupdatetime:false"`
 }
 

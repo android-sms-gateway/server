@@ -3,6 +3,7 @@ package messages
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -69,4 +70,13 @@ func (c *stateCache) Get(ctx context.Context, userID, id string) (*MessageState,
 	}
 
 	return message, nil
+}
+
+func (c *stateCache) Delete(ctx context.Context, userID, id string) error {
+	err := c.storage.Delete(ctx, userID+":"+id)
+	if err == nil || errors.Is(err, cacheImpl.ErrKeyNotFound) {
+		return nil
+	}
+
+	return fmt.Errorf("failed to delete message from cache: %w", err)
 }

@@ -875,6 +875,69 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
+                    }
+                ],
+                "description": "Cancels a pending message by ID. The message must be in Pending state.",
+                "tags": [
+                    "User",
+                    "Messages"
+                ],
+                "summary": "Cancel message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Message ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message state after cancellation",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.GetMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Message not found",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/3rdparty/v1/settings": {
@@ -1739,6 +1802,7 @@ const docTemplate = `{
                 "inbox:list",
                 "inbox:refresh",
                 "logs:read",
+                "messages:cancel",
                 "messages:send",
                 "messages:read",
                 "messages:list",
@@ -1756,6 +1820,7 @@ const docTemplate = `{
                 "ScopeInboxList",
                 "ScopeInboxRefresh",
                 "ScopeLogsRead",
+                "ScopeMessagesCancel",
                 "ScopeMessagesSend",
                 "ScopeMessagesRead",
                 "ScopeMessagesList",
@@ -1773,12 +1838,14 @@ const docTemplate = `{
             "enum": [
                 "Disabled",
                 "PerMinute",
+                "Per30Minutes",
                 "PerHour",
                 "PerDay"
             ],
             "x-enum-varnames": [
                 "Disabled",
                 "PerMinute",
+                "Per30Minutes",
                 "PerHour",
                 "PerDay"
             ]
@@ -2055,12 +2122,16 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "Pending",
+                "Cancelling",
+                "Cancelled",
                 "Processed",
                 "Sent",
                 "Delivered",
                 "Failed"
             ],
             "x-enum-comments": {
+                "ProcessingStateCancelled": "Cancelled",
+                "ProcessingStateCancelling": "Cancelling (cancellation requested)",
                 "ProcessingStateDelivered": "Delivered",
                 "ProcessingStateFailed": "Failed",
                 "ProcessingStatePending": "Pending",
@@ -2069,6 +2140,8 @@ const docTemplate = `{
             },
             "x-enum-descriptions": [
                 "Pending",
+                "Cancelling (cancellation requested)",
+                "Cancelled",
                 "Processed (received by device)",
                 "Sent",
                 "Delivered",
@@ -2076,6 +2149,8 @@ const docTemplate = `{
             ],
             "x-enum-varnames": [
                 "ProcessingStatePending",
+                "ProcessingStateCancelling",
+                "ProcessingStateCancelled",
                 "ProcessingStateProcessed",
                 "ProcessingStateSent",
                 "ProcessingStateDelivered",
@@ -2156,10 +2231,11 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "limit_period": {
-                    "description": "LimitPeriod defines the period for message sending limits.\nValid values are \"Disabled\", \"PerMinute\", \"PerHour\", or \"PerDay\".",
+                    "description": "LimitPeriod defines the period for message sending limits.\nValid values are \"Disabled\", \"PerMinute\", \"Per30Minutes\", \"PerHour\", or \"PerDay\".",
                     "enum": [
                         "Disabled",
                         "PerMinute",
+                        "Per30Minutes",
                         "PerHour",
                         "PerDay"
                     ],
@@ -2395,6 +2471,7 @@ const docTemplate = `{
                 "sms:sent",
                 "sms:delivered",
                 "sms:failed",
+                "sms:cancelled",
                 "system:ping",
                 "mms:received",
                 "mms:downloaded",
@@ -2404,6 +2481,7 @@ const docTemplate = `{
                 "WebhookEventAppStarted": "Triggered when the application is started.",
                 "WebhookEventMmsDownloaded": "Triggered when an MMS is downloaded.",
                 "WebhookEventMmsReceived": "Triggered when an MMS is received.",
+                "WebhookEventSmsCancelled": "Triggered when an SMS is cancelled.",
                 "WebhookEventSmsDataReceived": "Triggered when a data SMS is received.",
                 "WebhookEventSmsDelivered": "Triggered when an SMS is delivered.",
                 "WebhookEventSmsFailed": "Triggered when an SMS processing fails.",
@@ -2417,6 +2495,7 @@ const docTemplate = `{
                 "Triggered when an SMS is sent.",
                 "Triggered when an SMS is delivered.",
                 "Triggered when an SMS processing fails.",
+                "Triggered when an SMS is cancelled.",
                 "Triggered when the device pings the server.",
                 "Triggered when an MMS is received.",
                 "Triggered when an MMS is downloaded.",
@@ -2428,6 +2507,7 @@ const docTemplate = `{
                 "WebhookEventSmsSent",
                 "WebhookEventSmsDelivered",
                 "WebhookEventSmsFailed",
+                "WebhookEventSmsCancelled",
                 "WebhookEventSystemPing",
                 "WebhookEventMmsReceived",
                 "WebhookEventMmsDownloaded",

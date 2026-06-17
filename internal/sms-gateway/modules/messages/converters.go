@@ -43,6 +43,7 @@ func messageToDomain(input messageModel) (Message, error) {
 			ScheduleAt:         input.ScheduleAt,
 			Priority:           smsgateway.MessagePriority(input.Priority),
 		},
+		State:     input.State,
 		CreatedAt: input.CreatedAt,
 	}, nil
 }
