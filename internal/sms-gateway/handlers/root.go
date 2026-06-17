@@ -16,6 +16,8 @@ type rootHandler struct {
 }
 
 func (h *rootHandler) Register(app *fiber.App) {
+	app.Use(h.setLinkHeaders)
+
 	if h.config.PublicPath != "/api" {
 		app.Use(func(c *fiber.Ctx) error {
 			err := c.Next()
@@ -32,6 +34,17 @@ func (h *rootHandler) Register(app *fiber.App) {
 	h.healthHandler.Register(app)
 
 	h.registerOpenAPI(app)
+}
+
+func (h *rootHandler) setLinkHeaders(c *fiber.Ctx) error {
+	publicPath := strings.TrimRight(h.config.PublicPath, "/")
+	c.Set(fiber.HeaderLink,
+		`</.well-known/api-catalog>; rel="api-catalog", `+
+			`<`+publicPath+`/docs/doc.json>; rel="service-desc", `+
+			`<https://docs.sms-gate.app/>; rel="service-doc", `+
+			`</.well-known/api-catalog>; rel="describedby"`,
+	)
+	return c.Next() //nolint:wrapcheck // passed through to fiber's error handler
 }
 
 func (h *rootHandler) registerOpenAPI(router fiber.Router) {
