@@ -23,7 +23,7 @@ Authorization: Basic {{localCredentials}}
     "phoneNumbers": [
         "{{phone}}"
     ],
-    "simNumber": {{$randomInt 0 3}},
+    "simNumber": {{$randomInt 1 3}},
     "withDeliveryReport": true
 }
 
@@ -111,6 +111,10 @@ Authorization: Basic {{localCredentials}}
 
 ###
 GET {{localUrl}}/messages/{{messageId}} HTTP/1.1
+Authorization: Basic {{localCredentials}}
+
+###
+DELETE {{localUrl}}/messages/{{messageId}} HTTP/1.1
 Authorization: Basic {{localCredentials}}
 
 ###

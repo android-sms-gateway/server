@@ -19,7 +19,7 @@ type SelectFilter struct {
 	DeviceID  string
 	StartDate time.Time
 	EndDate   time.Time
-	State     ProcessingState
+	State     []ProcessingState
 }
 
 func (f *SelectFilter) WithExtID(extID string) *SelectFilter {
@@ -44,7 +44,7 @@ func (f *SelectFilter) WithDateRange(start, end time.Time) *SelectFilter {
 }
 
 func (f *SelectFilter) WithState(state ProcessingState) *SelectFilter {
-	f.State = state
+	f.State = append(f.State, state)
 	return f
 }
 
