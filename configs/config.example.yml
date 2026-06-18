@@ -1,5 +1,7 @@
 ## Common Config ##
 
+# Supported: MySQL 8.0.13+ or MariaDB 10.2.7+
+# Recommended: MariaDB LTS
 database: # database
   host: localhost # database host [DATABASE__HOST]
   port: 3306 # database port [DATABASE__PORT]

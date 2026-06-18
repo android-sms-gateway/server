@@ -43,7 +43,8 @@ This server acts as the backend component of the [SMSGate](https://github.com/ca
 
 - Go (for development and testing purposes)
 - Docker and Docker Compose (for Docker-based setup)
-- A configured MySQL/MariaDB database
+- A configured **MySQL 8.0.13+** or **MariaDB 10.2.7+** database
+    - MariaDB LTS (`mariadb:lts`) is the recommended and most-tested deployment target
 
 ## Quickstart
 

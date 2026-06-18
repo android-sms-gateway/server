@@ -67,7 +67,7 @@ The following table lists the configurable parameters of the SMSGate chart and t
 
 ### Using an External Database
 
-To use an external database instead of the built-in MariaDB:
+To use an external database (MySQL 8.0.13+ or MariaDB 10.2.7+) instead of the built-in MariaDB:
 
 ```yaml
 database:
