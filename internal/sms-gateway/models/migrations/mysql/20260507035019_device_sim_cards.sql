@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 ALTER TABLE `devices`
-ADD `sim_cards` json NOT NULL DEFAULT '[]';
+ADD `sim_cards` json NOT NULL DEFAULT ('[]');
 -- +goose StatementEnd
 ---
 -- +goose Down
