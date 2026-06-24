@@ -22,6 +22,9 @@ var (
 			"limit_value":        "",
 			"sim_selection_mode": "",
 			"log_lifetime_days":  "",
+			"work_hours_enabled": "",
+			"work_hours_start":   "",
+			"work_hours_end":     "",
 		},
 		"ping": map[string]any{
 			"interval_seconds": "",
@@ -48,6 +51,9 @@ var (
 			"limit_value":        "",
 			"sim_selection_mode": "",
 			"log_lifetime_days":  "",
+			"work_hours_enabled": "",
+			"work_hours_start":   "",
+			"work_hours_end":     "",
 		},
 		"ping": map[string]any{
 			"interval_seconds": "",
