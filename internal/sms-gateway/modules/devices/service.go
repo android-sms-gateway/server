@@ -2,7 +2,6 @@ package devices
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/rand/v2"
 	"time"
@@ -146,25 +145,11 @@ func (s *Service) Update(ctx context.Context, id string, device DeviceUpdate) er
 }
 
 func (s *Service) SetLastSeen(ctx context.Context, batch map[string]time.Time) error {
-	if len(batch) == 0 {
-		return nil
+	if err := s.devices.SetLastSeenBatch(ctx, batch); err != nil {
+		s.logger.Error("failed to set last seen batch", zap.Error(err))
+		return fmt.Errorf("failed to set last seen batch: %w", err)
 	}
-
-	var multiErr error
-	for deviceID, lastSeen := range batch {
-		if err := ctx.Err(); err != nil {
-			return errors.Join(err, multiErr)
-		}
-		if err := s.devices.SetLastSeen(ctx, deviceID, lastSeen); err != nil {
-			multiErr = errors.Join(multiErr, fmt.Errorf("device %s: %w", deviceID, err))
-			s.logger.Error("failed to set last seen",
-				zap.String("device_id", deviceID),
-				zap.Time("last_seen", lastSeen),
-				zap.Error(err),
-			)
-		}
-	}
-	return multiErr
+	return nil
 }
 
 // Remove removes devices for a specific user that match the provided filters.
