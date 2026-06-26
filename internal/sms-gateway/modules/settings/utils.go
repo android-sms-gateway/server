@@ -37,6 +37,9 @@ var (
 		"gateway": map[string]any{
 			"notification_channel": "",
 		},
+		"receiver": map[string]any{
+			"content_provider_enabled": "",
+		},
 	}
 
 	rulesPublic = map[string]any{
@@ -61,6 +64,9 @@ var (
 		},
 		"gateway": map[string]any{
 			"notification_channel": "",
+		},
+		"receiver": map[string]any{
+			"content_provider_enabled": "",
 		},
 	}
 )
