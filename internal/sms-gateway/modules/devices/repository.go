@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/samber/lo"
@@ -119,19 +120,42 @@ func (r *Repository) Update(ctx context.Context, id string, device DeviceUpdate)
 	return nil
 }
 
-func (r *Repository) SetLastSeen(ctx context.Context, id string, lastSeen time.Time) error {
-	if lastSeen.IsZero() {
-		return nil // ignore zero timestamps
+func (r *Repository) SetLastSeenBatch(ctx context.Context, batch map[string]time.Time) error {
+	if len(batch) == 0 {
+		return nil
+	}
+	const batchChunkSize = 500
+
+	type entry struct {
+		id string
+		ts time.Time
+	}
+	entries := make([]entry, 0, len(batch))
+	for id, ts := range batch {
+		entries = append(entries, entry{id: id, ts: ts})
 	}
 
-	err := r.db.
-		WithContext(ctx).
-		Model((*DeviceModel)(nil)).
-		Where("id = ? AND last_seen < ?", id, lastSeen).
-		UpdateColumn("last_seen", lastSeen).
-		Error
-	if err != nil {
-		return fmt.Errorf("failed to set last seen: %w", err)
+	for i := 0; i < len(entries); i += batchChunkSize {
+		chunk := entries[i:min(i+batchChunkSize, len(entries))]
+
+		var (
+			ids  []string
+			args []any
+			sb   strings.Builder
+		)
+
+		sb.WriteString("UPDATE devices SET last_seen = CASE id ")
+		for _, e := range chunk {
+			sb.WriteString("WHEN ? THEN GREATEST(last_seen, ?) ")
+			args = append(args, e.id, e.ts)
+			ids = append(ids, e.id)
+		}
+		sb.WriteString("END WHERE id IN (?)")
+		args = append(args, ids)
+
+		if err := r.db.WithContext(ctx).Exec(sb.String(), args...).Error; err != nil {
+			return fmt.Errorf("failed to set last_seen batch (chunk %d): %w", i/batchChunkSize, err)
+		}
 	}
 
 	return nil
