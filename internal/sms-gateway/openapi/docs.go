@@ -1411,6 +1411,14 @@ const docTemplate = `{
                         }
                     ]
                 },
+                "receiver": {
+                    "description": "Receiver contains settings related to SMS message reception.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.SettingsReceiver"
+                        }
+                    ]
+                },
                 "webhooks": {
                     "description": "Webhooks contains settings related to webhook functionality.",
                     "allOf": [
@@ -2215,6 +2223,15 @@ const docTemplate = `{
                     "description": "IntervalSeconds is the interval between ping requests (in seconds).\nMust be at least 1 when provided.",
                     "type": "integer",
                     "minimum": 1
+                }
+            }
+        },
+        "smsgateway.SettingsReceiver": {
+            "type": "object",
+            "properties": {
+                "content_provider_enabled": {
+                    "description": "ContentProviderEnabled enables monitoring the SMS content provider as a fallback for\ncarriers that intercept the SMS_RECEIVED broadcast.",
+                    "type": "boolean"
                 }
             }
         },
