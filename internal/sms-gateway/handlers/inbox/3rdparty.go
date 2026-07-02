@@ -91,7 +91,7 @@ func (h *ThirdPartyController) refresh(userID string, c *fiber.Ctx) error {
 		req.Since,
 		req.Until,
 		req.MessageTypes,
-		&req.TriggerWebhooks,
+		req.ResolveWebhookDelivery(),
 	); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}

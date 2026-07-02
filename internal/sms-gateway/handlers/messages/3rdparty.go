@@ -17,7 +17,6 @@ import (
 	"github.com/capcom6/go-helpers/slices"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"github.com/samber/lo"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -261,7 +260,7 @@ func (h *ThirdPartyController) postInboxExport(userID string, c *fiber.Ctx) erro
 		req.Since,
 		req.Until,
 		[]smsgateway.IncomingMessageType{smsgateway.IncomingMessageTypeSMS},
-		lo.ToPtr(true),
+		smsgateway.WebhookDeliveryIndividual,
 	); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
