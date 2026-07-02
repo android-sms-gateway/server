@@ -292,7 +292,7 @@ func (h *ThirdPartyController) postInboxExport(userID string, c *fiber.Ctx) erro
 		req.Since,
 		req.Until,
 		[]smsgateway.IncomingMessageType{smsgateway.IncomingMessageTypeSMS},
-		lo.ToPtr(true),
+		smsgateway.WebhookDeliveryIndividual,
 	); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}

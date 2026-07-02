@@ -496,6 +496,60 @@ func TestWebhooks_Post(t *testing.T) {
 	}
 }
 
+func TestWebhooks_Post_BatchEventTypes(t *testing.T) {
+	credentials := mobileDeviceRegister(t, publicMobileClient)
+	authorizedClient := publicUserClient.Clone().SetBasicAuth(credentials.Login, credentials.Password)
+
+	batchEvents := []struct {
+		event       string
+		description string
+	}{
+		{"sms:batch:received", "SMS Batch Received"},
+		{"sms:batch:data-received", "Data SMS Batch Received"},
+		{"mms:batch:received", "MMS Batch Received"},
+		{"mms:batch:downloaded", "MMS Batch Downloaded"},
+	}
+
+	for _, be := range batchEvents {
+		t.Run(be.description, func(t *testing.T) {
+			resp, err := authorizedClient.R().
+				SetBody(webhook{
+					URL:   "https://example.com/batch-webhook",
+					Event: be.event,
+				}).Post("webhooks")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if resp.StatusCode() != 201 {
+				t.Fatalf("expected 201 for event %s, got %d: %s", be.event, resp.StatusCode(), resp.String())
+			}
+
+			var result webhook
+			if err := json.Unmarshal(resp.Body(), &result); err != nil {
+				t.Fatal(err)
+			}
+
+			t.Cleanup(func() {
+				_, err := authorizedClient.R().Delete("webhooks/" + result.ID)
+				if err != nil {
+					t.Error(err)
+				}
+			})
+
+			if result.ID == "" {
+				t.Error("webhook ID is empty")
+			}
+			if result.Event != be.event {
+				t.Errorf("expected event '%s', got '%s'", be.event, result.Event)
+			}
+			if result.URL != "https://example.com/batch-webhook" {
+				t.Errorf("expected URL 'https://example.com/batch-webhook', got '%s'", result.URL)
+			}
+		})
+	}
+}
+
 func TestWebhooks_Delete(t *testing.T) {
 	credentials := mobileDeviceRegister(t, publicMobileClient)
 	authorizedClient := publicUserClient.Clone().SetBasicAuth(credentials.Login, credentials.Password)
