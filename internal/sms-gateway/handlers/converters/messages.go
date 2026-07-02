@@ -40,6 +40,7 @@ func MessageToMobileDTO(m messages.Message) smsgateway.MobileMessage {
 			ScheduleAt:         m.ScheduleAt,
 			Priority:           m.Priority,
 		},
+		State:     smsgateway.ProcessingState(m.State),
 		CreatedAt: m.CreatedAt,
 	}
 }

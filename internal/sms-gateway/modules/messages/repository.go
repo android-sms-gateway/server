@@ -47,8 +47,8 @@ func (r *Repository) list(filter SelectFilter, options SelectOptions) ([]message
 	}
 
 	// Apply state filter
-	if filter.State != "" {
-		query = query.Where("messages.state = ?", filter.State)
+	if len(filter.State) > 0 {
+		query = query.Where("messages.state IN ?", filter.State)
 	}
 
 	// Apply device filter
@@ -103,7 +103,7 @@ func (r *Repository) list(filter SelectFilter, options SelectOptions) ([]message
 
 func (r *Repository) listPending(deviceID string, order Order) ([]messageModel, error) {
 	messages, _, err := r.list(
-		*new(SelectFilter).WithDeviceID(deviceID).WithState(ProcessingStatePending),
+		*new(SelectFilter).WithDeviceID(deviceID).WithState(ProcessingStatePending).WithState(ProcessingStateCancelling),
 		*new(SelectOptions).IncludeContent().IncludeRecipients().WithLimit(maxPendingBatch).WithOrderBy(order),
 	)
 
@@ -177,7 +177,7 @@ func (r *Repository) UpdateState(message *messageModel) error {
 func (r *Repository) HashProcessed(ctx context.Context, ids []uint64) (int64, error) {
 	rawSQL := "UPDATE `messages` `m`, `message_recipients` `r`\n" +
 		"SET `m`.`is_hashed` = true, `m`.`content` = SHA2(COALESCE(JSON_VALUE(`content`, '$.text'), JSON_VALUE(`content`, '$.data')), 256), `r`.`phone_number` = LEFT(SHA2(phone_number, 256), 16)\n" +
-		"WHERE `m`.`id` = `r`.`message_id` AND `m`.`is_hashed` = false AND `m`.`is_encrypted` = false AND `m`.`state` <> 'Pending'"
+		"WHERE `m`.`id` = `r`.`message_id` AND `m`.`is_hashed` = false AND `m`.`is_encrypted` = false AND `m`.`state` NOT IN ('Pending', 'Cancelling')"
 	params := []any{}
 	if len(ids) > 0 {
 		rawSQL += " AND `m`.`id` IN (?)"
@@ -193,10 +193,24 @@ func (r *Repository) HashProcessed(ctx context.Context, ids []uint64) (int64, er
 	return res.RowsAffected, nil
 }
 
+func (r *Repository) CancelMessage(userID string, id string) error {
+	res := r.db.Model((*messageModel)(nil)).
+		Where("ext_id = ? AND state = ?", id, ProcessingStatePending).
+		Where("device_id IN (?)", r.db.Table("devices").Select("id").Where("user_id = ?", userID)).
+		Update("state", ProcessingStateCancelling)
+	if res.Error != nil {
+		return fmt.Errorf("failed to cancel message: %w", res.Error)
+	}
+	if res.RowsAffected == 0 {
+		return ErrMessageNotPending
+	}
+	return nil
+}
+
 func (r *Repository) Cleanup(ctx context.Context, until time.Time) (int64, error) {
 	res := r.db.
 		WithContext(ctx).
-		Where("state <> ?", ProcessingStatePending).
+		Where("state NOT IN ?", []ProcessingState{ProcessingStatePending, ProcessingStateCancelling}).
 		Where("created_at < ?", until).
 		Delete(new(messageModel))
 	return res.RowsAffected, res.Error

@@ -246,6 +246,32 @@ func (h *ThirdPartyController) get(userID string, c *fiber.Ctx) error {
 	return c.JSON(converters.MessageStateToDTO(*state))
 }
 
+//	@Summary		Cancel message
+//	@Description	Cancels a pending message by ID. The message must be in Pending state.
+//	@Security		ApiAuth
+//	@Security		JWTAuth
+//	@Tags			User, Messages
+//	@Param			id	path		string							true	"Message ID"
+//	@Success		200	{object}	smsgateway.GetMessageResponse	"Message state after cancellation"
+//	@Failure		400	{object}	smsgateway.ErrorResponse		"Invalid request"
+//	@Failure		401	{object}	smsgateway.ErrorResponse		"Unauthorized"
+//	@Failure		403	{object}	smsgateway.ErrorResponse		"Forbidden"
+//	@Failure		404	{object}	smsgateway.ErrorResponse		"Message not found"
+//	@Failure		500	{object}	smsgateway.ErrorResponse		"Internal server error"
+//	@Router			/3rdparty/v1/messages/{id} [delete]
+//
+// Cancel message.
+func (h *ThirdPartyController) delete(userID string, c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	state, err := h.messagesSvc.CancelMessage(userID, id)
+	if err != nil {
+		return fmt.Errorf("failed to cancel message: %w", err)
+	}
+
+	return c.JSON(converters.MessageStateToDTO(*state))
+}
+
 // Export inbox.
 //
 // Deprecated: use /3rdparty/v1/inbox/refresh instead.
@@ -283,11 +309,9 @@ func (h *ThirdPartyController) errorHandler(c *fiber.Ctx) error {
 
 	var msgValidationError messages.ValidationError
 	switch {
-	case errors.As(err, &msgValidationError):
-		fallthrough
-	case errors.Is(err, messages.ErrMultipleMessagesFound):
-		fallthrough
-	case errors.Is(err, messages.ErrNoContent):
+	case errors.As(err, &msgValidationError),
+		errors.Is(err, messages.ErrMultipleMessagesFound),
+		errors.Is(err, messages.ErrNoContent):
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 
 	case errors.Is(err, messages.ErrMessageNotFound):
@@ -319,6 +343,7 @@ func (h *ThirdPartyController) Register(router fiber.Router) {
 	router.Get("", permissions.RequireScope(ScopeList), userauth.WithUserID(h.list))
 	router.Post("", permissions.RequireScope(ScopeSend), userauth.WithUserID(h.post))
 	router.Get(":id", permissions.RequireScope(ScopeRead), userauth.WithUserID(h.get)).Name(route3rdPartyGetMessage)
+	router.Delete(":id", permissions.RequireScope(ScopeCancel), userauth.WithUserID(h.delete))
 
 	router.Post("inbox/export", permissions.RequireScope(ScopeExport), userauth.WithUserID(h.postInboxExport))
 }

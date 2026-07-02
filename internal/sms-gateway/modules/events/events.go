@@ -42,6 +42,12 @@ func NewMessagesExportRequestedEvent(
 	)
 }
 
+func NewMessageCancelledEvent(messageID string) Event {
+	return NewEvent(smsgateway.PushMessageCancelled, map[string]string{
+		"messageId": messageID,
+	})
+}
+
 func NewSettingsUpdatedEvent() Event {
 	return NewEvent(smsgateway.PushSettingsUpdated, nil)
 }
