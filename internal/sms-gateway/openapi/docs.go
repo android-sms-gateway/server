@@ -481,7 +481,7 @@ const docTemplate = `{
                         "JWTAuth": []
                     }
                 ],
-                "description": "Refreshes inbox messages. Webhooks are triggered when triggerWebhooks is true.",
+                "description": "Refreshes inbox messages. Webhook triggering depends on the ` + "`" + `webhookDelivery` + "`" + ` parameter.",
                 "consumes": [
                     "application/json"
                 ],
