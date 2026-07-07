@@ -7,7 +7,7 @@ require (
 	github.com/android-sms-gateway/client-go v1.14.0
 	github.com/ansrivas/fiberprometheus/v2 v2.17.0
 	github.com/capcom6/go-helpers v0.4.0
-	github.com/capcom6/go-infra-fx v0.5.7
+	github.com/capcom6/go-infra-fx v0.5.8
 	github.com/go-core-fx/cachefx v0.0.2
 	github.com/go-core-fx/fiberfx v0.5.0
 	github.com/go-core-fx/fxutil v0.0.2
