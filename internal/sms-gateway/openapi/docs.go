@@ -2289,6 +2289,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/smsgateway.SimSelectionMode"
                         }
                     ]
+                },
+                "work_hours_enabled": {
+                    "description": "WorkHoursEnabled enables restricting message delivery to a configurable time window.",
+                    "type": "boolean"
+                },
+                "work_hours_end": {
+                    "description": "WorkHoursEnd is the end of the working hours window in HH:mm format (24-hour).",
+                    "type": "string"
+                },
+                "work_hours_start": {
+                    "description": "WorkHoursStart is the start of the working hours window in HH:mm format (24-hour).",
+                    "type": "string"
                 }
             }
         },
