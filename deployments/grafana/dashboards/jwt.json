@@ -1,4 +1,47 @@
 {
+    "__elements": {},
+    "__inputs": [
+        {
+            "description": "",
+            "label": "prometheus",
+            "name": "DS_PROMETHEUS",
+            "pluginId": "prometheus",
+            "pluginName": "Prometheus",
+            "type": "datasource"
+        }
+    ],
+    "__requires": [
+        {
+            "id": "bargauge",
+            "name": "Bar gauge",
+            "type": "panel",
+            "version": ""
+        },
+        {
+            "id": "grafana",
+            "name": "Grafana",
+            "type": "grafana",
+            "version": "12.3.0"
+        },
+        {
+            "id": "prometheus",
+            "name": "Prometheus",
+            "type": "datasource",
+            "version": "1.0.0"
+        },
+        {
+            "id": "stat",
+            "name": "Stat",
+            "type": "panel",
+            "version": ""
+        },
+        {
+            "id": "timeseries",
+            "name": "Time series",
+            "type": "panel",
+            "version": ""
+        }
+    ],
     "annotations": {
         "list": [
             {
@@ -15,17 +58,32 @@
             }
         ]
     },
+    "description": "JWT authentication SRE dashboard covering the four golden signals: latency, traffic, errors, and saturation for token issuance, validation, refresh, and revocation operations.",
     "editable": true,
     "fiscalYearStartMonth": 0,
-    "graphTooltip": 0,
-    "id": 0,
+    "graphTooltip": 1,
+    "id": null,
     "links": [],
     "panels": [
         {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 100,
+            "panels": [],
+            "title": "Traffic — Rate & Volume",
+            "type": "row"
+        },
+        {
             "datasource": {
                 "type": "prometheus",
-                "uid": "edqp0a73uh2bka"
+                "uid": "${DS_PROMETHEUS}"
             },
+            "description": "Rate of JWT access+refresh token pair generation requests",
             "fieldConfig": {
                 "defaults": {
                     "mappings": [],
@@ -47,10 +105,10 @@
                 "overrides": []
             },
             "gridPos": {
-                "h": 6,
+                "h": 7,
                 "w": 6,
                 "x": 0,
-                "y": 0
+                "y": 1
             },
             "id": 1,
             "options": {
@@ -73,212 +131,25 @@
             "pluginVersion": "12.3.0",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
                     "editorMode": "code",
                     "expr": "sum(rate(sms_auth_jwt_tokens_issued_total{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval]))",
                     "range": true,
                     "refId": "A"
                 }
             ],
-            "title": "Auth Request Rate",
+            "title": "Token Issuance Rate",
             "type": "stat"
         },
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "edqp0a73uh2bka"
+                "uid": "${DS_PROMETHEUS}"
             },
-            "fieldConfig": {
-                "defaults": {
-                    "mappings": [],
-                    "max": 1,
-                    "min": 0,
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "red",
-                                "value": 0
-                            },
-                            {
-                                "color": "yellow",
-                                "value": 0.95
-                            },
-                            {
-                                "color": "green",
-                                "value": 0.99
-                            }
-                        ]
-                    },
-                    "unit": "percentunit"
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 6,
-                "w": 6,
-                "x": 6,
-                "y": 0
-            },
-            "id": 2,
-            "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "percentChangeColorMode": "standard",
-                "reduceOptions": {
-                    "calcs": [
-                        "lastNotNull"
-                    ],
-                    "fields": "",
-                    "values": false
-                },
-                "showPercentChange": false,
-                "textMode": "auto",
-                "wideLayout": true
-            },
-            "pluginVersion": "12.3.0",
-            "targets": [
-                {
-                    "editorMode": "code",
-                    "expr": "sum(rate(sms_auth_jwt_tokens_validated_total{status=\"success\",instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) / sum(rate(sms_auth_jwt_tokens_validated_total{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval]))",
-                    "range": true,
-                    "refId": "A"
-                }
-            ],
-            "title": "Validation Success %",
-            "type": "stat"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "edqp0a73uh2bka"
-            },
-            "fieldConfig": {
-                "defaults": {
-                    "mappings": [],
-                    "max": 1,
-                    "min": 0,
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            },
-                            {
-                                "color": "yellow",
-                                "value": 0.01
-                            },
-                            {
-                                "color": "red",
-                                "value": 0.05
-                            }
-                        ]
-                    },
-                    "unit": "percentunit"
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 6,
-                "w": 6,
-                "x": 12,
-                "y": 0
-            },
-            "id": 3,
-            "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "percentChangeColorMode": "standard",
-                "reduceOptions": {
-                    "calcs": [
-                        "lastNotNull"
-                    ],
-                    "fields": "",
-                    "values": false
-                },
-                "showPercentChange": false,
-                "textMode": "auto",
-                "wideLayout": true
-            },
-            "pluginVersion": "12.3.0",
-            "targets": [
-                {
-                    "editorMode": "code",
-                    "expr": "sum(rate(sms_auth_jwt_tokens_validated_total{status=\"error\",instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) / sum(rate(sms_auth_jwt_tokens_validated_total{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval]))",
-                    "range": true,
-                    "refId": "A"
-                }
-            ],
-            "title": "Error Rate",
-            "type": "stat"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "edqp0a73uh2bka"
-            },
-            "fieldConfig": {
-                "defaults": {
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": 0
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
-                            }
-                        ]
-                    }
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 6,
-                "w": 6,
-                "x": 18,
-                "y": 0
-            },
-            "id": 4,
-            "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "percentChangeColorMode": "standard",
-                "reduceOptions": {
-                    "calcs": [
-                        "lastNotNull"
-                    ],
-                    "fields": "",
-                    "values": false
-                },
-                "showPercentChange": false,
-                "textMode": "auto",
-                "wideLayout": true
-            },
-            "pluginVersion": "12.3.0",
-            "targets": [
-                {
-                    "expr": "increase(sms_auth_jwt_tokens_issued_total{instance=~\"$instance\",job=~\"$job\"}[24h])",
-                    "refId": "A"
-                }
-            ],
-            "title": "Tokens Issued (24h)",
-            "type": "stat"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "edqp0a73uh2bka"
-            },
+            "description": "Token issuance rate broken down by status (success/error)",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -337,10 +208,10 @@
                 "overrides": []
             },
             "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 0,
-                "y": 6
+                "h": 7,
+                "w": 18,
+                "x": 6,
+                "y": 1
             },
             "id": 5,
             "options": {
@@ -359,6 +230,10 @@
             "pluginVersion": "12.3.0",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
                     "expr": "sum by (status) (rate(sms_auth_jwt_tokens_issued_total{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval]))",
                     "legendFormat": "{{status}}",
                     "refId": "A"
@@ -368,10 +243,168 @@
             "type": "timeseries"
         },
         {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 8
+            },
+            "id": 200,
+            "panels": [],
+            "title": "Errors",
+            "type": "row"
+        },
+        {
             "datasource": {
                 "type": "prometheus",
-                "uid": "edqp0a73uh2bka"
+                "uid": "${DS_PROMETHEUS}"
             },
+            "description": "Proportion of JWT validation operations that resulted in an error",
+            "fieldConfig": {
+                "defaults": {
+                    "mappings": [],
+                    "max": 1,
+                    "min": 0,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 0.01
+                            },
+                            {
+                                "color": "red",
+                                "value": 0.05
+                            }
+                        ]
+                    },
+                    "unit": "percentunit"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 4,
+                "x": 0,
+                "y": 9
+            },
+            "id": 3,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.3.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
+                    "editorMode": "code",
+                    "expr": "sum(rate(sms_auth_jwt_tokens_validated_total{status=\"error\",instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) / clamp_min(sum(rate(sms_auth_jwt_tokens_validated_total{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])), 0.00001)",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Validation Error Rate",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "description": "Proportion of JWT refresh operations that resulted in an error",
+            "fieldConfig": {
+                "defaults": {
+                    "mappings": [],
+                    "max": 1,
+                    "min": 0,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 0.01
+                            },
+                            {
+                                "color": "red",
+                                "value": 0.05
+                            }
+                        ]
+                    },
+                    "unit": "percentunit"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 4,
+                "x": 4,
+                "y": 9
+            },
+            "id": 2,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.3.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
+                    "editorMode": "code",
+                    "expr": "sum(rate(sms_auth_jwt_tokens_refreshed_total{status=\"error\",instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) / clamp_min(sum(rate(sms_auth_jwt_tokens_refreshed_total{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])), 0.00001)",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Refresh Error Rate",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "description": "Rolling proportion of validation requests that succeed",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -430,10 +463,10 @@
                 "overrides": []
             },
             "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 12,
-                "y": 6
+                "h": 10,
+                "w": 16,
+                "x": 8,
+                "y": 9
             },
             "id": 6,
             "options": {
@@ -452,6 +485,10 @@
             "pluginVersion": "12.3.0",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
                     "expr": "sum(rate(sms_auth_jwt_tokens_validated_total{status=\"success\",instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) / sum(rate(sms_auth_jwt_tokens_validated_total{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval]))",
                     "legendFormat": "Success Rate",
                     "refId": "A"
@@ -463,8 +500,169 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "edqp0a73uh2bka"
+                "uid": "${DS_PROMETHEUS}"
             },
+            "description": "Distribution of validation outcomes over the last 24 hours",
+            "fieldConfig": {
+                "defaults": {
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 4,
+                "x": 0,
+                "y": 14
+            },
+            "id": 9,
+            "options": {
+                "displayMode": "gradient",
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": false
+                },
+                "maxVizHeight": 300,
+                "minVizHeight": 10,
+                "minVizWidth": 0,
+                "namePlacement": "auto",
+                "orientation": "horizontal",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showUnfilled": true,
+                "sizing": "auto",
+                "textMode": "value",
+                "valueMode": "color"
+            },
+            "pluginVersion": "12.3.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
+                    "editorMode": "code",
+                    "expr": "sum by (status) (increase(sms_auth_jwt_tokens_validated_total{instance=~\"$instance\",job=~\"$job\"}[24h]))",
+                    "instant": true,
+                    "legendFormat": "{{status}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Validation Status Distribution",
+            "type": "bargauge"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "description": "Proportion of JWT revocation operations that resulted in an error",
+            "fieldConfig": {
+                "defaults": {
+                    "mappings": [],
+                    "max": 1,
+                    "min": 0,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 0.01
+                            },
+                            {
+                                "color": "red",
+                                "value": 0.05
+                            }
+                        ]
+                    },
+                    "unit": "percentunit"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 4,
+                "x": 4,
+                "y": 14
+            },
+            "id": 11,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.3.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
+                    "editorMode": "code",
+                    "expr": "sum(rate(sms_auth_jwt_tokens_revoked_total{status=\"error\",instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) / clamp_min(sum(rate(sms_auth_jwt_tokens_revoked_total{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])), 0.00001)",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Revocation Error Rate",
+            "type": "stat"
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 19
+            },
+            "id": 300,
+            "panels": [],
+            "title": "Latency",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "description": "Latency distribution for JWT token pair generation (p50, p95, p99)",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -523,10 +721,10 @@
                 "overrides": []
             },
             "gridPos": {
-                "h": 8,
+                "h": 7,
                 "w": 12,
                 "x": 0,
-                "y": 14
+                "y": 20
             },
             "id": 7,
             "options": {
@@ -545,16 +743,28 @@
             "pluginVersion": "12.3.0",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
                     "expr": "histogram_quantile(0.50, sum(rate(sms_auth_jwt_issuance_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
                     "legendFormat": "p50",
                     "refId": "A"
                 },
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
                     "expr": "histogram_quantile(0.95, sum(rate(sms_auth_jwt_issuance_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
                     "legendFormat": "p95",
                     "refId": "B"
                 },
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
                     "expr": "histogram_quantile(0.99, sum(rate(sms_auth_jwt_issuance_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
                     "legendFormat": "p99",
                     "refId": "C"
@@ -566,8 +776,9 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "edqp0a73uh2bka"
+                "uid": "${DS_PROMETHEUS}"
             },
+            "description": "Latency distribution for JWT token validation (p50, p95, p99)",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -626,10 +837,10 @@
                 "overrides": []
             },
             "gridPos": {
-                "h": 8,
+                "h": 7,
                 "w": 12,
                 "x": 12,
-                "y": 14
+                "y": 20
             },
             "id": 8,
             "options": {
@@ -648,16 +859,28 @@
             "pluginVersion": "12.3.0",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
                     "expr": "histogram_quantile(0.50, sum(rate(sms_auth_jwt_validation_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
                     "legendFormat": "p50",
                     "refId": "A"
                 },
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
                     "expr": "histogram_quantile(0.95, sum(rate(sms_auth_jwt_validation_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
                     "legendFormat": "p95",
                     "refId": "B"
                 },
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
                     "expr": "histogram_quantile(0.99, sum(rate(sms_auth_jwt_validation_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
                     "legendFormat": "p99",
                     "refId": "C"
@@ -669,69 +892,9 @@
         {
             "datasource": {
                 "type": "prometheus",
-                "uid": "edqp0a73uh2bka"
+                "uid": "${DS_PROMETHEUS}"
             },
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "palette-classic"
-                    },
-                    "custom": {
-                        "hideFrom": {
-                            "legend": false,
-                            "tooltip": false,
-                            "viz": false
-                        }
-                    },
-                    "mappings": []
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 0,
-                "y": 22
-            },
-            "id": 9,
-            "options": {
-                "legend": {
-                    "displayMode": "list",
-                    "placement": "bottom",
-                    "showLegend": true
-                },
-                "pieType": "pie",
-                "reduceOptions": {
-                    "calcs": [
-                        "lastNotNull"
-                    ],
-                    "fields": "",
-                    "values": false
-                },
-                "sort": "desc",
-                "tooltip": {
-                    "hideZeros": false,
-                    "mode": "single",
-                    "sort": "none"
-                }
-            },
-            "pluginVersion": "12.3.0",
-            "targets": [
-                {
-                    "expr": "sum by (status) (increase(sms_auth_jwt_tokens_validated_total{instance=~\"$instance\",job=~\"$job\"}[24h]))",
-                    "instant": true,
-                    "legendFormat": "{{status}}",
-                    "refId": "A"
-                }
-            ],
-            "title": "Validation Status Distribution",
-            "type": "piechart"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "edqp0a73uh2bka"
-            },
+            "description": "Latency distribution for JWT token refresh operations (p50, p95, p99)",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -790,10 +953,10 @@
                 "overrides": []
             },
             "gridPos": {
-                "h": 8,
+                "h": 7,
                 "w": 12,
-                "x": 12,
-                "y": 22
+                "x": 0,
+                "y": 27
             },
             "id": 10,
             "options": {
@@ -812,16 +975,28 @@
             "pluginVersion": "12.3.0",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
                     "expr": "histogram_quantile(0.50, sum(rate(sms_auth_jwt_refresh_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
                     "legendFormat": "p50",
                     "refId": "A"
                 },
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
                     "expr": "histogram_quantile(0.95, sum(rate(sms_auth_jwt_refresh_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
                     "legendFormat": "p95",
                     "refId": "B"
                 },
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
                     "expr": "histogram_quantile(0.99, sum(rate(sms_auth_jwt_refresh_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
                     "legendFormat": "p99",
                     "refId": "C"
@@ -829,10 +1004,269 @@
             ],
             "title": "Token Refresh Latency",
             "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "description": "Latency distribution for JWT token revocation operations (p50, p95, p99)",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "showValues": false,
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "s"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 12,
+                "x": 12,
+                "y": 27
+            },
+            "id": 13,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "12.3.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
+                    "editorMode": "code",
+                    "expr": "histogram_quantile(0.50, sum(rate(sms_auth_jwt_revocation_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
+                    "legendFormat": "p50",
+                    "range": true,
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
+                    "editorMode": "code",
+                    "expr": "histogram_quantile(0.95, sum(rate(sms_auth_jwt_revocation_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
+                    "legendFormat": "p95",
+                    "range": true,
+                    "refId": "B"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
+                    "editorMode": "code",
+                    "expr": "histogram_quantile(0.99, sum(rate(sms_auth_jwt_revocation_duration_seconds_bucket{instance=~\"$instance\",job=~\"$job\"}[$__rate_interval])) by (le))",
+                    "legendFormat": "p99",
+                    "range": true,
+                    "refId": "C"
+                }
+            ],
+            "title": "Token Revocation Latency",
+            "type": "timeseries"
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 34
+            },
+            "id": 400,
+            "panels": [],
+            "title": "Saturation",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "description": "Total number of JWT token pairs issued in the last 24 hours",
+            "fieldConfig": {
+                "defaults": {
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 12,
+                "x": 0,
+                "y": 35
+            },
+            "id": 4,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.3.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
+                    "editorMode": "code",
+                    "expr": "sum(increase(sms_auth_jwt_tokens_issued_total{instance=~\"$instance\",job=~\"$job\"}[24h]))",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Tokens Issued (24h)",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "description": "Total number of JWT tokens revoked in the last 24 hours",
+            "fieldConfig": {
+                "defaults": {
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 12,
+                "x": 12,
+                "y": 35
+            },
+            "id": 12,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "12.3.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_PROMETHEUS}"
+                    },
+                    "editorMode": "code",
+                    "expr": "sum(increase(sms_auth_jwt_tokens_revoked_total{instance=~\"$instance\",job=~\"$job\"}[24h]))",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Tokens Revoked (24h)",
+            "type": "stat"
         }
     ],
     "preload": false,
-    "refresh": "30s",
+    "refresh": "auto",
     "schemaVersion": 42,
     "tags": [
         "jwt",
@@ -843,17 +1277,14 @@
     "templating": {
         "list": [
             {
-                "current": {
-                    "text": "All",
-                    "value": [
-                        "$__all"
-                    ]
-                },
+                "current": {},
                 "datasource": {
                     "type": "prometheus",
-                    "uid": "edqp0a73uh2bka"
+                    "uid": "${DS_PROMETHEUS}"
                 },
+                "definition": "label_values(sms_auth_jwt_tokens_issued_total, instance)",
                 "includeAll": true,
+                "label": "Instance",
                 "multi": true,
                 "name": "instance",
                 "options": [],
@@ -862,17 +1293,14 @@
                 "type": "query"
             },
             {
-                "current": {
-                    "text": "All",
-                    "value": [
-                        "$__all"
-                    ]
-                },
+                "current": {},
                 "datasource": {
                     "type": "prometheus",
-                    "uid": "edqp0a73uh2bka"
+                    "uid": "${DS_PROMETHEUS}"
                 },
+                "definition": "label_values(sms_auth_jwt_tokens_issued_total, job)",
                 "includeAll": true,
+                "label": "Job",
                 "multi": true,
                 "name": "job",
                 "options": [],
@@ -890,5 +1318,6 @@
     "timezone": "",
     "title": "JWT Authentication - SRE",
     "uid": "jwt-sre",
-    "version": 3
+    "version": 9,
+    "weekStart": ""
 }
