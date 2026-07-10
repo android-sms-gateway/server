@@ -122,6 +122,10 @@ GET {{baseUrl}}/3rdparty/v1/messages?from=2025-01-01T00:00:00.000Z&to=2025-12-31
 Authorization: Basic {{credentials}}
 
 ###
+GET {{baseUrl}}/3rdparty/v1/messages?sort=created_at HTTP/1.1
+Authorization: Basic {{credentials}}
+
+###
 POST {{baseUrl}}/3rdparty/v1/messages/inbox/export HTTP/1.1
 Authorization: Basic {{credentials}}
 Content-Type: application/json
