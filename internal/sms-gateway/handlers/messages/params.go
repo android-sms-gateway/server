@@ -46,13 +46,22 @@ func (p *thirdPartyGetQueryParams) ToOptions() messages.SelectOptions {
 	}
 
 	if p.Limit != nil {
-		options.Limit = min(*p.Limit, maxLimit)
+		options.Limit = max(min(*p.Limit, maxLimit), 1)
 	} else {
 		options.Limit = 50
 	}
 
 	if p.Offset != nil {
 		options.Offset = max(*p.Offset, 0)
+	}
+
+	if p.Sort != nil {
+		switch *p.Sort {
+		case smsgateway.CreatedAtAscending:
+			options.SortField = messages.SortFieldCreatedAtAsc
+		case smsgateway.CreatedAtDescending:
+			options.SortField = messages.SortFieldCreatedAtDesc
+		}
 	}
 
 	return options
