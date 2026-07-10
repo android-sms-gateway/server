@@ -673,6 +673,17 @@ const docTemplate = `{
                         "description": "Include textMessage/dataMessage content for each message. Default is false",
                         "name": "includeContent",
                         "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "created_at",
+                            "-created_at"
+                        ],
+                        "type": "string",
+                        "default": "-created_at",
+                        "description": "Sort order per JSON:API spec. Use created_at (ascending) or -created_at (descending)",
+                        "name": "sort",
+                        "in": "query"
                     }
                 ],
                 "responses": {
