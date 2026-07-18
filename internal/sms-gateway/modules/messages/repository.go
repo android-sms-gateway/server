@@ -71,9 +71,14 @@ func (r *Repository) list(filter SelectFilter, options SelectOptions) ([]message
 	}
 
 	// Apply ordering
-	if options.OrderBy == MessagesOrderFIFO {
+	switch {
+	case options.SortField == SortFieldCreatedAtAsc:
+		query = query.Order("messages.created_at ASC")
+	case options.SortField == SortFieldCreatedAtDesc:
+		query = query.Order("messages.created_at DESC")
+	case options.OrderBy == MessagesOrderFIFO:
 		query = query.Order("messages.schedule_at ASC, messages.priority DESC, messages.id ASC")
-	} else {
+	default:
 		query = query.Order("messages.schedule_at ASC, messages.priority DESC, messages.id DESC")
 	}
 
