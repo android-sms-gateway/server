@@ -28,9 +28,9 @@ func (s *Service) Refresh(
 	deviceID *string,
 	since, until time.Time,
 	types []smsgateway.IncomingMessageType,
-	triggerWebhooks *bool,
+	webhookDelivery smsgateway.WebhookDelivery,
 ) error {
-	event := events.NewMessagesExportRequestedEvent(since, until, types, triggerWebhooks)
+	event := events.NewMessagesExportRequestedEvent(since, until, types, webhookDelivery)
 
 	if err := s.eventsSvc.Notify(userID, deviceID, event); err != nil {
 		return fmt.Errorf("failed to notify device: %w", err)
