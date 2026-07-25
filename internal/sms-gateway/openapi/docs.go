@@ -362,7 +362,7 @@ const docTemplate = `{
                         "JWTAuth": []
                     }
                 ],
-                "description": "Retrieves incoming messages with filtering and pagination.",
+                "description": "Retrieves inbox messages with filtering and pagination.",
                 "produces": [
                     "application/json"
                 ],
@@ -370,7 +370,7 @@ const docTemplate = `{
                     "User",
                     "Inbox"
                 ],
-                "summary": "Get incoming messages",
+                "summary": "Get inbox messages",
                 "parameters": [
                     {
                         "enum": [
@@ -380,7 +380,7 @@ const docTemplate = `{
                             "MMS_DOWNLOADED"
                         ],
                         "type": "string",
-                        "description": "Filter incoming messages by type",
+                        "description": "Filter inbox messages by type",
                         "name": "type",
                         "in": "query"
                     },
@@ -420,11 +420,17 @@ const docTemplate = `{
                         "description": "Device ID",
                         "name": "deviceId",
                         "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Include attachment metadata in response (for MMS messages)",
+                        "name": "includeAttachments",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "A list of incoming messages",
+                        "description": "A list of inbox messages",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -522,6 +528,81 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/3rdparty/v1/inbox/{id}/attachments/{partId}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
+                    }
+                ],
+                "description": "Downloads an attachment from an inbox message by message ID and part ID.",
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "User",
+                    "Inbox"
+                ],
+                "summary": "Get attachment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Inbox message ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Attachment part ID",
+                        "name": "partId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Attachment file",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
                         "schema": {
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
@@ -1580,6 +1661,14 @@ const docTemplate = `{
                     "type": "boolean",
                     "example": false
                 },
+                "mmsMessage": {
+                    "description": "Present only when ` + "`" + `includeContent=true` + "`" + ` and the message type is mms.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.MmsMessage"
+                        }
+                    ]
+                },
                 "recipients": {
                     "description": "Recipients states",
                     "type": "array",
@@ -1699,6 +1788,31 @@ const docTemplate = `{
                 "HealthStatusFail"
             ]
         },
+        "smsgateway.InboxAttachment": {
+            "type": "object",
+            "properties": {
+                "contentType": {
+                    "description": "Attachment MIME type",
+                    "type": "string",
+                    "example": "image/jpeg"
+                },
+                "name": {
+                    "description": "Attachment file name",
+                    "type": "string",
+                    "example": "photo.jpg"
+                },
+                "partId": {
+                    "description": "Attachment part ID",
+                    "type": "integer",
+                    "example": 1
+                },
+                "size": {
+                    "description": "Attachment file size",
+                    "type": "integer",
+                    "example": 102400
+                }
+            }
+        },
         "smsgateway.InboxRefreshRequest": {
             "type": "object",
             "required": [
@@ -1763,6 +1877,13 @@ const docTemplate = `{
                 "type"
             ],
             "properties": {
+                "attachments": {
+                    "description": "MMS attachments",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/smsgateway.InboxAttachment"
+                    }
+                },
                 "contentPreview": {
                     "description": "Message body preview or metadata",
                     "type": "string",
@@ -1775,9 +1896,14 @@ const docTemplate = `{
                     "example": "2020-01-01T00:00:00Z"
                 },
                 "id": {
-                    "description": "Incoming message ID",
+                    "description": "Inbox message ID",
                     "type": "string",
                     "example": "PyDmBQZZXYmyxMwED8Fzy"
+                },
+                "isEncrypted": {
+                    "description": "Whether the message is encrypted",
+                    "type": "boolean",
+                    "example": true
                 },
                 "recipient": {
                     "description": "Recipient phone number on the device",
@@ -1785,7 +1911,7 @@ const docTemplate = `{
                     "example": "+79990001234"
                 },
                 "sender": {
-                    "description": "Incoming sender phone number",
+                    "description": "Inbox sender phone number",
                     "type": "string",
                     "example": "+79990001234"
                 },
@@ -1839,6 +1965,7 @@ const docTemplate = `{
                 "devices:delete",
                 "inbox:list",
                 "inbox:refresh",
+                "inbox:read",
                 "logs:read",
                 "messages:cancel",
                 "messages:send",
@@ -1857,6 +1984,7 @@ const docTemplate = `{
                 "ScopeDevicesDelete",
                 "ScopeInboxList",
                 "ScopeInboxRefresh",
+                "ScopeInboxRead",
                 "ScopeLogsRead",
                 "ScopeMessagesCancel",
                 "ScopeMessagesSend",
@@ -1975,11 +2103,20 @@ const docTemplate = `{
                     "maxLength": 65535,
                     "example": "Hello World!"
                 },
+                "mmsMessage": {
+                    "description": "MMS message",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.MmsMessage"
+                        }
+                    ]
+                },
                 "phoneNumbers": {
                     "description": "Recipients (phone numbers)",
                     "type": "array",
                     "maxItems": 100,
                     "minItems": 1,
+                    "uniqueItems": true,
                     "items": {
                         "type": "string"
                     },
@@ -2111,6 +2248,14 @@ const docTemplate = `{
                     "type": "boolean",
                     "example": false
                 },
+                "mmsMessage": {
+                    "description": "Present only when ` + "`" + `includeContent=true` + "`" + ` and the message type is mms.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.MmsMessage"
+                        }
+                    ]
+                },
                 "recipients": {
                     "description": "Recipients states",
                     "type": "array",
@@ -2155,6 +2300,52 @@ const docTemplate = `{
                 "LIFO",
                 "FIFO"
             ]
+        },
+        "smsgateway.MmsAttachment": {
+            "type": "object",
+            "required": [
+                "contentType",
+                "data"
+            ],
+            "properties": {
+                "contentType": {
+                    "description": "ContentType is the MIME type of the attachment.",
+                    "type": "string",
+                    "example": "image/png"
+                },
+                "data": {
+                    "description": "Data is the base64-encoded attachment content.",
+                    "type": "string",
+                    "example": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+                },
+                "name": {
+                    "description": "Name is the optional file name of the attachment.",
+                    "type": "string",
+                    "example": "picture.png"
+                }
+            }
+        },
+        "smsgateway.MmsMessage": {
+            "type": "object",
+            "properties": {
+                "attachments": {
+                    "description": "Attachments is the list of attachments. Omitted when empty.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/smsgateway.MmsAttachment"
+                    }
+                },
+                "subject": {
+                    "description": "Subject is the optional subject of the MMS.",
+                    "type": "string",
+                    "example": "Hello"
+                },
+                "text": {
+                    "description": "Text is the optional text body of the MMS.",
+                    "type": "string",
+                    "example": "World"
+                }
+            }
         },
         "smsgateway.ProcessingState": {
             "type": "string",
