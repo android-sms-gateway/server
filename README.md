@@ -165,8 +165,8 @@ The following scopes are available for token generation:
 
 - `devices:delete` - Delete devices
 - `devices:list` - List connected devices
-- `inbox:list` - List incoming messages with filters
-- `inbox:read` - Read incoming messages
+- `inbox:list` - List inbox messages with filters
+- `inbox:read` - Read inbox messages
 - `logs:read` - Read server logs
 - `messages:export` - Export messages
 - `messages:list` - List messages

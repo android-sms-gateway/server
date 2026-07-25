@@ -6,6 +6,7 @@ import (
 
 	"github.com/android-sms-gateway/server/internal/worker/server"
 	"github.com/android-sms-gateway/server/internal/worker/tasks/devices"
+	"github.com/android-sms-gateway/server/internal/worker/tasks/inbox"
 	"github.com/android-sms-gateway/server/internal/worker/tasks/messages"
 	"github.com/android-sms-gateway/server/internal/worker/tasks/tokens"
 	"github.com/capcom6/go-infra-fx/config"
@@ -66,6 +67,14 @@ func Module() fx.Option {
 				Cleanup: tokens.CleanupConfig{
 					Interval: time.Duration(cfg.Tasks.TokensCleanup.Interval),
 					MaxAge:   time.Duration(cfg.Tasks.TokensCleanup.MaxAge),
+				},
+			}
+		}),
+		fx.Provide(func(cfg Config) inbox.Config {
+			return inbox.Config{
+				Cleanup: inbox.CleanupConfig{
+					Interval: time.Duration(cfg.Tasks.InboxCleanup.Interval),
+					MaxAge:   time.Duration(cfg.Tasks.InboxCleanup.MaxAge),
 				},
 			}
 		}),
