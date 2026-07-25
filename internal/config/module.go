@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/inbox"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/jwt"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
@@ -127,6 +128,9 @@ func Module() fx.Option {
 		}),
 		fx.Provide(func(_ Config) devices.Config {
 			return devices.Config{}
+		}),
+		fx.Provide(func(_ Config) inbox.Config {
+			return inbox.Config{}
 		}),
 		fx.Provide(func(cfg Config) sse.Config {
 			return sse.NewConfig(

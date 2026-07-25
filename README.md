@@ -21,6 +21,8 @@ Backend for the SMSGate ecosystem: a REST API that dispatches SMS through connec
   - [🔌 API Overview](#-api-overview)
   - [📚 Documentation](#-documentation)
   - [🤝 Contributing](#-contributing)
+  - [🗺️ Roadmap](#️-roadmap)
+  - [📞 Contact](#-contact)
   - [⚖️ License](#️-license)
   - [📜 Legal Notice](#-legal-notice)
 
@@ -44,7 +46,7 @@ SMSGate Server is the backend of the SMSGate ecosystem. It accepts SMS dispatch 
 
 - MySQL 8.0.13+ or MariaDB 10.2.7+ database (MariaDB LTS recommended)
 - Docker + Docker Compose for container setup
-- Go 1.25+ for building from source
+- Go 1.25.8+ for building from source
 
 ## 🚀 Quickstart
 
@@ -58,10 +60,16 @@ docker run -p 3000:3000 \
   ghcr.io/android-sms-gateway/server:latest
 ```
 
-Or with Compose (backend + worker + MariaDB):
+Or with Compose (backend + background worker + MariaDB):
 
 ```bash
 docker compose -f deployments/docker-compose/docker-compose.yml up --build
+```
+
+The worker handles background tasks: message hashing, message/device/token cleanup. Run it as a separate process or via the `worker` subcommand:
+
+```bash
+./sms-gateway worker
 ```
 
 Local development:
@@ -82,6 +90,17 @@ export GATEWAY__PRIVATE_TOKEN=change-me
 export DATABASE__HOST=localhost
 export HTTP__LISTEN=0.0.0.0:3000
 ```
+
+### Worker Tasks
+
+The background worker runs periodic tasks controlled by the `tasks` config section:
+
+| Task               | Default Interval | Purpose                                                                 |
+| ------------------ | ---------------- | ----------------------------------------------------------------------- |
+| `messages_hashing` | `168h` (7 days)  | Hash processed messages to avoid plain text storage                     |
+| `messages_cleanup` | `24h`            | Delete messages older than `max_age` (default `720h` / 30 days)         |
+| `devices_cleanup`  | `24h`            | Remove inactive devices older than `max_age` (default `8760h` / 1 year) |
+| `tokens_cleanup`   | `24h`            | Revoke expired tokens past `max_age` grace (default `1h`)               |
 
 ## 🔐 Authentication
 
@@ -117,6 +136,16 @@ Also: `/api/3rdparty/v1/inbox`, `/settings`, `/logs`. OpenAPI schema is served w
 ## 🤝 Contributing
 
 Open an issue first, then submit a PR. Run `make lint` and `make test` locally.
+
+## 🗺️ Roadmap
+
+Track planned work and known issues in the [issue tracker](https://github.com/android-sms-gateway/server/issues).
+
+## 📞 Contact
+
+- **Email:** [support@sms-gate.app](mailto:support@sms-gate.app)
+- **Documentation:** [docs.sms-gate.app](https://docs.sms-gate.app/)
+- **Issues:** [github.com/android-sms-gateway/server/issues](https://github.com/android-sms-gateway/server/issues)
 
 ## ⚖️ License
 
