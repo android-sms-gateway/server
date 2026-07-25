@@ -18,6 +18,7 @@ type Config struct {
 	FCM      FCMConfig `yaml:"fcm"`      // firebase cloud messaging config
 	SSE      SSE       `yaml:"sse"`      // server-sent events config
 	Messages Messages  `yaml:"messages"` // messages config
+	Inbox    Inbox     `yaml:"inbox"`    // inbox config
 	Cache    Cache     `yaml:"cache"`    // cache (memory or redis) config
 	PubSub   PubSub    `yaml:"pubsub"`   // pubsub (memory or redis) config
 	JWT      JWT       `yaml:"jwt"`      // jwt config
@@ -115,6 +116,11 @@ type OTP struct {
 	Retries uint8  `yaml:"retries" envconfig:"OTP__RETRIES"` // otp generation retries (collision handling)
 }
 
+type Inbox struct {
+	RetentionDays      uint16 `yaml:"retention_days"       envconfig:"INBOX__RETENTION_DAYS"`       // retention period in days
+	CleanupIntervalMin uint16 `yaml:"cleanup_interval_min" envconfig:"INBOX__CLEANUP_INTERVAL_MIN"` // cleanup interval in minutes
+}
+
 func Default() Config {
 	//nolint:exhaustruct,mnd,goconst // default values
 	return Config{
@@ -169,6 +175,10 @@ func Default() Config {
 			Length:  6,
 			TTL:     60,
 			Retries: 3,
+		},
+		Inbox: Inbox{
+			RetentionDays:      30,
+			CleanupIntervalMin: 60,
 		},
 	}
 }
