@@ -1,6 +1,7 @@
 package inbox
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -9,15 +10,30 @@ import (
 	"go.uber.org/zap"
 )
 
+// Service provides business logic for inbox messages.
 type Service struct {
+	config Config
+
 	eventsSvc *events.Service
+
+	inbox *Repository
 
 	logger *zap.Logger
 }
 
-func New(eventsSvc *events.Service, logger *zap.Logger) *Service {
+// NewService creates a new Service.
+func NewService(
+	config Config,
+	eventsSvc *events.Service,
+	inbox *Repository,
+	logger *zap.Logger,
+) *Service {
 	return &Service{
+		config: config,
+
 		eventsSvc: eventsSvc,
+
+		inbox: inbox,
 
 		logger: logger,
 	}
@@ -37,4 +53,45 @@ func (s *Service) Refresh(
 	}
 
 	return nil
+}
+
+// InsertBatch stores a batch of encrypted inbox messages.
+// Returns ErrNotEncrypted if any message has IsEncrypted=false.
+// Returns ErrEmptyBatch if the slice is empty.
+func (s *Service) InsertBatch(ctx context.Context, deviceID string, msgs []MessageInput) error {
+	if len(msgs) == 0 {
+		return ErrEmptyBatch
+	}
+
+	for _, m := range msgs {
+		if !m.IsEncrypted {
+			return ErrNotEncrypted
+		}
+	}
+
+	if err := s.inbox.InsertBatch(ctx, deviceID, msgs); err != nil {
+		return fmt.Errorf("failed to insert inbox messages: %w", err)
+	}
+
+	return nil
+}
+
+// List returns inbox messages for a user.
+func (s *Service) List(userID string, filter ListFilter, opts ListOptions) ([]Message, int64, error) {
+	return s.inbox.list(userID, filter, opts)
+}
+
+// GetAttachment returns a single attachment, verifying user ownership of the parent message.
+func (s *Service) GetAttachment(
+	ctx context.Context,
+	userID string,
+	messageExtID string,
+	partID int64,
+) (*Attachment, error) {
+	msg, err := s.inbox.findMessageByExtID(ctx, messageExtID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.inbox.findAttachment(ctx, msg.ID, partID)
 }

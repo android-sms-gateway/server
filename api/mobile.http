@@ -81,3 +81,97 @@ Authorization: Bearer {{mobileToken}}
 ###
 GET {{baseUrl}}/events HTTP/1.1
 Authorization: Bearer {{mobileToken}}
+
+###
+POST {{baseUrl}}/inbox HTTP/1.1
+Authorization: Bearer {{mobileToken}}
+Content-Type: application/json
+
+[
+  {
+    "id": "sms-001",
+    "type": "SMS",
+    "sender": "+79990001234",
+    "recipient": "+79990005678",
+    "simNumber": 1,
+    "content": "a2V5X2VuY3J5cHRlZF9jb250ZW50",
+    "isEncrypted": true,
+    "createdAt": "2026-01-15T10:30:00Z"
+  }
+]
+
+###
+POST {{baseUrl}}/inbox HTTP/1.1
+Authorization: Bearer {{mobileToken}}
+Content-Type: application/json
+
+[
+  {
+    "id": "mms-001",
+    "type": "MMS",
+    "sender": "+79990001234",
+    "recipient": "+79990005678",
+    "simNumber": 1,
+    "content": "a2V5X2VuY3J5cHRlZF9jb250ZW50",
+    "isEncrypted": true,
+    "createdAt": "2026-01-15T11:00:00Z",
+    "attachments": [
+      {
+        "partId": 1,
+        "contentType": "image/jpeg",
+        "name": "enc_photo.jpg",
+        "size": 102400,
+        "data": "base64encodeddata"
+      },
+      {
+        "partId": 2,
+        "contentType": "text/plain",
+        "name": "enc_text.txt",
+        "data": "base64encodeddata"
+      }
+    ]
+  }
+]
+
+###
+POST {{baseUrl}}/inbox HTTP/1.1
+Authorization: Bearer {{mobileToken}}
+Content-Type: application/json
+
+[
+  {
+    "id": "sms-batch-001",
+    "type": "SMS",
+    "sender": "+79990001111",
+    "content": "a2V5X2VuY3J5cHRlZF9jb250ZW50XzE=",
+    "isEncrypted": true,
+    "createdAt": "2026-01-15T12:00:00Z"
+  },
+  {
+    "id": "sms-batch-002",
+    "type": "DATA_SMS",
+    "sender": "+79990002222",
+    "recipient": "+79990005678",
+    "simNumber": 2,
+    "content": "a2V5X2VuY3J5cHRlZF9jb250ZW50XzI=",
+    "isEncrypted": true,
+    "createdAt": "2026-01-15T12:01:00Z"
+  },
+  {
+    "id": "mms-batch-001",
+    "type": "MMS_DOWNLOADED",
+    "sender": "+79990003333",
+    "content": "a2V5X2VuY3J5cHRlZF9jb250ZW50XzM=",
+    "isEncrypted": true,
+    "createdAt": "2026-01-15T12:02:00Z",
+    "attachments": [
+      {
+        "partId": 1,
+        "contentType": "image/png",
+        "name": "enc_image.png",
+        "size": 204800,
+        "data": "base64encodeddata"
+      }
+    ]
+  }
+]

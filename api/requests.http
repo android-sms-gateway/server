@@ -126,18 +126,6 @@ GET {{baseUrl}}/3rdparty/v1/messages?sort=created_at HTTP/1.1
 Authorization: Basic {{credentials}}
 
 ###
-POST {{baseUrl}}/3rdparty/v1/inbox/refresh HTTP/1.1
-Authorization: Basic {{credentials}}
-Content-Type: application/json
-
-{
-    "since": "2024-12-01T00:00:00.000Z",
-    "until": "2024-12-31T23:59:59.999Z",
-    "deviceId": "_Py53j9Cj-JAWMqDXQcQF",
-    "webhookDelivery": "Batch"
-}
-
-###
 # @name getDevices
 @deviceId={{getDevices.response.body.$.0.id}}
 GET {{baseUrl}}/3rdparty/v1/devices HTTP/1.1
@@ -285,7 +273,7 @@ Content-Type: application/json
     "deviceId": "{{deviceId}}",
     "since": "2026-01-01T00:00:00.000Z",
     "until": "2026-12-31T23:59:59Z",
-    "messageTypes": ["SMS", "MMS"]
+    "messageTypes": ["MMS"]
 }
 
 ###
