@@ -5,11 +5,12 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 )
 
-type thirdPartyPostQueryParams struct {
-	SkipPhoneValidation bool `query:"skipPhoneValidation"`
-	DeviceActiveWithin  int  `query:"deviceActiveWithin"  validate:"omitempty,min=1"`
-}
-
+// thirdPartyPostQueryParams aliases smsgateway.SendOptions so that the query
+// parameter shape stays in sync with client-go. Note that any field with a
+// `query` struct tag added to SendOptions in a future client-go release will
+// automatically widen the surface of this endpoint; additions to SendOptions
+// must be reviewed deliberately here before merging.
+type thirdPartyPostQueryParams smsgateway.SendOptions
 type thirdPartyGetQueryParams smsgateway.ListMessagesOptions
 
 func (p *thirdPartyGetQueryParams) ToFilter() messages.SelectFilter {
