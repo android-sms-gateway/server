@@ -318,11 +318,13 @@ func (h *ThirdPartyController) errorHandler(c *fiber.Ctx) error {
 		errors.Is(err, messages.ErrMultipleMessagesFound),
 		errors.Is(err, messages.ErrNoContent):
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
-
 	case errors.Is(err, messages.ErrMessageNotFound):
 		return fiber.NewError(fiber.StatusNotFound, err.Error())
-
 	case errors.Is(err, messages.ErrMessageAlreadyExists):
+		return fiber.NewError(fiber.StatusConflict, err.Error())
+	case errors.Is(err, messages.ErrQueueLimitExceeded):
+		return fiber.NewError(fiber.StatusServiceUnavailable, err.Error())
+	case errors.Is(err, messages.ErrMessageNotPending):
 		return fiber.NewError(fiber.StatusConflict, err.Error())
 
 	case errors.Is(err, devices.ErrNotFound):
@@ -333,9 +335,6 @@ func (h *ThirdPartyController) errorHandler(c *fiber.Ctx) error {
 		fallthrough
 	case errors.Is(err, devices.ErrMoreThanOne):
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
-
-	case errors.Is(err, messages.ErrQueueLimitExceeded):
-		return fiber.NewError(fiber.StatusServiceUnavailable, err.Error())
 	}
 
 	h.Logger.Error("failed to handle request", zap.Error(err))
