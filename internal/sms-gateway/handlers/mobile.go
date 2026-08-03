@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/webhooks"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/auth"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
+	"github.com/android-sms-gateway/server/internal/sms-gateway/otp"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/users"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -74,7 +76,7 @@ func newMobileHandler(
 }
 
 func (h *mobileHandler) Register(router fiber.Router) {
-	router = router.Group("/mobile/v1")
+	router = router.Group("/mobile/v1", h.errorsHandler)
 
 	router.Post("/device",
 		userauth.NewBasic(h.usersSvc),
@@ -255,14 +257,14 @@ func (h *mobileHandler) patchDevice(device devices.Device, c *fiber.Ctx) error {
 //	@Produce		json
 //	@Success		200	{object}	smsgateway.MobileUserCodeResponse	"User code"
 //	@Failure		500	{object}	smsgateway.ErrorResponse			"Internal server error"
+//	@Failure		501	{object}	smsgateway.ErrorResponse			"OTP service disabled"
 //	@Router			/mobile/v1/user/code [get]
 //
 // Get user code.
 func (h *mobileHandler) getUserCode(userID string, c *fiber.Ctx) error {
 	code, err := h.authSvc.GenerateUserCode(c.Context(), userID)
 	if err != nil {
-		h.Logger.Error("failed to generate user code", zap.Error(err), zap.String("user_id", userID))
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate user code")
+		return fmt.Errorf("failed to generate user code: %w", err)
 	}
 
 	return c.JSON(smsgateway.MobileUserCodeResponse{
@@ -310,4 +312,22 @@ func (h *mobileHandler) simCardsToDomain(simCards []smsgateway.SimCard) []device
 			ICCID:       sc.ICCID,
 		}
 	})
+}
+
+func (h *mobileHandler) errorsHandler(c *fiber.Ctx) error {
+	err := c.Next()
+	if err == nil {
+		return nil
+	}
+
+	switch {
+	case errors.Is(err, otp.ErrInvalidConfig):
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	case errors.Is(err, otp.ErrInitFailed):
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	case errors.Is(err, otp.ErrDisabled):
+		return fiber.NewError(fiber.StatusNotImplemented, err.Error())
+	}
+
+	return err //nolint:wrapcheck // passed through to fiber's error handler
 }

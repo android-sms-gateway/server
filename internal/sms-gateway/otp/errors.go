@@ -7,4 +7,6 @@ var (
 	ErrInvalidConfig = errors.New("invalid config")
 	// ErrInitFailed indicates that the OTP service failed to initialize.
 	ErrInitFailed = errors.New("initialization failed")
+	// ErrDisabled indicates that the OTP service is disabled.
+	ErrDisabled = errors.New("otp disabled")
 )

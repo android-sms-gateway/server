@@ -109,8 +109,10 @@ type JWT struct {
 }
 
 type OTP struct {
-	TTL     uint16 `yaml:"ttl"     envconfig:"OTP__TTL"`
-	Retries uint8  `yaml:"retries" envconfig:"OTP__RETRIES"`
+	Enabled bool   `yaml:"enabled" envconfig:"OTP__ENABLED"` // enable one-time code authentication for device registration
+	Length  uint8  `yaml:"length"  envconfig:"OTP__LENGTH"`  // OTP code length (min 6)
+	TTL     uint16 `yaml:"ttl"     envconfig:"OTP__TTL"`     // otp ttl in seconds
+	Retries uint8  `yaml:"retries" envconfig:"OTP__RETRIES"` // otp generation retries (collision handling)
 }
 
 func Default() Config {
@@ -163,7 +165,9 @@ func Default() Config {
 			Issuer:     "sms-gate.app",
 		},
 		OTP: OTP{
-			TTL:     300,
+			Enabled: true,
+			Length:  6,
+			TTL:     60,
 			Retries: 3,
 		},
 	}
