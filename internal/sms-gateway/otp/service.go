@@ -2,18 +2,24 @@ package otp
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
-	"math/big"
+	"strings"
 	"time"
 
 	"github.com/go-core-fx/cachefx/cache"
+	"github.com/jaevor/go-nanoid"
 	"go.uber.org/zap"
 )
+
+// otpAlphabet contains 31 ASCII characters for OTP generation.
+// Digits 2-9 (excludes 0, 1) and letters a-z excluding i, l, o
+// (visually similar to 1, I, O/0 respectively).
+const otpAlphabet = "23456789abcdefghjkmnpqrstuvwxyz"
 
 type Service struct {
 	cfg Config
 
+	gen     func() string
 	storage *Storage
 
 	logger *zap.Logger
@@ -40,7 +46,12 @@ func NewService(cfg Config, storage *Storage, logger *zap.Logger) (*Service, err
 		return nil, fmt.Errorf("%w: logger is required", ErrInitFailed)
 	}
 
-	return &Service{cfg: cfg, storage: storage, logger: logger}, nil
+	gen, err := nanoid.CustomASCII(otpAlphabet, cfg.Length)
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to create OTP generator: %w", ErrInitFailed, err)
+	}
+
+	return &Service{cfg: cfg, gen: gen, storage: storage, logger: logger}, nil
 }
 
 // Generate generates a new one-time user authorization code.
@@ -52,7 +63,9 @@ func NewService(cfg Config, storage *Storage, logger *zap.Logger) (*Service, err
 //
 // The generated code is stored with a TTL of the configured duration.
 func (s *Service) Generate(ctx context.Context, userID string) (*Code, error) {
-	const maxValue = 1000000
+	if !s.cfg.Enabled {
+		return nil, ErrDisabled
+	}
 
 	var code string
 	var err error
@@ -60,14 +73,7 @@ func (s *Service) Generate(ctx context.Context, userID string) (*Code, error) {
 	validUntil := time.Now().Add(s.cfg.TTL)
 
 	for range s.cfg.Retries {
-		num, rndErr := rand.Int(rand.Reader, big.NewInt(maxValue))
-		if rndErr != nil {
-			s.logger.Warn("failed to generate random number", zap.Error(rndErr))
-			err = rndErr
-			continue
-		}
-
-		code = fmt.Sprintf("%06d", num.Int64())
+		code = s.gen()
 
 		if err = s.storage.SetOrFail(ctx, code, userID, cache.WithValidUntil(validUntil)); err != nil {
 			s.logger.Warn("failed to store code", zap.Error(err))
@@ -94,5 +100,9 @@ func (s *Service) Generate(ctx context.Context, userID string) (*Code, error) {
 // If there is an error while validating the code, it returns the error.
 // If the code is valid, it deletes the code from the storage and returns the user ID.
 func (s *Service) Validate(ctx context.Context, code string) (string, error) {
-	return s.storage.GetAndDelete(ctx, code)
+	if !s.cfg.Enabled {
+		return "", ErrDisabled
+	}
+
+	return s.storage.GetAndDelete(ctx, strings.ToLower(code))
 }

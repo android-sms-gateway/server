@@ -159,6 +159,8 @@ func Module() fx.Option {
 		}),
 		fx.Provide(func(cfg Config) otp.Config {
 			return otp.Config{
+				Enabled: cfg.OTP.Enabled,
+				Length:  int(cfg.OTP.Length),
 				TTL:     time.Duration(cfg.OTP.TTL) * time.Second,
 				Retries: int(cfg.OTP.Retries),
 			}
