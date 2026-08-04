@@ -40,6 +40,10 @@ func NewService(
 }
 
 func (s *Service) Insert(ctx context.Context, userID string, device DeviceInfo) (*Device, error) {
+	if err := validateE2EPair(device.PublicKey, device.KeyVersion); err != nil {
+		return nil, err
+	}
+
 	input := DeviceInput{
 		DeviceInfo: device,
 		ID:         s.idGen(),
@@ -48,6 +52,28 @@ func (s *Service) Insert(ctx context.Context, userID string, device DeviceInfo) 
 	}
 
 	return s.devices.Insert(ctx, input)
+}
+
+// ValidateE2EPair returns ErrInconsistentE2E if exactly one of the E2E key
+// fields is set, or if the public key is an empty string. Both fields must be
+// either provided together with a non-empty key or both absent.
+func (s *Service) ValidateE2EPair(publicKey *string, keyVersion *int) error {
+	return validateE2EPair(publicKey, keyVersion)
+}
+
+// validateE2EPair returns ErrInconsistentE2E if exactly one of the E2E key
+// fields is set, or if the public key is an empty string. Both fields must be
+// either provided together with a non-empty key or both absent.
+func validateE2EPair(publicKey *string, keyVersion *int) error {
+	if (publicKey != nil) != (keyVersion != nil) {
+		return ErrInconsistentE2E
+	}
+
+	if publicKey != nil && *publicKey == "" {
+		return ErrInconsistentE2E
+	}
+
+	return nil
 }
 
 // Select returns a list of devices for a specific user that match the provided filters.
@@ -130,6 +156,10 @@ func (s *Service) GetByToken(ctx context.Context, token string) (*Device, error)
 }
 
 func (s *Service) Update(ctx context.Context, id string, device DeviceUpdate) error {
+	if err := validateE2EPair(device.PublicKey, device.KeyVersion); err != nil {
+		return err
+	}
+
 	if err := s.devices.Update(ctx, id, device); err != nil {
 		return err
 	}
