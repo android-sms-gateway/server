@@ -64,6 +64,27 @@ func TestDeviceToDTO(t *testing.T) {
 			},
 		},
 		{
+			name: "device with versioned public key",
+			device: devices.Device{
+				DeviceInput: devices.DeviceInput{
+					DeviceInfo: devices.DeviceInfo{
+						DeviceUpdate: devices.DeviceUpdate{
+							PublicKey:  lo.ToPtr("test-public-key"),
+							KeyVersion: lo.ToPtr(1),
+						},
+					},
+					ID: "test-id",
+				},
+			},
+			expected: smsgateway.Device{
+				ID: "test-id",
+				VersionedPublicKey: smsgateway.VersionedPublicKey{
+					PublicKey:  lo.ToPtr("test-public-key"),
+					KeyVersion: lo.ToPtr(1),
+				},
+			},
+		},
+		{
 			name: "device with sim cards",
 			device: devices.Device{
 				DeviceInput: devices.DeviceInput{

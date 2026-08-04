@@ -23,6 +23,9 @@ type DeviceModel struct {
 	UserID string `gorm:"not null;type:varchar(32)"`
 
 	SimCards datatypes.JSONSlice[simCardModel] `gorm:"serializer:json;type:json"`
+
+	PublicKey  *string `gorm:"type:text"`
+	KeyVersion *int    `gorm:"default:null"`
 }
 
 func newDeviceModel(device DeviceInput) *DeviceModel {
@@ -46,6 +49,9 @@ func newDeviceModel(device DeviceInput) *DeviceModel {
 			device.SimCards,
 			func(simCard SimCard, _ int) simCardModel { return newSimCardModel(simCard) },
 		),
+
+		PublicKey:  device.PublicKey,
+		KeyVersion: device.KeyVersion,
 	}
 }
 
@@ -62,8 +68,10 @@ func (m *DeviceModel) toDomain() *Device {
 		DeviceInput: DeviceInput{
 			DeviceInfo: DeviceInfo{
 				DeviceUpdate: DeviceUpdate{
-					PushToken: m.PushToken,
-					SimCards:  lo.Map(m.SimCards, func(m simCardModel, _ int) SimCard { return m.toDomain() }),
+					PushToken:  m.PushToken,
+					SimCards:   lo.Map(m.SimCards, func(m simCardModel, _ int) SimCard { return m.toDomain() }),
+					PublicKey:  m.PublicKey,
+					KeyVersion: m.KeyVersion,
 				},
 
 				Name: m.Name,
