@@ -94,7 +94,7 @@ func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 		c.Context(),
 		userID,
 		req.DeviceID,
-		time.Duration(params.DeviceActiveWithin)*time.Hour,
+		time.Duration(lo.FromPtrOr(params.DeviceActiveWithin, 0))*time.Hour,
 	)
 	if err != nil {
 		h.Logger.Error(
@@ -144,7 +144,7 @@ func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 		c.Context(),
 		*device,
 		msg,
-		messages.EnqueueOptions{SkipPhoneValidation: params.SkipPhoneValidation},
+		messages.EnqueueOptions{SkipPhoneValidation: lo.FromPtrOr(params.SkipPhoneValidation, false)},
 	)
 	if err != nil {
 		h.Logger.Error(
