@@ -1,0 +1,268 @@
+groups:
+  - name: server:events:alerts
+    rules:
+      - alert: LowEventDeliverySuccessRate
+        expr: 100 * (sum(rate(sms_events_sent_total[5m])) / (sum(rate(sms_events_sent_total[5m])) + sum(rate(sms_events_failed_total[5m]))) < 90
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Event delivery success rate below 90%"
+          description: "Event delivery success rate is at {{ $value }}%"
+
+  - name: server:http-alerts
+    rules:
+      - alert: HighHTTPErrorRateWarning
+        expr: sum(rate(http_requests_total{job="backend", status_code=~"5.."}[5m])) / sum(rate(http_requests_total{job="backend"}[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High HTTP error rate (Warning)"
+          description: "The HTTP error rate has exceeded 5% over the last 5 minutes."
+
+      - alert: HighHTTPErrorRateCritical
+        expr: sum(rate(http_requests_total{job="backend", status_code=~"5.."}[5m])) / sum(rate(http_requests_total{job="backend"}[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High HTTP error rate (Critical)"
+          description: "The HTTP error rate has exceeded 10% over the last 5 minutes."
+
+      - alert: HighHTTPLatencyWarning
+        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job="backend"}[5m])) by (le)) > 0.3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High HTTP latency (p99) (Warning)"
+          description: "The p99 HTTP latency has exceeded 0.3 seconds over the last 5 minutes."
+
+      - alert: HighHTTPLatencyCritical
+        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job="backend"}[5m])) by (le)) > 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High HTTP latency (p99) (Critical)"
+          description: "The p99 HTTP latency has exceeded 1 seconds over the last 5 minutes."
+
+      - alert: IncreasedHTTPRequestVolumeWarning
+        expr: rate(http_requests_total{job="backend"}[1m]) > 2 * avg_over_time(rate(http_requests_total{job="backend"}[1m])[10m:1m])
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Increased HTTP request volume (Warning)"
+          description: "The HTTP request volume has increased by 2x compared to the average of the last 10 minutes."
+
+      - alert: IncreasedHTTPRequestVolumeCritical
+        expr: rate(http_requests_total{job="backend"}[1m]) > 5 * avg_over_time(rate(http_requests_total{job="backend"}[1m])[10m])
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Increased HTTP request volume (Critical)"
+          description: "The HTTP request volume has increased by 5x compared to the average of the last 10 minutes."
+
+  - name: server:jwt:alerts
+    rules:
+      - alert: JWT_Validation_ErrorRate_High
+        expr: rate(sms_auth_jwt_tokens_validated_total{status="error"}[5m]) / max(rate(sms_auth_jwt_tokens_validated_total[5m]), 0.00001) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: jwt
+        annotations:
+          summary: "High JWT validation error rate"
+          description: "JWT validation error rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+
+      - alert: JWT_Issuance_Latency_High
+        expr: histogram_quantile(0.99, rate(sms_auth_jwt_issuance_duration_seconds_bucket[5m])) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          service: jwt
+        annotations:
+          summary: "High JWT issuance latency (p99)"
+          description: "JWT issuance p99 latency is {{ $value }}s (threshold: 0.5s)"
+
+      - alert: JWT_Revocation_Failures
+        expr: rate(sms_auth_jwt_tokens_revoked_total{status="error"}[5m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          service: jwt
+        annotations:
+          summary: "JWT revocation failures detected"
+          description: "JWT revocation errors occurring at rate {{ $value }}/s"
+
+      - alert: JWT_Refresh_Latency_High
+        expr: histogram_quantile(0.99, rate(sms_auth_jwt_refresh_duration_seconds_bucket[5m])) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          service: jwt
+        annotations:
+          summary: "High JWT refresh latency (p99)"
+          description: "JWT refresh p99 latency is {{ $value }}s (threshold: 0.5s)"
+
+      - alert: JWT_Refresh_ErrorRate_High
+        expr: sum(rate(sms_auth_jwt_tokens_refreshed_total{status="error"}[5m])) / clamp_min(sum(rate(sms_auth_jwt_tokens_refreshed_total[5m])), 0.00001) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: jwt
+        annotations:
+          summary: "High JWT refresh error rate"
+          description: "JWT refresh error rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+
+  - name: server:messages:alerts
+    rules:
+      - alert: LimiterQueryErrors
+        expr: sum(increase(sms_messages_limiter_query_errors_total[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Limiter database query errors detected"
+          description:
+            "Limiter is encountering database errors while checking limits ({{
+            $value }} errors in 5m). Rate limiting may not function correctly."
+          runbook:
+            "Check database connectivity and investigate query failures in the
+            messages limiter logs"
+
+      - alert: HighRateLimitingActivity
+        expr:
+          sum(increase(sms_messages_limiter_checks_total{result="limited"}[5m])) >
+          100
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate limiting activity detected"
+          description:
+            "Devices are being rate-limited at a high rate ({{ $value }}
+            limited checks in 5m). Review queue capacity configuration or
+            investigate potential abuse."
+          runbook:
+            "Check the Messages dashboard for batch size and query error panels.
+            Review QueueConfig settings (MaxPending, MaxPendingAge, MaxFailed)."
+
+  - name: server:online:alerts
+    rules:
+      - alert: OnlineStatusErrors
+        expr: sum(increase(sms_online_status_set_total{status="error"}[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of online status errors"
+          description: "The number of online status errors has exceeded 10 in the last 5 minutes."
+
+      - alert: CacheOperationErrors
+        expr: sum by (operation) (increase(sms_online_cache_operations_total{status="error"}[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of cache operation errors"
+          description: "Cache errors for operation={{ $labels.operation }} exceeded 5 in 5m."
+
+      - alert: PersistenceErrors
+        expr: sum(increase(sms_online_persistence_errors_total[5m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Persistence errors detected"
+          description: "Persistence errors have been detected in the online module."
+
+      - alert: HighPersistenceLatency
+        expr: histogram_quantile(0.95, sum(rate(sms_online_persistence_latency_seconds_bucket[5m])) by (le)) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High persistence latency"
+          description: "The 95th percentile persistence latency has exceeded 0.5 seconds."
+
+  - name: server:sse:alerts
+    rules:
+      - alert: HighSSEErrorRate
+        expr: |
+          (sum(rate(sms_sse_connection_errors_total[5m])) / sum(rate(sms_sse_events_sent_total[5m]))) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High SSE error rate ({{ $value | humanize }}%)"
+          description: "SSE error rate has exceeded 5% for 5 minutes. This may indicate client connectivity issues or server-side processing problems."
+          dashboard: "https://grafana.example.com/d/sse-dashboard"
+          runbook: "https://internal.dev-docs/server/sse-troubleshooting#high-error-rate"
+
+      - alert: SSEConnectionLoss
+        expr: sms_sse_active_connections == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "All SSE connections lost"
+          description: "No active SSE connections detected for 5 minutes. This indicates complete service disruption for real-time updates."
+          dashboard: "https://grafana.example.com/d/sse-dashboard"
+          runbook: "https://internal.dev-docs/server/sse-troubleshooting#connection-loss"
+
+      - alert: HighSSELatency
+        expr: |
+          histogram_quantile(0.95, rate(sms_sse_event_delivery_latency_seconds_bucket[5m])) > 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High SSE event latency (95th percentile > 10s)"
+          description: "95th percentile of event delivery latency has exceeded 10 seconds for 5 minutes. Clients may experience significant delays in receiving real-time updates."
+          dashboard: "https://grafana.example.com/d/sse-dashboard"
+          runbook: "https://internal.dev-docs/server/sse-troubleshooting#high-latency"
+
+      - alert: HighConnectionChurn
+        expr: rate(sms_sse_connections_opened_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High SSE connection churn ({{ $value | humanize }} connections/sec)"
+          description: "SSE connection churn rate has exceeded 10 connections per second for 5 minutes. This may indicate unstable client connections or aggressive reconnection logic."
+          dashboard: "https://grafana.example.com/d/sse-dashboard"
+          runbook: "https://internal.dev-docs/server/sse-troubleshooting#connection-churn"
+
+  - name: server:worker:alerts
+    rules:
+      - alert: WorkerTaskFailure
+        expr: sum(rate(worker_executor_task_result_total{result="error"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High worker task failure rate"
+          description: "Worker task error rate is {{ $value }} errors per minute, exceeding threshold"
+          runbook: "Check worker logs for task failures"
+      - alert: LongRunningTask
+        expr: histogram_quantile(0.95, sum(rate(worker_executor_task_duration_seconds_bucket[5m])) by (le)) > 30
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Worker tasks running longer than expected"
+          description: "95th percentile task duration is {{ $value }}s, above 30s threshold"
+          runbook: "Review task performance and optimize if needed"
+      - alert: HighActiveTasks
+        expr: worker_executor_active_tasks > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of active worker tasks"
+          description: "Active tasks count is {{ $value }}, exceeding 10 for more than 5 minutes"
+          runbook: "Monitor for potential task queuing or performance issues"
