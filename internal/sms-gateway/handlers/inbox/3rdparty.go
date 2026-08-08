@@ -64,7 +64,7 @@ func (h *ThirdPartyController) list(_ string, _ *fiber.Ctx) error {
 }
 
 //	@Summary		Request inbox messages refresh
-//	@Description	Refreshes inbox messages. Webhooks are triggered when triggerWebhooks is true.
+//	@Description	Refreshes inbox messages. Webhook triggering depends on the `webhookDelivery` parameter.
 //	@Security		ApiAuth
 //	@Security		JWTAuth
 //	@Tags			User, Inbox
@@ -91,7 +91,7 @@ func (h *ThirdPartyController) refresh(userID string, c *fiber.Ctx) error {
 		req.Since,
 		req.Until,
 		req.MessageTypes,
-		&req.TriggerWebhooks,
+		req.ResolveWebhookDelivery(),
 	); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}

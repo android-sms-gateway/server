@@ -20,7 +20,7 @@ func NewWebhooksUpdatedEvent() Event {
 func NewMessagesExportRequestedEvent(
 	since, until time.Time,
 	types []smsgateway.IncomingMessageType,
-	triggerWebhooks *bool,
+	webhookDelivery smsgateway.WebhookDelivery,
 ) Event {
 	data := map[string]string{
 		"since": since.Format(time.RFC3339),
@@ -32,9 +32,8 @@ func NewMessagesExportRequestedEvent(
 			",",
 		)
 	}
-	if triggerWebhooks != nil {
-		data["triggerWebhooks"] = strconv.FormatBool(*triggerWebhooks)
-	}
+	data["webhookDelivery"] = string(webhookDelivery)
+	data["triggerWebhooks"] = strconv.FormatBool(webhookDelivery != smsgateway.WebhookDeliveryDisabled)
 
 	return NewEvent(
 		smsgateway.PushMessagesExportRequested,

@@ -481,7 +481,7 @@ const docTemplate = `{
                         "JWTAuth": []
                     }
                 ],
-                "description": "Refreshes inbox messages. Webhooks are triggered when triggerWebhooks is true.",
+                "description": "Refreshes inbox messages. Webhook triggering depends on the ` + "`" + `webhookDelivery` + "`" + ` parameter.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1714,7 +1714,7 @@ const docTemplate = `{
                     "example": "2024-01-01T00:00:00Z"
                 },
                 "triggerWebhooks": {
-                    "description": "Indicates whether to trigger webhooks for the refreshed messages.",
+                    "description": "Deprecated: use WebhookDelivery instead. Indicates whether to trigger webhooks for the refreshed messages.",
                     "type": "boolean",
                     "example": true
                 },
@@ -1723,6 +1723,20 @@ const docTemplate = `{
                     "type": "string",
                     "format": "date-time",
                     "example": "2024-01-01T23:59:59Z"
+                },
+                "webhookDelivery": {
+                    "description": "Delivery mode for webhooks (overrides triggerWebhooks when set).",
+                    "enum": [
+                        "Disabled",
+                        "Individual",
+                        "Batch"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.WebhookDelivery"
+                        }
+                    ],
+                    "example": "Batch"
                 }
             }
         },
@@ -2486,6 +2500,29 @@ const docTemplate = `{
                 }
             }
         },
+        "smsgateway.WebhookDelivery": {
+            "type": "string",
+            "enum": [
+                "Disabled",
+                "Individual",
+                "Batch"
+            ],
+            "x-enum-comments": {
+                "WebhookDeliveryBatch": "Deliver webhooks as ordered batches.",
+                "WebhookDeliveryDisabled": "Disable webhook delivery.",
+                "WebhookDeliveryIndividual": "Deliver webhooks individually (one per message)."
+            },
+            "x-enum-descriptions": [
+                "Disable webhook delivery.",
+                "Deliver webhooks individually (one per message).",
+                "Deliver webhooks as ordered batches."
+            ],
+            "x-enum-varnames": [
+                "WebhookDeliveryDisabled",
+                "WebhookDeliveryIndividual",
+                "WebhookDeliveryBatch"
+            ]
+        },
         "smsgateway.WebhookEvent": {
             "type": "string",
             "enum": [
@@ -2498,12 +2535,20 @@ const docTemplate = `{
                 "system:ping",
                 "mms:received",
                 "mms:downloaded",
-                "app:started"
+                "app:started",
+                "sms:batch:received",
+                "sms:batch:data-received",
+                "mms:batch:received",
+                "mms:batch:downloaded"
             ],
             "x-enum-comments": {
                 "WebhookEventAppStarted": "Triggered when the application is started.",
+                "WebhookEventMmsBatchDownloaded": "Triggered when a batch of MMS messages is downloaded.",
+                "WebhookEventMmsBatchReceived": "Triggered when a batch of MMS messages is received.",
                 "WebhookEventMmsDownloaded": "Triggered when an MMS is downloaded.",
                 "WebhookEventMmsReceived": "Triggered when an MMS is received.",
+                "WebhookEventSmsBatchDataReceived": "Triggered when a batch of data SMS messages is received.",
+                "WebhookEventSmsBatchReceived": "Triggered when a batch of SMS messages is received.",
                 "WebhookEventSmsCancelled": "Triggered when an SMS is cancelled.",
                 "WebhookEventSmsDataReceived": "Triggered when a data SMS is received.",
                 "WebhookEventSmsDelivered": "Triggered when an SMS is delivered.",
@@ -2522,7 +2567,11 @@ const docTemplate = `{
                 "Triggered when the device pings the server.",
                 "Triggered when an MMS is received.",
                 "Triggered when an MMS is downloaded.",
-                "Triggered when the application is started."
+                "Triggered when the application is started.",
+                "Triggered when a batch of SMS messages is received.",
+                "Triggered when a batch of data SMS messages is received.",
+                "Triggered when a batch of MMS messages is received.",
+                "Triggered when a batch of MMS messages is downloaded."
             ],
             "x-enum-varnames": [
                 "WebhookEventSmsReceived",
@@ -2534,7 +2583,11 @@ const docTemplate = `{
                 "WebhookEventSystemPing",
                 "WebhookEventMmsReceived",
                 "WebhookEventMmsDownloaded",
-                "WebhookEventAppStarted"
+                "WebhookEventAppStarted",
+                "WebhookEventSmsBatchReceived",
+                "WebhookEventSmsBatchDataReceived",
+                "WebhookEventMmsBatchReceived",
+                "WebhookEventMmsBatchDownloaded"
             ]
         }
     },
