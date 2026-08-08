@@ -93,7 +93,7 @@ func (r *Repository) Update(ctx context.Context, id string, device DeviceUpdate)
 	updates := map[string]any{}
 
 	if device.PushToken != nil {
-		updates["push_token"] = device.PushToken
+		updates["push_token"] = lo.EmptyableToPtr(*device.PushToken)
 	}
 
 	if device.SimCards != nil {
@@ -101,6 +101,14 @@ func (r *Repository) Update(ctx context.Context, id string, device DeviceUpdate)
 			device.SimCards,
 			func(simCard SimCard, _ int) simCardModel { return newSimCardModel(simCard) },
 		))
+	}
+
+	if device.PublicKey != nil {
+		updates["public_key"] = device.PublicKey
+	}
+
+	if device.KeyVersion != nil {
+		updates["key_version"] = *device.KeyVersion
 	}
 
 	if len(updates) == 0 {

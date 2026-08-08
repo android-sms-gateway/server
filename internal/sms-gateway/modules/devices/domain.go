@@ -1,6 +1,8 @@
 package devices
 
-import "time"
+import (
+	"time"
+)
 
 type DeviceInput struct {
 	DeviceInfo
@@ -20,6 +22,17 @@ type DeviceInfo struct {
 type DeviceUpdate struct {
 	PushToken *string
 	SimCards  []SimCard
+	// PublicKey is a base64-encoded RSA public key (nil if no E2E).
+	// Setting a new key together with KeyVersion overwrites the previous key;
+	// clearing an existing key is intentionally unsupported. On insert, nil
+	// means the device is created without E2E; on update, a both-nil pair is
+	// a no-op that leaves the existing key unchanged. An empty string is
+	// rejected with ErrInconsistentE2E.
+	PublicKey *string
+	// KeyVersion is the key version used for rotation tracking (nil if no
+	// E2E). It must always be set together with PublicKey: providing exactly
+	// one of the two is rejected with ErrInconsistentE2E.
+	KeyVersion *int
 }
 
 type Device struct {
