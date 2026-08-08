@@ -642,18 +642,31 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "enum": [
+                            "Pending",
+                            "Cancelling",
+                            "Cancelled",
+                            "Processed",
+                            "Sent",
+                            "Delivered",
+                            "Failed"
+                        ],
                         "type": "string",
                         "description": "Filter messages by processing state",
                         "name": "state",
                         "in": "query"
                     },
                     {
+                        "maxLength": 21,
+                        "minLength": 21,
                         "type": "string",
                         "description": "Filter by device ID",
                         "name": "deviceId",
                         "in": "query"
                     },
                     {
+                        "maximum": 100,
+                        "minimum": 1,
                         "type": "integer",
                         "default": 50,
                         "description": "Pagination limit",
