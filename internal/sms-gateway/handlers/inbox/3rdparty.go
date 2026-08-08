@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/base"
@@ -16,9 +15,6 @@ import (
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
-
-const listDefaultLimit = 50
-const listMaxLimit = 500
 
 type ThirdPartyController struct {
 	base.Handler
@@ -71,46 +67,13 @@ func (h *ThirdPartyController) Register(router fiber.Router) {
 //
 // Get inbox messages.
 func (h *ThirdPartyController) list(userID string, c *fiber.Ctx) error {
-	var startDate, endDate time.Time
-
-	if from := c.Query("from"); from != "" {
-		t, err := time.Parse(time.RFC3339, from)
-		if err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, "invalid from: "+err.Error())
-		}
-		startDate = t
-	}
-	if to := c.Query("to"); to != "" {
-		t, err := time.Parse(time.RFC3339, to)
-		if err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, "invalid to: "+err.Error())
-		}
-		endDate = t
+	var params thirdPartyListParams
+	if err := c.QueryParser(&params); err != nil {
+		h.Logger.Error("failed to parse query parameters", zap.Error(err))
+		return fiber.NewError(fiber.StatusBadRequest, "failed to parse query parameters")
 	}
 
-	limit, err := strconv.Atoi(c.Query("limit", "50"))
-	if err != nil || limit < 1 {
-		limit = listDefaultLimit
-	}
-	if limit > listMaxLimit {
-		limit = listMaxLimit
-	}
-
-	offset, err := strconv.Atoi(c.Query("offset", "0"))
-	if err != nil || offset < 0 {
-		offset = 0
-	}
-
-	messages, total, err := h.inboxSvc.List(userID, inbox.ListFilter{
-		UserID:    userID,
-		DeviceID:  c.Query("deviceId"),
-		Type:      inbox.MessageType(c.Query("type")),
-		StartDate: startDate,
-		EndDate:   endDate,
-	}, inbox.ListOptions{
-		Limit:  limit,
-		Offset: offset,
-	})
+	messages, total, err := h.inboxSvc.List(userID, params.toFilter(userID), params.toOptions())
 	if err != nil {
 		h.Logger.Error("failed to list inbox messages", zap.Error(err), zap.String("user_id", userID))
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to list inbox messages")
