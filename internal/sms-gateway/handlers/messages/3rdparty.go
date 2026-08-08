@@ -181,11 +181,11 @@ func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 //	@Security		JWTAuth
 //	@Tags			User, Messages
 //	@Produce		json
-//	@Param			from			query		string							false	"Start date in RFC3339 format"															Format(date-time)
-//	@Param			to				query		string							false	"End date in RFC3339 format"															Format(date-time)
-//	@Param			state			query		string							false	"Filter messages by processing state"													Enum(Pending, Processed, Sent, Delivered, Failed)
-//	@Param			deviceId		query		string							false	"Filter by device ID"																	min(21)		max(21)
-//	@Param			limit			query		int								false	"Pagination limit"																		default(50)	min(1)	max(100)
+//	@Param			from			query		string							false	"Start date in RFC3339 format"	Format(date-time)
+//	@Param			to				query		string							false	"End date in RFC3339 format"	Format(date-time)
+//	@Param			state			query		smsgateway.ProcessingState		false	"Filter messages by processing state"
+//	@Param			deviceId		query		string							false	"Filter by device ID"																	minLength(21)	maxLength(21)
+//	@Param			limit			query		int								false	"Pagination limit"																		default(50)		minimum(1)	maximum(100)//	@Param	offset	query	int	false	"Pagination offset"	default(0)
 //	@Param			offset			query		int								false	"Pagination offset"																		default(0)
 //	@Param			includeContent	query		bool							false	"Include textMessage/dataMessage content for each message. Default is false"			default(false)
 //	@Param			sort			query		string							false	"Sort order per JSON:API spec. Use created_at (ascending) or -created_at (descending)"	Enums(created_at, -created_at)	default(-created_at)
