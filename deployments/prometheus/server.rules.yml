@@ -1,94 +1,239 @@
 groups:
   - name: server:events:alerts
     rules:
-      - alert: LowEventDeliverySuccessRate
-        expr: 100 * (sum(rate(sms_events_sent_total[5m])) / (sum(rate(sms_events_sent_total[5m])) + sum(rate(sms_events_failed_total[5m]))) < 90
+      - alert: LowEventDeliverySuccessRateWarning
+        expr: 100 * (sum(rate(sms_events_sent_total[5m])) / (sum(rate(sms_events_sent_total[5m])) + sum(rate(sms_events_failed_total[5m])) OR vector(0))) < 99.5
+        for: 10m
+        labels:
+          severity: warning
+          service: events
+        annotations:
+          summary: "Event delivery success rate below 99.5%"
+          description: "Event delivery success rate is {{ $value }}% over the last 5 minutes (threshold: 99.5%)"
+          runbook: "Check the Events dashboard and events module logs for send failures"
+          dashboard: "http://grafana/d/events-metrics"
+
+      - alert: LowEventDeliverySuccessRateCritical
+        expr: 100 * (sum(rate(sms_events_sent_total[5m])) / (sum(rate(sms_events_sent_total[5m])) + sum(rate(sms_events_failed_total[5m])) OR vector(0))) < 99.0
         for: 10m
         labels:
           severity: critical
+          service: events
         annotations:
-          summary: "Event delivery success rate below 90%"
-          description: "Event delivery success rate is at {{ $value }}%"
+          summary: "Event delivery success rate below 99.0%"
+          description: "Event delivery success rate is {{ $value }}% over the last 5 minutes (threshold: 99.0%)"
+          runbook: "Check the Events dashboard and events module logs for send failures"
+          dashboard: "http://grafana/d/events-metrics"
 
-  - name: server:http-alerts
+  - name: server:http:alerts
     rules:
       - alert: HighHTTPErrorRateWarning
-        expr: sum(rate(http_requests_total{job="backend", status_code=~"5.."}[5m])) / sum(rate(http_requests_total{job="backend"}[5m])) > 0.05
+        expr: sum(rate(http_requests_total{job="backend", status_code=~"5.."}[5m])) / (sum(rate(http_requests_total{job="backend"}[5m])) OR vector(0)) > 0.005
         for: 5m
         labels:
           severity: warning
+          service: http
         annotations:
           summary: "High HTTP error rate (Warning)"
-          description: "The HTTP error rate has exceeded 5% over the last 5 minutes."
+          description: "HTTP 5xx ratio is {{ $value | humanizePercentage }} over the last 5 minutes (threshold: 0.5%)"
+          runbook: "Check the HTTP dashboard and backend logs for 5xx responses"
+          dashboard: "http://grafana/d/http-metrics"
 
       - alert: HighHTTPErrorRateCritical
-        expr: sum(rate(http_requests_total{job="backend", status_code=~"5.."}[5m])) / sum(rate(http_requests_total{job="backend"}[5m])) > 0.1
+        expr: sum(rate(http_requests_total{job="backend", status_code=~"5.."}[5m])) / (sum(rate(http_requests_total{job="backend"}[5m])) OR vector(0)) > 0.01
         for: 5m
         labels:
           severity: critical
+          service: http
         annotations:
           summary: "High HTTP error rate (Critical)"
-          description: "The HTTP error rate has exceeded 10% over the last 5 minutes."
+          description: "HTTP 5xx ratio is {{ $value | humanizePercentage }} over the last 5 minutes (threshold: 1%)"
+          runbook: "Check the HTTP dashboard and backend logs for 5xx responses"
+          dashboard: "http://grafana/d/http-metrics"
 
       - alert: HighHTTPLatencyWarning
-        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job="backend"}[5m])) by (le)) > 0.3
+        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job="backend"}[5m])) by (le)) > 0.2
         for: 5m
         labels:
           severity: warning
+          service: http
         annotations:
-          summary: "High HTTP latency (p99) (Warning)"
-          description: "The p99 HTTP latency has exceeded 0.3 seconds over the last 5 minutes."
+          summary: "High HTTP latency p99 (Warning)"
+          description: "p99 HTTP latency is {{ $value }}s over the last 5 minutes (threshold: 0.2s)"
+          runbook: "Check the HTTP dashboard and backend logs for slow requests"
+          dashboard: "http://grafana/d/http-metrics"
 
       - alert: HighHTTPLatencyCritical
-        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job="backend"}[5m])) by (le)) > 1
+        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job="backend"}[5m])) by (le)) > 0.5
         for: 5m
         labels:
           severity: critical
+          service: http
         annotations:
-          summary: "High HTTP latency (p99) (Critical)"
-          description: "The p99 HTTP latency has exceeded 1 seconds over the last 5 minutes."
+          summary: "High HTTP latency p99 (Critical)"
+          description: "p99 HTTP latency is {{ $value }}s over the last 5 minutes (threshold: 0.5s)"
+          runbook: "Check the HTTP dashboard and backend logs for slow requests"
+          dashboard: "http://grafana/d/http-metrics"
 
       - alert: IncreasedHTTPRequestVolumeWarning
-        expr: rate(http_requests_total{job="backend"}[1m]) > 2 * avg_over_time(rate(http_requests_total{job="backend"}[1m])[10m:1m])
+        expr: rate(http_requests_total{job="backend"}[5m]) > 2 * rate(http_requests_total{job="backend"}[5m] offset 10m)
         for: 5m
         labels:
           severity: warning
+          service: http
         annotations:
           summary: "Increased HTTP request volume (Warning)"
-          description: "The HTTP request volume has increased by 2x compared to the average of the last 10 minutes."
+          description: "HTTP request rate is {{ $value }} rps, more than 2x the rate 10 minutes ago"
+          runbook: "Check the HTTP dashboard for request volume and investigate traffic spikes"
+          dashboard: "http://grafana/d/http-metrics"
 
       - alert: IncreasedHTTPRequestVolumeCritical
-        expr: rate(http_requests_total{job="backend"}[1m]) > 5 * avg_over_time(rate(http_requests_total{job="backend"}[1m])[10m])
+        expr: rate(http_requests_total{job="backend"}[5m]) > 5 * rate(http_requests_total{job="backend"}[5m] offset 10m)
         for: 5m
         labels:
           severity: critical
+          service: http
         annotations:
           summary: "Increased HTTP request volume (Critical)"
-          description: "The HTTP request volume has increased by 5x compared to the average of the last 10 minutes."
+          description: "HTTP request rate is {{ $value }} rps, more than 5x the rate 10 minutes ago"
+          runbook: "Check the HTTP dashboard for request volume and investigate traffic spikes"
+          dashboard: "http://grafana/d/http-metrics"
+
+      - alert: HighHTTPInProgressWarning
+        expr: sum by (instance) (http_requests_in_progress_total{job="backend"}) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: http
+        annotations:
+          summary: "High number of HTTP requests in progress (Warning)"
+          description: "HTTP requests in progress for instance={{ $labels.instance }} is {{ $value }} (threshold: 10)"
+          runbook: "Check the HTTP dashboard for in-progress requests and backend saturation"
+          dashboard: "http://grafana/d/http-metrics"
+
+      - alert: HighHTTPInProgressCritical
+        expr: sum by (instance) (http_requests_in_progress_total{job="backend"}) > 20
+        for: 5m
+        labels:
+          severity: critical
+          service: http
+        annotations:
+          summary: "High number of HTTP requests in progress (Critical)"
+          description: "HTTP requests in progress for instance={{ $labels.instance }} is {{ $value }} (threshold: 20)"
+          runbook: "Check the HTTP dashboard for in-progress requests and backend saturation"
+          dashboard: "http://grafana/d/http-metrics"
+
+      - alert: BackendDown
+        expr: up{job="backend"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: http
+        annotations:
+          summary: "Backend process is down"
+          description: "Backend scrape target job=backend is down (up == 0)"
+          runbook: "Check the HTTP dashboard and backend logs"
+          dashboard: "http://grafana/d/http-metrics"
 
   - name: server:jwt:alerts
     rules:
-      - alert: JWT_Validation_ErrorRate_High
-        expr: rate(sms_auth_jwt_tokens_validated_total{status="error"}[5m]) / max(rate(sms_auth_jwt_tokens_validated_total[5m]), 0.00001) > 0.1
+      - alert: HighJWTValidationErrorRateWarning
+        expr: sum(rate(sms_auth_jwt_tokens_validated_total{status="error"}[5m])) / (sum(rate(sms_auth_jwt_tokens_validated_total[5m])) OR vector(0)) > 0.05
         for: 5m
         labels:
           severity: warning
           service: jwt
         annotations:
-          summary: "High JWT validation error rate"
-          description: "JWT validation error rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+          summary: "High JWT validation error rate (Warning)"
+          description: "JWT validation error ratio is {{ $value | humanizePercentage }} over the last 5 minutes (threshold: 5%)"
+          runbook: "Check the JWT dashboard and auth module logs for validation errors"
+          dashboard: "http://grafana/d/jwt-metrics"
 
-      - alert: JWT_Issuance_Latency_High
-        expr: histogram_quantile(0.99, rate(sms_auth_jwt_issuance_duration_seconds_bucket[5m])) > 0.5
+      - alert: HighJWTValidationErrorRateCritical
+        expr: sum(rate(sms_auth_jwt_tokens_validated_total{status="error"}[5m])) / (sum(rate(sms_auth_jwt_tokens_validated_total[5m])) OR vector(0)) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          service: jwt
+        annotations:
+          summary: "High JWT validation error rate (Critical)"
+          description: "JWT validation error ratio is {{ $value | humanizePercentage }} over the last 5 minutes (threshold: 10%)"
+          runbook: "Check the JWT dashboard and auth module logs for validation errors"
+          dashboard: "http://grafana/d/jwt-metrics"
+
+      - alert: HighJWTRefreshErrorRateWarning
+        expr: sum(rate(sms_auth_jwt_tokens_refreshed_total{status="error"}[5m])) / (sum(rate(sms_auth_jwt_tokens_refreshed_total[5m])) OR vector(0)) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: jwt
+        annotations:
+          summary: "High JWT refresh error rate (Warning)"
+          description: "JWT refresh error ratio is {{ $value | humanizePercentage }} over the last 5 minutes (threshold: 5%)"
+          runbook: "Check the JWT dashboard and auth module logs for refresh errors"
+          dashboard: "http://grafana/d/jwt-metrics"
+
+      - alert: HighJWTRefreshErrorRateCritical
+        expr: sum(rate(sms_auth_jwt_tokens_refreshed_total{status="error"}[5m])) / (sum(rate(sms_auth_jwt_tokens_refreshed_total[5m])) OR vector(0)) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          service: jwt
+        annotations:
+          summary: "High JWT refresh error rate (Critical)"
+          description: "JWT refresh error ratio is {{ $value | humanizePercentage }} over the last 5 minutes (threshold: 10%)"
+          runbook: "Check the JWT dashboard and auth module logs for refresh errors"
+          dashboard: "http://grafana/d/jwt-metrics"
+
+      - alert: HighJWTIssuanceLatencyWarning
+        expr: histogram_quantile(0.99, rate(sms_auth_jwt_issuance_duration_seconds_bucket[5m])) > 0.2
         for: 10m
         labels:
           severity: warning
           service: jwt
         annotations:
-          summary: "High JWT issuance latency (p99)"
-          description: "JWT issuance p99 latency is {{ $value }}s (threshold: 0.5s)"
+          summary: "High JWT issuance latency p99 (Warning)"
+          description: "JWT issuance p99 latency is {{ $value }}s (threshold: 0.2s)"
+          runbook: "Check the JWT dashboard and auth module logs for slow issuance"
+          dashboard: "http://grafana/d/jwt-metrics"
 
-      - alert: JWT_Revocation_Failures
+      - alert: HighJWTIssuanceLatencyCritical
+        expr: histogram_quantile(0.99, rate(sms_auth_jwt_issuance_duration_seconds_bucket[5m])) > 0.5
+        for: 10m
+        labels:
+          severity: critical
+          service: jwt
+        annotations:
+          summary: "High JWT issuance latency p99 (Critical)"
+          description: "JWT issuance p99 latency is {{ $value }}s (threshold: 0.5s)"
+          runbook: "Check the JWT dashboard and auth module logs for slow issuance"
+          dashboard: "http://grafana/d/jwt-metrics"
+
+      - alert: HighJWTRefreshLatencyWarning
+        expr: histogram_quantile(0.99, rate(sms_auth_jwt_refresh_duration_seconds_bucket[5m])) > 0.2
+        for: 10m
+        labels:
+          severity: warning
+          service: jwt
+        annotations:
+          summary: "High JWT refresh latency p99 (Warning)"
+          description: "JWT refresh p99 latency is {{ $value }}s (threshold: 0.2s)"
+          runbook: "Check the JWT dashboard and auth module logs for slow refreshes"
+          dashboard: "http://grafana/d/jwt-metrics"
+
+      - alert: HighJWTRefreshLatencyCritical
+        expr: histogram_quantile(0.99, rate(sms_auth_jwt_refresh_duration_seconds_bucket[5m])) > 0.5
+        for: 10m
+        labels:
+          severity: critical
+          service: jwt
+        annotations:
+          summary: "High JWT refresh latency p99 (Critical)"
+          description: "JWT refresh p99 latency is {{ $value }}s (threshold: 0.5s)"
+          runbook: "Check the JWT dashboard and auth module logs for slow refreshes"
+          dashboard: "http://grafana/d/jwt-metrics"
+
+      - alert: JWTRevocationFailures
         expr: rate(sms_auth_jwt_tokens_revoked_total{status="error"}[5m]) > 0
         for: 5m
         labels:
@@ -97,26 +242,8 @@ groups:
         annotations:
           summary: "JWT revocation failures detected"
           description: "JWT revocation errors occurring at rate {{ $value }}/s"
-
-      - alert: JWT_Refresh_Latency_High
-        expr: histogram_quantile(0.99, rate(sms_auth_jwt_refresh_duration_seconds_bucket[5m])) > 0.5
-        for: 10m
-        labels:
-          severity: warning
-          service: jwt
-        annotations:
-          summary: "High JWT refresh latency (p99)"
-          description: "JWT refresh p99 latency is {{ $value }}s (threshold: 0.5s)"
-
-      - alert: JWT_Refresh_ErrorRate_High
-        expr: sum(rate(sms_auth_jwt_tokens_refreshed_total{status="error"}[5m])) / clamp_min(sum(rate(sms_auth_jwt_tokens_refreshed_total[5m])), 0.00001) > 0.1
-        for: 5m
-        labels:
-          severity: warning
-          service: jwt
-        annotations:
-          summary: "High JWT refresh error rate"
-          description: "JWT refresh error rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+          runbook: "Check the JWT dashboard and auth module logs for revocation errors"
+          dashboard: "http://grafana/d/jwt-metrics"
 
   - name: server:messages:alerts
     rules:
@@ -125,31 +252,24 @@ groups:
         for: 5m
         labels:
           severity: warning
+          service: messages
         annotations:
           summary: "Limiter database query errors detected"
-          description:
-            "Limiter is encountering database errors while checking limits ({{
-            $value }} errors in 5m). Rate limiting may not function correctly."
-          runbook:
-            "Check database connectivity and investigate query failures in the
-            messages limiter logs"
+          description: "Limiter is encountering database errors while checking limits ({{ $value }} errors in 5m). Rate limiting may not function correctly."
+          runbook: "Check database connectivity and investigate query failures in the messages limiter logs"
+          dashboard: "http://grafana/d/messages-metrics"
 
       - alert: HighRateLimitingActivity
-        expr:
-          sum(increase(sms_messages_limiter_checks_total{result="limited"}[5m])) >
-          100
+        expr: sum(increase(sms_messages_limiter_checks_total{result="limited"}[5m])) > 100
         for: 10m
         labels:
           severity: warning
+          service: messages
         annotations:
           summary: "High rate limiting activity detected"
-          description:
-            "Devices are being rate-limited at a high rate ({{ $value }}
-            limited checks in 5m). Review queue capacity configuration or
-            investigate potential abuse."
-          runbook:
-            "Check the Messages dashboard for batch size and query error panels.
-            Review QueueConfig settings (MaxPending, MaxPendingAge, MaxFailed)."
+          description: "Devices are being rate-limited at a high rate ({{ $value }} limited checks in 5m). Review queue capacity configuration or investigate potential abuse."
+          runbook: "Check the Messages dashboard for batch size and query error panels. Review QueueConfig settings (MaxPending, MaxPendingAge, MaxFailed)."
+          dashboard: "http://grafana/d/messages-metrics"
 
   - name: server:online:alerts
     rules:
@@ -158,84 +278,134 @@ groups:
         for: 5m
         labels:
           severity: warning
+          service: online
         annotations:
           summary: "High number of online status errors"
-          description: "The number of online status errors has exceeded 10 in the last 5 minutes."
+          description: "Online status errors are {{ $value }} in the last 5 minutes (threshold: 10)"
+          runbook: "Check the Online dashboard and online module logs for status set errors"
+          dashboard: "http://grafana/d/online-metrics"
 
       - alert: CacheOperationErrors
         expr: sum by (operation) (increase(sms_online_cache_operations_total{status="error"}[5m])) > 5
         for: 5m
         labels:
           severity: warning
+          service: online
         annotations:
           summary: "High number of cache operation errors"
-          description: "Cache errors for operation={{ $labels.operation }} exceeded 5 in 5m."
+          description: "Cache errors for operation={{ $labels.operation }} are {{ $value }} in 5m (threshold: 5)"
+          runbook: "Check the Online dashboard and online module logs for cache operation errors"
+          dashboard: "http://grafana/d/online-metrics"
 
       - alert: PersistenceErrors
         expr: sum(increase(sms_online_persistence_errors_total[5m])) > 0
         for: 5m
         labels:
           severity: critical
+          service: online
         annotations:
           summary: "Persistence errors detected"
-          description: "Persistence errors have been detected in the online module."
+          description: "Persistence errors are {{ $value }} in the last 5 minutes"
+          runbook: "Check the Online dashboard and online module logs for persistence errors"
+          dashboard: "http://grafana/d/online-metrics"
 
-      - alert: HighPersistenceLatency
-        expr: histogram_quantile(0.95, sum(rate(sms_online_persistence_latency_seconds_bucket[5m])) by (le)) > 0.5
+      - alert: HighPersistenceLatencyWarning
+        expr: histogram_quantile(0.99, sum(rate(sms_online_persistence_latency_seconds_bucket[5m])) by (le)) > 0.2
         for: 5m
         labels:
           severity: warning
+          service: online
         annotations:
-          summary: "High persistence latency"
-          description: "The 95th percentile persistence latency has exceeded 0.5 seconds."
+          summary: "High persistence latency p99 (Warning)"
+          description: "p99 persistence latency is {{ $value }}s over the last 5 minutes (threshold: 0.2s)"
+          runbook: "Check the Online dashboard and database latency"
+          dashboard: "http://grafana/d/online-metrics"
+
+      - alert: HighPersistenceLatencyCritical
+        expr: histogram_quantile(0.99, sum(rate(sms_online_persistence_latency_seconds_bucket[5m])) by (le)) > 0.5
+        for: 5m
+        labels:
+          severity: critical
+          service: online
+        annotations:
+          summary: "High persistence latency p99 (Critical)"
+          description: "p99 persistence latency is {{ $value }}s over the last 5 minutes (threshold: 0.5s)"
+          runbook: "Check the Online dashboard and database latency"
+          dashboard: "http://grafana/d/online-metrics"
 
   - name: server:sse:alerts
     rules:
-      - alert: HighSSEErrorRate
-        expr: |
-          (sum(rate(sms_sse_connection_errors_total[5m])) / sum(rate(sms_sse_events_sent_total[5m]))) > 0.05
+      - alert: HighSSEErrorRateWarning
+        expr: sum(rate(sms_sse_connection_errors_total[5m])) / (sum(rate(sms_sse_events_sent_total[5m])) OR vector(0)) > 0.005
         for: 5m
         labels:
           severity: warning
+          service: sse
         annotations:
-          summary: "High SSE error rate ({{ $value | humanize }}%)"
-          description: "SSE error rate has exceeded 5% for 5 minutes. This may indicate client connectivity issues or server-side processing problems."
-          dashboard: "https://grafana.example.com/d/sse-dashboard"
-          runbook: "https://internal.dev-docs/server/sse-troubleshooting#high-error-rate"
+          summary: "High SSE error rate (Warning)"
+          description: "SSE error ratio is {{ $value | humanizePercentage }} over the last 5 minutes (threshold: 0.5%)"
+          runbook: "Check SSE connections and event delivery; review sse module logs"
+          dashboard: "http://grafana/d/sse-metrics"
+
+      - alert: HighSSEErrorRateCritical
+        expr: sum(rate(sms_sse_connection_errors_total[5m])) / (sum(rate(sms_sse_events_sent_total[5m])) OR vector(0)) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          service: sse
+        annotations:
+          summary: "High SSE error rate (Critical)"
+          description: "SSE error ratio is {{ $value | humanizePercentage }} over the last 5 minutes (threshold: 1%)"
+          runbook: "Check SSE connections and event delivery; review sse module logs"
+          dashboard: "http://grafana/d/sse-metrics"
 
       - alert: SSEConnectionLoss
-        expr: sms_sse_active_connections == 0
+        expr: sms_sse_active_connections > 0 and rate(sms_sse_keepalives_sent_total[5m]) == 0
         for: 5m
         labels:
           severity: critical
+          service: sse
         annotations:
-          summary: "All SSE connections lost"
-          description: "No active SSE connections detected for 5 minutes. This indicates complete service disruption for real-time updates."
-          dashboard: "https://grafana.example.com/d/sse-dashboard"
-          runbook: "https://internal.dev-docs/server/sse-troubleshooting#connection-loss"
+          summary: "SSE heartbeat lost"
+          description: "SSE clients are connected but no server-side keepalive heartbeats were sent for 5 minutes. This indicates a broken SSE transport."
+          runbook: "Check SSE connections and gateway health; review sse module logs"
+          dashboard: "http://grafana/d/sse-metrics"
 
-      - alert: HighSSELatency
-        expr: |
-          histogram_quantile(0.95, rate(sms_sse_event_delivery_latency_seconds_bucket[5m])) > 10
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "High SSE event latency (95th percentile > 10s)"
-          description: "95th percentile of event delivery latency has exceeded 10 seconds for 5 minutes. Clients may experience significant delays in receiving real-time updates."
-          dashboard: "https://grafana.example.com/d/sse-dashboard"
-          runbook: "https://internal.dev-docs/server/sse-troubleshooting#high-latency"
-
-      - alert: HighConnectionChurn
-        expr: rate(sms_sse_connections_opened_total[5m]) > 10
+      - alert: SSEClientConnectionLoss
+        expr: max_over_time(sms_sse_active_connections[10m]) > 0 and sms_sse_active_connections == 0
         for: 5m
         labels:
           severity: warning
+          service: sse
         annotations:
-          summary: "High SSE connection churn ({{ $value | humanize }} connections/sec)"
-          description: "SSE connection churn rate has exceeded 10 connections per second for 5 minutes. This may indicate unstable client connections or aggressive reconnection logic."
-          dashboard: "https://grafana.example.com/d/sse-dashboard"
-          runbook: "https://internal.dev-docs/server/sse-troubleshooting#connection-churn"
+          summary: "SSE clients disconnected"
+          description: "SSE clients were connected within the last 10 minutes but there are no active connections now. Clients may have lost real-time updates."
+          runbook: "Check SSE connections and gateway health; review sse module logs"
+          dashboard: "http://grafana/d/sse-metrics"
+
+      - alert: HighSSELatencyWarning
+        expr: histogram_quantile(0.99, rate(sms_sse_event_delivery_latency_seconds_bucket[5m])) > 0.02
+        for: 5m
+        labels:
+          severity: warning
+          service: sse
+        annotations:
+          summary: "High SSE event latency p99 (Warning)"
+          description: "p99 event delivery latency is {{ $value }}s over the last 5 minutes (threshold: 0.02s)"
+          runbook: "Check SSE event delivery latency; review sse module logs"
+          dashboard: "http://grafana/d/sse-metrics"
+
+      - alert: HighSSELatencyCritical
+        expr: histogram_quantile(0.99, rate(sms_sse_event_delivery_latency_seconds_bucket[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: sse
+        annotations:
+          summary: "High SSE event latency p99 (Critical)"
+          description: "p99 event delivery latency is {{ $value }}s over the last 5 minutes (threshold: 0.05s)"
+          runbook: "Check SSE event delivery latency; review sse module logs"
+          dashboard: "http://grafana/d/sse-metrics"
 
   - name: server:worker:alerts
     rules:
@@ -244,25 +414,107 @@ groups:
         for: 5m
         labels:
           severity: critical
+          service: worker
         annotations:
           summary: "High worker task failure rate"
           description: "Worker task error rate is {{ $value }} errors per minute, exceeding threshold"
           runbook: "Check worker logs for task failures"
-      - alert: LongRunningTask
-        expr: histogram_quantile(0.95, sum(rate(worker_executor_task_duration_seconds_bucket[5m])) by (le)) > 30
+          dashboard: "http://grafana/d/worker-metrics"
+
+      - alert: LongRunningTaskWarning
+        expr: histogram_quantile(0.99, sum(rate(worker_executor_task_duration_seconds_bucket[5m])) by (le)) > 5
         for: 10m
         labels:
           severity: warning
+          service: worker
         annotations:
-          summary: "Worker tasks running longer than expected"
-          description: "95th percentile task duration is {{ $value }}s, above 30s threshold"
+          summary: "Worker tasks running longer than expected (Warning)"
+          description: "p99 task duration is {{ $value }}s, above 5s threshold"
           runbook: "Review task performance and optimize if needed"
-      - alert: HighActiveTasks
-        expr: worker_executor_active_tasks > 10
+          dashboard: "http://grafana/d/worker-metrics"
+
+      - alert: LongRunningTaskCritical
+        expr: histogram_quantile(0.99, sum(rate(worker_executor_task_duration_seconds_bucket[5m])) by (le)) > 10
+        for: 10m
+        labels:
+          severity: critical
+          service: worker
+        annotations:
+          summary: "Worker tasks running longer than expected (Critical)"
+          description: "p99 task duration is {{ $value }}s, above 10s threshold"
+          runbook: "Review task performance and optimize if needed"
+          dashboard: "http://grafana/d/worker-metrics"
+
+      - alert: HighActiveTasksWarning
+        expr: worker_executor_active_tasks > 7
         for: 5m
         labels:
           severity: warning
+          service: worker
         annotations:
-          summary: "High number of active worker tasks"
+          summary: "High number of active worker tasks (Warning)"
+          description: "Active tasks count is {{ $value }}, exceeding 7 for more than 5 minutes"
+          runbook: "Monitor for potential task queuing or performance issues"
+          dashboard: "http://grafana/d/worker-metrics"
+
+      - alert: HighActiveTasksCritical
+        expr: worker_executor_active_tasks > 10
+        for: 5m
+        labels:
+          severity: critical
+          service: worker
+        annotations:
+          summary: "High number of active worker tasks (Critical)"
           description: "Active tasks count is {{ $value }}, exceeding 10 for more than 5 minutes"
           runbook: "Monitor for potential task queuing or performance issues"
+          dashboard: "http://grafana/d/worker-metrics"
+
+      - alert: WorkerDown
+        expr: up{job="worker"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: worker
+        annotations:
+          summary: "Worker process is down"
+          description: "Worker scrape target job=worker is down (up == 0)"
+          runbook: "Check worker process health and restart if needed"
+          dashboard: "http://grafana/d/worker-metrics"
+
+  - name: server:push:alerts
+    rules:
+      - alert: LowPushDeliverySuccessRateWarning
+        expr: 100 * (1 - (sum(rate(sms_push_retries_total[5m])) / (sum(rate(sms_push_enqueued_total[5m])) OR vector(0)))) < 99.5
+        for: 5m
+        labels:
+          severity: warning
+          service: push
+        annotations:
+          summary: "Push delivery success rate below 99.5%"
+          description: "Push delivery success rate is {{ $value }}% over the last 5 minutes (threshold: 99.5%)"
+          runbook: "Check the Push dashboard and push module logs for delivery retries"
+          dashboard: "http://grafana/d/push-metrics"
+
+      - alert: LowPushDeliverySuccessRateCritical
+        expr: 100 * (1 - (sum(rate(sms_push_retries_total[5m])) / (sum(rate(sms_push_enqueued_total[5m])) OR vector(0)))) < 99.0
+        for: 5m
+        labels:
+          severity: critical
+          service: push
+        annotations:
+          summary: "Push delivery success rate below 99.0%"
+          description: "Push delivery success rate is {{ $value }}% over the last 5 minutes (threshold: 99.0%)"
+          runbook: "Check the Push dashboard and push module logs for delivery retries"
+          dashboard: "http://grafana/d/push-metrics"
+
+      - alert: HighPushErrorRate
+        expr: sum(increase(sms_push_errors_total[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+          service: push
+        annotations:
+          summary: "Push errors detected"
+          description: "Push errors are {{ $value }} in the last 5 minutes"
+          runbook: "Check the Push dashboard and push module logs for delivery errors"
+          dashboard: "http://grafana/d/push-metrics"
