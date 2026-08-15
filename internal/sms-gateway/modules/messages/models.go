@@ -69,6 +69,12 @@ func newMessageModel(
 		Recipients: lo.Map(phoneNumbers, func(item string, _ int) messageRecipientModel {
 			return newMessageRecipient(item, ProcessingStatePending, nil)
 		}),
+		States: []messageStateModel{
+			{
+				State:     ProcessingStatePending,
+				UpdatedAt: time.Now(),
+			},
+		},
 		Priority:           priority,
 		SimNumber:          simNumber,
 		ValidUntil:         validUntil,
