@@ -348,3 +348,124 @@ func TestMessages_GetMessages(t *testing.T) {
 		})
 	}
 }
+
+func TestMessages_Post(t *testing.T) {
+	credentials := mobileDeviceRegister(t, publicMobileClient)
+	authorizedClient := publicUserClient.Clone().SetBasicAuth(credentials.Login, credentials.Password)
+
+	cases := []struct {
+		name               string
+		req                map[string]any
+		expectedStatusCode int
+		expectedMessage    string
+	}{
+		{
+			name: "duplicate phone numbers are rejected",
+			req: map[string]any{
+				"message": "test",
+				"phoneNumbers": []string{
+					"+79999999999",
+					"+79999999999",
+				},
+			},
+			expectedStatusCode: 400,
+			expectedMessage:    "phone numbers must be unique",
+		},
+		{
+			name: "distinct phone numbers are accepted",
+			req: map[string]any{
+				"message": "test",
+				"phoneNumbers": []string{
+					"+79999999999",
+					"+79990001234",
+				},
+			},
+			expectedStatusCode: 202,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			res, err := authorizedClient.R().
+				SetHeader("Content-Type", "application/json").
+				SetBody(c.req).
+				Post("messages")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if res.StatusCode() != c.expectedStatusCode {
+				t.Fatal(res.StatusCode(), res.String())
+			}
+
+			if c.expectedMessage != "" {
+				var resp errorResponse
+				if err := json.Unmarshal(res.Body(), &resp); err != nil {
+					t.Fatal(err)
+				}
+
+				if resp.Message != c.expectedMessage {
+					t.Errorf("expected message %q, got %q", c.expectedMessage, resp.Message)
+				}
+			}
+		})
+	}
+}
+
+func TestMessages_PostDuplicateMessageID(t *testing.T) {
+	credentials := mobileDeviceRegister(t, publicMobileClient)
+	authorizedClient := publicUserClient.Clone().SetBasicAuth(credentials.Login, credentials.Password)
+
+	// The message ID uniqueness scope is per device (unq_messages_id_device),
+	// so pin the device to guarantee the ExtID collision.
+	base := map[string]any{
+		"id":           "e2e-duplicate-message-id",
+		"message":      "test",
+		"deviceId":     credentials.ID,
+		"phoneNumbers": []string{"+79999999999"},
+	}
+
+	t.Run("first message with the ID is accepted", func(t *testing.T) {
+		res, err := authorizedClient.R().
+			SetHeader("Content-Type", "application/json").
+			SetBody(base).
+			Post("messages")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if res.StatusCode() != 202 {
+			t.Fatal(res.StatusCode(), res.String())
+		}
+	})
+
+	t.Run("duplicate message ID is rejected", func(t *testing.T) {
+		req := map[string]any{
+			"id":           base["id"],
+			"message":      "test",
+			"deviceId":     credentials.ID,
+			"phoneNumbers": []string{"+79990001234"},
+		}
+
+		res, err := authorizedClient.R().
+			SetHeader("Content-Type", "application/json").
+			SetBody(req).
+			Post("messages")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if res.StatusCode() != 409 {
+			t.Fatal(res.StatusCode(), res.String())
+		}
+
+		var resp errorResponse
+		if err := json.Unmarshal(res.Body(), &resp); err != nil {
+			t.Fatal(err)
+		}
+
+		if resp.Message != "message with the same ID already exists" {
+			t.Errorf("expected message %q, got %q", "Message with the same ID already exists", resp.Message)
+		}
+	})
+}
