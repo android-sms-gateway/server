@@ -72,7 +72,7 @@ func NewThirdPartyController(params thirdPartyControllerParams) *ThirdPartyContr
 //	@Failure		400					{object}	smsgateway.ErrorResponse		"Invalid request"
 //	@Failure		401					{object}	smsgateway.ErrorResponse		"Unauthorized"
 //	@Failure		403					{object}	smsgateway.ErrorResponse		"Forbidden"
-//	@Failure		409					{object}	smsgateway.ErrorResponse		"Message with such ID already exists"
+//	@Failure		409					{object}	smsgateway.ErrorResponse		"Message with the same ID already exists"
 //	@Failure		500					{object}	smsgateway.ErrorResponse		"Internal server error"
 //	@Failure		503					{object}	smsgateway.ErrorResponse		"Queue limits exceeded; ensure device is online"
 //	@Header			202					{string}	Location						"Get message state URL"
@@ -314,14 +314,16 @@ func (h *ThirdPartyController) errorHandler(c *fiber.Ctx) error {
 
 	var msgValidationError messages.ValidationError
 	switch {
-	case errors.As(err, &msgValidationError),
-		errors.Is(err, messages.ErrMultipleMessagesFound),
-		errors.Is(err, messages.ErrNoContent):
+	case errors.As(err, &msgValidationError):
+		return fiber.NewError(fiber.StatusBadRequest, msgValidationError.Error())
+	case errors.Is(err, messages.ErrMultipleMessagesFound):
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	case errors.Is(err, messages.ErrNoContent):
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	case errors.Is(err, messages.ErrMessageNotFound):
 		return fiber.NewError(fiber.StatusNotFound, err.Error())
 	case errors.Is(err, messages.ErrMessageAlreadyExists):
-		return fiber.NewError(fiber.StatusConflict, err.Error())
+		return fiber.NewError(fiber.StatusConflict, messages.ErrMessageAlreadyExists.Error())
 	case errors.Is(err, messages.ErrQueueLimitExceeded):
 		return fiber.NewError(fiber.StatusServiceUnavailable, err.Error())
 	case errors.Is(err, messages.ErrMessageNotPending):

@@ -310,6 +310,14 @@ func (s *Service) prepareMessage(
 		message.PhoneNumbers[i] = phone
 	}
 
+	seen := make(map[string]struct{}, len(message.PhoneNumbers))
+	for _, phone := range message.PhoneNumbers {
+		if _, ok := seen[phone]; ok {
+			return nil, ValidationError("phone numbers must be unique")
+		}
+		seen[phone] = struct{}{}
+	}
+
 	validUntil := message.ValidUntil
 	if message.TTL != nil && *message.TTL > 0 {
 		//nolint:gosec // not a problem

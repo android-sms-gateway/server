@@ -819,7 +819,7 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "Message with such ID already exists",
+                        "description": "Message with the same ID already exists",
                         "schema": {
                             "$ref": "#/definitions/smsgateway.ErrorResponse"
                         }
