@@ -372,14 +372,14 @@ groups:
           dashboard: "http://grafana/d/sse-metrics"
 
       - alert: SSEClientConnectionLoss
-        expr: max_over_time(sms_sse_active_connections[10m]) > 0 and sms_sse_active_connections == 0
+        expr: max_over_time(sms_sse_active_connections[1h]) > 0 and sms_sse_active_connections == 0
         for: 5m
         labels:
           severity: warning
           service: sse
         annotations:
           summary: "SSE clients disconnected"
-          description: "SSE clients were connected within the last 10 minutes but there are no active connections now. Clients may have lost real-time updates."
+          description: "SSE clients were connected within the last hour but there are no active connections now. Clients may have lost real-time updates."
           runbook: "Check SSE connections and gateway health; review sse module logs"
           dashboard: "http://grafana/d/sse-metrics"
 
