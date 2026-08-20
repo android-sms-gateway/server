@@ -462,6 +462,7 @@ linters:
     wrapcheck:
       extra-ignore-sigs:
         - .JSON(
+        - .Send(
         - .SendStatus(
 
   exclusions:
