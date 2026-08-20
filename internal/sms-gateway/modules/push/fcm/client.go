@@ -69,7 +69,7 @@ func (c *Client) Send(ctx context.Context, messages []client.Message) ([]error, 
 			Android: &messaging.AndroidConfig{
 				Priority: "high",
 			},
-			Token: message.Token,
+			Token: message.Token, //nolint:staticcheck //migration to Fid is planned
 		})
 		if err != nil {
 			errs[i] = fmt.Errorf("failed to send message: %w", err)

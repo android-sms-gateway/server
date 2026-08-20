@@ -195,8 +195,10 @@ func (h *mobileHandler) postDevice(c *fiber.Ctx) error {
 		userID,
 		devices.DeviceInfo{
 			DeviceUpdate: devices.DeviceUpdate{
-				PushToken: req.PushToken,
-				SimCards:  h.simCardsToDomain(req.SimCards),
+				PushToken:  req.PushToken,
+				SimCards:   h.simCardsToDomain(req.SimCards),
+				PublicKey:  req.PublicKey,
+				KeyVersion: req.KeyVersion,
 			},
 			Name: req.Name,
 		},
@@ -239,8 +241,10 @@ func (h *mobileHandler) patchDevice(device devices.Device, c *fiber.Ctx) error {
 	}
 
 	err := h.devicesSvc.Update(c.Context(), req.Id, devices.DeviceUpdate{
-		PushToken: lo.EmptyableToPtr(req.PushToken),
-		SimCards:  h.simCardsToDomain(req.SimCards),
+		PushToken:  req.PushToken,
+		SimCards:   h.simCardsToDomain(req.SimCards),
+		PublicKey:  req.PublicKey,
+		KeyVersion: req.KeyVersion,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update device: %w", err)
