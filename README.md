@@ -1,212 +1,138 @@
+# 📱 SMSGate Server
+
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
+[![Stars][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
-[![Apache 2.0 License][license-shield]][license-url]
+[![License][license-shield]][license-url]
 
-# SMSGate Server
+Backend for the SMSGate ecosystem: a REST API that dispatches SMS through connected Android devices, with the optional private deployment.
 
-This server acts as the backend component of the [SMSGate](https://github.com/capcom6/android-sms-gateway), facilitating the sending of SMS messages through connected Android devices. It includes a RESTful API for message management, integration with Firebase Cloud Messaging (FCM), and a database for persistent storage.
+## 📚 Table of Contents
 
-## Table of Contents
+- [📱 SMSGate Server](#-smsgate-server)
+  - [📚 Table of Contents](#-table-of-contents)
+  - [📖 About](#-about)
+  - [⭐ Features](#-features)
+  - [📦 Prerequisites](#-prerequisites)
+  - [🚀 Quickstart](#-quickstart)
+  - [⚙️ Configuration](#️-configuration)
+  - [🔐 Authentication](#-authentication)
+  - [🔌 API Overview](#-api-overview)
+  - [📚 Documentation](#-documentation)
+  - [🤝 Contributing](#-contributing)
+  - [⚖️ License](#️-license)
+  - [📜 Legal Notice](#-legal-notice)
 
-- [SMSGate Server](#smsgate-server)
-  - [Table of Contents](#table-of-contents)
-  - [Features](#features)
-  - [Prerequisites](#prerequisites)
-  - [Quickstart](#quickstart)
-  - [Work modes](#work-modes)
-  - [JWT Authentication](#jwt-authentication)
-    - [Configuration](#configuration)
-    - [Token Management](#token-management)
-      - [Generate Token Pair](#generate-token-pair)
-      - [Refresh Access Token](#refresh-access-token)
-      - [Revoke Token](#revoke-token)
-    - [Using JWT Tokens](#using-jwt-tokens)
-    - [Available Scopes](#available-scopes)
-  - [Contributing](#contributing)
-  - [License](#license)
-  - [Legal Notice](#legal-notice)
+## 📖 About
 
-## Features
+SMSGate Server is the backend of the SMSGate ecosystem. It accepts SMS dispatch requests through a REST API, routes them to connected Android devices over Firebase Cloud Messaging, and tracks delivery state. It runs in two modes: public (anonymous device registration, used at [api.sms-gate.app](https://api.sms-gate.app)) and private (token-protected registration, push relayed through the upstream). Deep docs: https://docs.sms-gate.app/.
 
-- **SMS Messaging**: Dispatch SMS and data messages through a RESTful API.
-- **Message Status**: Retrieve status for sent messages.
-- **Device Management**: View information about connected Android devices.
-- **Webhooks**: Configure webhooks for event-driven notifications.
-- **Health Monitoring**: Access health check endpoints to ensure system integrity.
-- **Access Control**: Operate in either public mode for open access or private mode for restricted access.
-- **Data SMS Support**: Send/receive binary payloads via SMS with Base64 encoding and port-based routing.
-- **JWT Authentication**: Secure API access with JSON Web Tokens, including access and refresh token support for enhanced security.
+## ⭐ Features
 
-## Prerequisites
+- Text, data, and scheduled SMS dispatch
+- Message status tracking and cancellation
+- Device management (list, delete, online state)
+- Health check endpoints (live, ready, startup)
+- JWT authentication with scopes and token refresh
+- OTP-based device registration
+- Inbox, settings, and logs APIs
+- Public and private deployment modes
+- MySQL 8.0.13+ / MariaDB 10.2.7+ storage (MariaDB LTS recommended)
 
-- Go (for development and testing purposes)
-- Docker and Docker Compose (for Docker-based setup)
-- A configured **MySQL 8.0.13+** or **MariaDB 10.2.7+** database
-    - MariaDB LTS (`mariadb:lts`) is the recommended and most-tested deployment target
+## 📦 Prerequisites
 
-## Quickstart
+- MySQL 8.0.13+ or MariaDB 10.2.7+ database (MariaDB LTS recommended)
+- Docker + Docker Compose for container setup
+- Go 1.25+ for building from source
 
-The easiest way to get started with the server is to use the Docker-based setup in Private Mode. In this mode device registration endpoint is protected, so no one can register a new device without knowing the token.
+## 🚀 Quickstart
 
-1. Set up MySQL or MariaDB database.
-2. Create config.yml, based on [config.example.yml](configs/config.example.yml). The most important sections are `database`, `http` and `gateway`. Environment variables can be used to override values in the config file.
-    1. In `gateway.mode` section set `private`.
-    2. In `gateway.private_token` section set the access token for device registration in private mode. This token must be set on devices with private mode active.
-    3. In `gateway.upstream_url` section set the upstream server base URL used for private-mode push notifications. (default: `https://api.sms-gate.app/upstream/v1`).
-    4. (Optional) In `jwt` section configure JWT authentication:
-       - Set `secret` to a secure random string (minimum 32 characters)
-       - Configure `access_ttl` (default: 15m) and `refresh_ttl` (default: 720h)
-       - Set `issuer` to identify your server
-3. Start the server in Docker: `docker run -p 3000:3000 -v ./config.yml:/app/config.yml capcom6/sms-gateway:latest`.
-4. Set up private mode on devices.
-5. Use started private server with the same API as the public server at [api.sms-gate.app](https://api.sms-gate.app).
+1. Create `configs/config.yml` from [configs/config.example.yml](configs/config.example.yml).
+2. For private mode set `gateway.mode: private` and `gateway.private_token`.
+3. Start the server:
 
-See also [docker-compose.yml](deployments/docker-compose/docker-compose.yml) for Docker-based setup.
-
-## Work modes
-
-The server has two work modes: public and private. The public mode allows anonymous device registration and used at [api.sms-gate.app](https://api.sms-gate.app). Private mode can be used to send sensitive messages and running server in local infrastructure.
-
-In most operations public and private modes are the same. But there are some differences:
-
-- `POST /api/mobile/v1/device` endpoint is protected by API key in private mode. So it is not possible to register a new device on private server without knowing the token.
-- FCM notifications from private server are sent through `api.sms-gate.app`. Notifications don't contain any sensitive data like phone numbers or message text.
-
-See also [private mode discussion](https://github.com/capcom6/android-sms-gateway/issues/20).
-
-## JWT Authentication
-
-The server supports JWT (JSON Web Token) authentication for secure API access. When enabled, you can generate access tokens with specific scopes and refresh them without re-authenticating.
-
-### Configuration
-
-To enable JWT authentication, configure the `jwt` section in your [`config.yml`](configs/config.example.yml):
-
-```yaml
-jwt:
-  secret: your-secure-secret-key-minimum-32-characters  # Required, minimum 32 characters
-  access_ttl: 15m                                       # Access token time-to-live (default: 15m)
-  refresh_ttl: 720h                                     # Refresh token time-to-live (default: 720h)
-  issuer: your-server-name                              # Optional issuer identifier
+```bash
+docker run -p 3000:3000 \
+  -v ./configs/config.yml:/app/config.yml \
+  ghcr.io/android-sms-gateway/server:latest
 ```
 
-**Important**: The `secret` must be at least 32 characters long. The `refresh_ttl` must be greater than `access_ttl`.
+Or with Compose (backend + worker + MariaDB):
 
-### Token Management
-
-#### Generate Token Pair
-
-Generate an access token and refresh token using Basic authentication:
-
-```http
-POST /api/3rdparty/v1/auth/token HTTP/1.1
-Authorization: Basic <base64-encoded-credentials>
-Content-Type: application/json
-
-{
-    "ttl": 3600,
-    "scopes": [
-        "messages:send",
-        "messages:read",
-        "devices:list",
-        "devices:delete",
-        "webhooks:list",
-        "webhooks:write",
-        "settings:read",
-        "settings:write",
-        "logs:read"
-    ]
-}
+```bash
+docker compose -f deployments/docker-compose/docker-compose.yml up --build
 ```
 
-Response:
-```json
-{
-    "id": "token-jti",
-    "token_type": "Bearer",
-    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "expires_at": "2026-03-12T02:00:00Z"
-}
+Local development:
+
+```bash
+make run        # go run ./cmd/sms-gateway/main.go
+make air        # hot-reload dev server (TZ=UTC DEBUG=1)
+make db-upgrade # apply migrations
 ```
 
-#### Refresh Access Token
+## ⚙️ Configuration
 
-Use the refresh token to obtain a new access token:
+Configuration lives in [configs/config.example.yml](configs/config.example.yml); every key can be overridden by env vars using `SECTION__KEY` (e.g. `DATABASE__HOST`, `GATEWAY__MODE`). Key sections: `database`, `gateway`, `http`, `fcm`, `sse`, `messages`, `cache`, `pubsub`, `jwt`, `otp`, `tasks`.
 
-```http
-POST /api/3rdparty/v1/auth/token/refresh HTTP/1.1
-Authorization: Bearer <refresh_token>
+```bash
+export GATEWAY__MODE=private
+export GATEWAY__PRIVATE_TOKEN=change-me
+export DATABASE__HOST=localhost
+export HTTP__LISTEN=0.0.0.0:3000
 ```
 
-#### Revoke Token
+## 🔐 Authentication
 
-Revoke a specific token by its JTI (JWT ID):
+The API supports Basic auth and JWT bearer tokens. JWT tokens carry scopes and are issued per user:
 
-```http
-DELETE /api/3rdparty/v1/auth/token/<jti> HTTP/1.1
-Authorization: Basic <base64-encoded-credentials>
-```
+- `POST /api/3rdparty/v1/auth/token` - issue access/refresh pair (Basic auth)
+- `POST /api/3rdparty/v1/auth/token/refresh` - rotate access token (Bearer refresh)
+- `DELETE /api/3rdparty/v1/auth/token/{jti}` - revoke token (Basic auth)
 
-### Using JWT Tokens
+Available scopes: `messages:send`, `messages:list`, `messages:read`, `messages:export`, `messages:cancel`, `devices:list`, `devices:delete`, `inbox:list`, `inbox:refresh`, `logs:read`, `settings:read`, `settings:write`, `tokens:manage`, `tokens:refresh`, `webhooks:list`, `webhooks:write`, `webhooks:delete`.
 
-Once you have an access token, use it in the `Authorization` header:
+Full reference: [integration/authentication](https://docs.sms-gate.app/integration/authentication/).
 
-```http
-GET /api/3rdparty/v1/messages HTTP/1.1
-Authorization: Bearer <access_token>
-```
+## 🔌 API Overview
 
-### Available Scopes
+| Group    | Base path                                              |
+| -------- | ------------------------------------------------------ |
+| Messages | `/api/3rdparty/v1/messages`                            |
+| Devices  | `/api/3rdparty/v1/devices`                             |
+| Webhooks | `/api/3rdparty/v1/webhooks`                            |
+| Health   | `/api/3rdparty/v1/health[/live \| /ready \| /startup]` |
+| Auth     | `/api/3rdparty/v1/auth/token`                          |
 
-The following scopes are available for token generation:
+Also: `/api/3rdparty/v1/inbox`, `/settings`, `/logs`. OpenAPI schema is served when `http.openapi.enabled: true`.
 
-- `devices:delete` - Delete devices
-- `devices:list` - List connected devices
-- `inbox:list` - List incoming messages with filters
-- `inbox:read` - Read incoming messages
-- `logs:read` - Read server logs
-- `messages:export` - Export messages
-- `messages:list` - List messages
-- `messages:read` - Read individual messages
-- `messages:send` - Send SMS messages
-- `settings:read` - Read server settings
-- `settings:write` - Modify server settings
-- `tokens:manage` - Generate and revoke tokens
-- `webhooks:delete` - Delete webhooks
-- `webhooks:list` - List webhooks
-- `webhooks:write` - Create and update webhooks
+## 📚 Documentation
 
-## Contributing
+- [Private server setup](https://docs.sms-gate.app/getting-started/private-server/)
+- [API integration](https://docs.sms-gate.app/integration/api/)
+- [Authentication](https://docs.sms-gate.app/integration/authentication/)
+- [Webhooks](https://docs.sms-gate.app/features/webhooks/)
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+## 🤝 Contributing
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
+Open an issue first, then submit a PR. Run `make lint` and `make test` locally.
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+## ⚖️ License
 
-## License
+Apache-2.0. See [LICENSE](LICENSE).
 
-Distributed under the Apache-2.0 license. See [LICENSE](LICENSE) for more information.
-
-## Legal Notice
+## 📜 Legal Notice
 
 Android is a trademark of Google LLC.
 
-[contributors-shield]: https://img.shields.io/github/contributors/android-sms-gateway/server.svg?style=for-the-badge
+[contributors-shield]: https://img.shields.io/github/contributors/android-sms-gateway/server?style=for-the-badge
 [contributors-url]: https://github.com/android-sms-gateway/server/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/android-sms-gateway/server.svg?style=for-the-badge
+[forks-shield]: https://img.shields.io/github/forks/android-sms-gateway/server?style=for-the-badge
 [forks-url]: https://github.com/android-sms-gateway/server/network/members
-[stars-shield]: https://img.shields.io/github/stars/android-sms-gateway/server.svg?style=for-the-badge
+[stars-shield]: https://img.shields.io/github/stars/android-sms-gateway/server?style=for-the-badge
 [stars-url]: https://github.com/android-sms-gateway/server/stargazers
-[issues-shield]: https://img.shields.io/github/issues/android-sms-gateway/server.svg?style=for-the-badge
+[issues-shield]: https://img.shields.io/github/issues/android-sms-gateway/server?style=for-the-badge
 [issues-url]: https://github.com/android-sms-gateway/server/issues
-[license-shield]: https://img.shields.io/github/license/android-sms-gateway/server.svg?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/android-sms-gateway/server?style=for-the-badge
 [license-url]: https://github.com/android-sms-gateway/server/blob/master/LICENSE
