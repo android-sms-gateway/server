@@ -41,9 +41,7 @@ func (r *Repository) list(filter SelectFilter, options SelectOptions) ([]message
 
 	// Apply user filter
 	if filter.UserID != "" {
-		query = query.
-			Joins("JOIN devices ON messages.device_id = devices.id").
-			Where("devices.user_id = ?", filter.UserID)
+		query = query.Where("messages.user_id = ?", filter.UserID)
 	}
 
 	// Apply state filter

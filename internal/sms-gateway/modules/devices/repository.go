@@ -90,6 +90,9 @@ func (r *Repository) Insert(ctx context.Context, device DeviceInput) (*Device, e
 }
 
 func (r *Repository) Update(ctx context.Context, id string, device DeviceUpdate) error {
+	// NOTE: `user_id` is intentionally not updatable. messages.user_id is
+	// denormalized from devices.user_id (see 20260826120000_add_messages_user_id);
+	// changing a device's owner requires backfilling messages.user_id too.
 	updates := map[string]any{}
 
 	if device.PushToken != nil {
