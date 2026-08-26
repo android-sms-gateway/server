@@ -32,6 +32,7 @@ type messageModel struct {
 	models.SoftDeletableModel
 
 	ID                 uint64          `gorm:"primaryKey;type:BIGINT UNSIGNED;autoIncrement"`
+	UserID             string          `gorm:"not null;type:varchar(32);index:idx_messages_user_created_at,priority:1"`
 	DeviceID           string          `gorm:"not null;type:char(21);uniqueIndex:unq_messages_id_device,priority:2;index:idx_messages_device_state;index:idx_messages_device_created_at,priority:1"`
 	ExtID              string          `gorm:"not null;type:varchar(36);uniqueIndex:unq_messages_id_device,priority:1"`
 	Type               MessageType     `gorm:"not null;type:enum('Text','Data');default:Text"`
@@ -52,6 +53,7 @@ type messageModel struct {
 }
 
 func newMessageModel(
+	userID string,
 	extID string,
 	deviceID string,
 	phoneNumbers []string,
@@ -65,6 +67,7 @@ func newMessageModel(
 	//nolint:exhaustruct // partial constructor
 	return &messageModel{
 		ExtID:    extID,
+		UserID:   userID,
 		DeviceID: deviceID,
 		Recipients: lo.Map(phoneNumbers, func(item string, _ int) messageRecipientModel {
 			return newMessageRecipient(item, ProcessingStatePending, nil)

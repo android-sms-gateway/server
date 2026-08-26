@@ -331,6 +331,7 @@ func (s *Service) prepareMessage(
 	}
 
 	msg := newMessageModel(
+		device.UserID,
 		message.ID,
 		device.ID,
 		message.PhoneNumbers,
