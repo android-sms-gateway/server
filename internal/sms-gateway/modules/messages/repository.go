@@ -198,8 +198,7 @@ func (r *Repository) HashProcessed(ctx context.Context, ids []uint64) (int64, er
 
 func (r *Repository) CancelMessage(userID string, id string) error {
 	res := r.db.Model((*messageModel)(nil)).
-		Where("ext_id = ? AND state = ?", id, ProcessingStatePending).
-		Where("device_id IN (?)", r.db.Table("devices").Select("id").Where("user_id = ?", userID)).
+		Where("ext_id = ? AND state = ? AND user_id = ?", id, ProcessingStatePending, userID).
 		Update("state", ProcessingStateCancelling)
 	if res.Error != nil {
 		return fmt.Errorf("failed to cancel message: %w", res.Error)
