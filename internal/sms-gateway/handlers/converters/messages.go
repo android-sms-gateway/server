@@ -55,6 +55,7 @@ func MessageStateToDTO(state messages.MessageState) smsgateway.MessageState {
 		IsEncrypted: state.IsEncrypted,
 		Recipients:  state.Recipients,
 		States:      state.States,
+		CreatedAt:   state.CreatedAt,
 
 		TextMessage:   state.TextContent,
 		DataMessage:   state.DataContent,
