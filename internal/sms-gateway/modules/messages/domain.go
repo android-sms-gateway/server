@@ -6,13 +6,15 @@ import (
 	"github.com/android-sms-gateway/client-go/smsgateway"
 )
 
-type TextMessageContent = smsgateway.TextMessage
-type DataMessageContent = smsgateway.DataMessage
+type TextContent = smsgateway.TextMessage
+type DataContent = smsgateway.DataMessage
+type MultimediaContent = smsgateway.MmsMessage
 type HashedMessageContent = smsgateway.HashedMessage
 
 type MessageContent struct {
-	TextContent *TextMessageContent `json:"textContent,omitempty"`
-	DataContent *DataMessageContent `json:"dataContent,omitempty"`
+	TextContent *TextContent       `json:"textContent,omitempty"`
+	DataContent *DataContent       `json:"dataContent,omitempty"`
+	MmsContent  *MultimediaContent `json:"mmsContent,omitempty"`
 }
 
 type MessageStateContent struct {

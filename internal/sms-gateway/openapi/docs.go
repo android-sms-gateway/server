@@ -683,7 +683,7 @@ const docTemplate = `{
                     {
                         "type": "boolean",
                         "default": false,
-                        "description": "Include textMessage/dataMessage content for each message. Default is false",
+                        "description": "Include textMessage/dataMessage/mmsMessage content for each message. Default is false",
                         "name": "includeContent",
                         "in": "query"
                     },
@@ -1580,6 +1580,14 @@ const docTemplate = `{
                     "type": "boolean",
                     "example": false
                 },
+                "mmsMessage": {
+                    "description": "Present only when ` + "`" + `includeContent=true` + "`" + ` and the message type is mms.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.MmsMessage"
+                        }
+                    ]
+                },
                 "recipients": {
                     "description": "Recipients states",
                     "type": "array",
@@ -1975,11 +1983,20 @@ const docTemplate = `{
                     "maxLength": 65535,
                     "example": "Hello World!"
                 },
+                "mmsMessage": {
+                    "description": "MMS message",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.MmsMessage"
+                        }
+                    ]
+                },
                 "phoneNumbers": {
                     "description": "Recipients (phone numbers)",
                     "type": "array",
                     "maxItems": 100,
                     "minItems": 1,
+                    "uniqueItems": true,
                     "items": {
                         "type": "string"
                     },
@@ -2111,6 +2128,14 @@ const docTemplate = `{
                     "type": "boolean",
                     "example": false
                 },
+                "mmsMessage": {
+                    "description": "Present only when ` + "`" + `includeContent=true` + "`" + ` and the message type is mms.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.MmsMessage"
+                        }
+                    ]
+                },
                 "recipients": {
                     "description": "Recipients states",
                     "type": "array",
@@ -2155,6 +2180,52 @@ const docTemplate = `{
                 "LIFO",
                 "FIFO"
             ]
+        },
+        "smsgateway.MmsAttachment": {
+            "type": "object",
+            "required": [
+                "contentType",
+                "data"
+            ],
+            "properties": {
+                "contentType": {
+                    "description": "ContentType is the MIME type of the attachment.",
+                    "type": "string",
+                    "example": "image/png"
+                },
+                "data": {
+                    "description": "Data is the base64-encoded attachment content.",
+                    "type": "string",
+                    "example": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+                },
+                "name": {
+                    "description": "Name is the optional file name of the attachment.",
+                    "type": "string",
+                    "example": "picture.png"
+                }
+            }
+        },
+        "smsgateway.MmsMessage": {
+            "type": "object",
+            "properties": {
+                "attachments": {
+                    "description": "Attachments is the list of attachments. Omitted when empty.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/smsgateway.MmsAttachment"
+                    }
+                },
+                "subject": {
+                    "description": "Subject is the optional subject of the MMS.",
+                    "type": "string",
+                    "example": "Hello"
+                },
+                "text": {
+                    "description": "Text is the optional text body of the MMS.",
+                    "type": "string",
+                    "example": "World"
+                }
+            }
         },
         "smsgateway.ProcessingState": {
             "type": "string",
