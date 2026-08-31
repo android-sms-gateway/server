@@ -24,12 +24,17 @@ func messageToDomain(input messageModel) (Message, error) {
 	if err != nil {
 		return Message{}, fmt.Errorf("failed to get data content: %w", err)
 	}
+	mmsContent, err := input.GetMultimediaContent()
+	if err != nil {
+		return Message{}, fmt.Errorf("failed to get mms content: %w", err)
+	}
 
 	return Message{
 		MessageInput: MessageInput{
 			MessageContent: MessageContent{
 				TextContent: textContent,
 				DataContent: dataContent,
+				MmsContent:  mmsContent,
 			},
 
 			ID: input.ExtID,

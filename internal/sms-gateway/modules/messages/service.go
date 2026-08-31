@@ -343,17 +343,8 @@ func (s *Service) prepareMessage(
 		message.IsEncrypted,
 	)
 
-	switch {
-	case message.TextContent != nil:
-		if setErr := msg.SetTextContent(*message.TextContent); setErr != nil {
-			return nil, fmt.Errorf("failed to set text content: %w", setErr)
-		}
-	case message.DataContent != nil:
-		if setErr := msg.SetDataContent(*message.DataContent); setErr != nil {
-			return nil, fmt.Errorf("failed to set data content: %w", setErr)
-		}
-	default:
-		return nil, ErrNoContent
+	if setErr := setMessageContent(msg, message); setErr != nil {
+		return nil, setErr
 	}
 
 	if msg.ExtID == "" {
@@ -361,6 +352,27 @@ func (s *Service) prepareMessage(
 	}
 
 	return msg, nil
+}
+
+func setMessageContent(msg *messageModel, message MessageInput) error {
+	switch {
+	case message.TextContent != nil:
+		if setErr := msg.SetTextContent(*message.TextContent); setErr != nil {
+			return fmt.Errorf("failed to set text content: %w", setErr)
+		}
+	case message.DataContent != nil:
+		if setErr := msg.SetDataContent(*message.DataContent); setErr != nil {
+			return fmt.Errorf("failed to set data content: %w", setErr)
+		}
+	case message.MmsContent != nil:
+		if setErr := msg.SetMultimediaContent(*message.MmsContent); setErr != nil {
+			return fmt.Errorf("failed to set mms content: %w", setErr)
+		}
+	default:
+		return ErrNoContent
+	}
+
+	return nil
 }
 
 /////////////////////////////////////////////////////////////////////////////
