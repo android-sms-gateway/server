@@ -369,7 +369,7 @@ func TestMessages_Post(t *testing.T) {
 				},
 			},
 			expectedStatusCode: 400,
-			expectedMessage:    "phone numbers must be unique",
+			expectedMessage:    "failed to validate: Key: 'Message.PhoneNumbers' Error:Field validation for 'PhoneNumbers' failed on the 'unique' tag",
 		},
 		{
 			name: "distinct phone numbers are accepted",
