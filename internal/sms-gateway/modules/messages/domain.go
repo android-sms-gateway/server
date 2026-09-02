@@ -55,7 +55,8 @@ type MessageState struct {
 	MessageStateInput
 	MessageStateContent
 
-	DeviceID    string `json:"deviceId"`    // Device ID
-	IsHashed    bool   `json:"isHashed"`    // Hashed
-	IsEncrypted bool   `json:"isEncrypted"` // Encrypted
+	DeviceID    string    `json:"deviceId"`    // Device ID
+	IsHashed    bool      `json:"isHashed"`    // Hashed
+	IsEncrypted bool      `json:"isEncrypted"` // Encrypted
+	CreatedAt   time.Time `json:"createdAt"`   // Created at
 }

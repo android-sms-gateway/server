@@ -40,6 +40,8 @@ github.com/MicahParks/keyfunc v1.9.0 h1:lhKd5xrFHLNOWrDc4Tyb/Q1AJ4LCzQ48GVJyVIID
 github.com/MicahParks/keyfunc v1.9.0/go.mod h1:IdnCilugA0O/99dW+/MkvlyrsX8+L8+x95xuVNtM5jw=
 github.com/android-sms-gateway/client-go v1.14.5 h1:CtyXAHPdyDtCFTzeVPt5EUfnWhQ2RsIWbCUk52tbGjw=
 github.com/android-sms-gateway/client-go v1.14.5/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
+github.com/android-sms-gateway/client-go v1.15.1-0.20260831040827-45278c69c3e9 h1:/REm4VYPWTPAjB06JuM+iCSmcLcvepURbwqsz8KCIaI=
+github.com/android-sms-gateway/client-go v1.15.1-0.20260831040827-45278c69c3e9/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
 github.com/andybalholm/brotli v1.2.2 h1:HzTuoo2ErYQqf5qvcJInB8uvqSVxRttzkFexPWtnceM=
 github.com/andybalholm/brotli v1.2.2/go.mod h1:rzTDkvFWvIrjDXZHkuS16NPggd91W3kUSvPlQ1pLaKY=
 github.com/ansrivas/fiberprometheus/v2 v2.17.0 h1:p0gqs5LsSCWGoSFF44fCJkyU+XcE6TLRqEMu80b2iCo=
