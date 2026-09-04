@@ -4,7 +4,7 @@ go 1.25.8
 
 require (
 	firebase.google.com/go/v4 v4.21.0
-	github.com/android-sms-gateway/client-go v1.14.5
+	github.com/android-sms-gateway/client-go v1.15.0
 	github.com/ansrivas/fiberprometheus/v2 v2.17.0
 	github.com/capcom6/go-helpers v0.4.0
 	github.com/capcom6/go-infra-fx v0.5.9
@@ -24,7 +24,6 @@ require (
 	github.com/prometheus/client_golang v1.24.1
 	github.com/redis/go-redis/v9 v9.21.0
 	github.com/samber/lo v1.53.0
-	github.com/stretchr/testify v1.11.1
 	github.com/swaggo/swag v1.16.6
 	go.uber.org/fx v1.24.0
 	go.uber.org/zap v1.28.0
@@ -57,7 +56,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/cncf/xds/go v0.0.0-20260202195803-dba9d589def2 // indirect
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.37.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.3.3 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
@@ -101,7 +99,6 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/pressly/goose/v3 v3.27.3 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.70.1 // indirect
