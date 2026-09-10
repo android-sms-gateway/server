@@ -58,4 +58,6 @@ type MessageState struct {
 	DeviceID    string `json:"deviceId"`    // Device ID
 	IsHashed    bool   `json:"isHashed"`    // Hashed
 	IsEncrypted bool   `json:"isEncrypted"` // Encrypted
+
+	ScheduleAt *time.Time `json:"scheduleAt,omitempty"` // Scheduled delivery time, if set
 }
