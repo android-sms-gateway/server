@@ -35,12 +35,15 @@ SMSGate Server is the backend of the SMSGate ecosystem. It accepts SMS/MMS dispa
 
 - Text, data, scheduled SMS and MMS dispatch
 - Message status tracking and cancellation
-- Device management (list, delete, online state)
+- Message listing with filtering, sorting and limit/offset pagination
+- Device management (list, delete, last-seen and SIM card info)
 - Health check endpoints (live, ready, startup)
 - JWT authentication with scopes and token refresh
 - OTP-based device registration
-- Inbox, settings, and logs APIs
+- Inbox and settings APIs
 - Public and private deployment modes
+- Redis-backed cache and pub/sub for multi-replica deployments
+- Prometheus metrics at `/metrics`
 - MySQL 8.0.13+ / MariaDB 10.2.7+ storage (MariaDB LTS recommended)
 
 ## 📦 Prerequisites
@@ -67,7 +70,7 @@ Or with Compose (backend + background worker + MariaDB):
 docker compose -f deployments/docker-compose/docker-compose.yml up --build
 ```
 
-The worker handles background tasks: message hashing, message/device/token cleanup. Run it as a separate process or via the `worker` subcommand:
+The worker handles background tasks: message hashing, message/device/token/inbox cleanup. Run it as a separate process or via the `worker` subcommand:
 
 ```bash
 ./sms-gateway worker
@@ -89,7 +92,7 @@ make db-upgrade # apply migrations
 
 ## ⚙️ Configuration
 
-Configuration lives in [configs/config.example.yml](configs/config.example.yml); every key can be overridden by env vars using `SECTION__KEY` (e.g. `DATABASE__HOST`, `GATEWAY__MODE`). Key sections: `database`, `gateway`, `http`, `fcm`, `sse`, `messages`, `cache`, `pubsub`, `jwt`, `otp`, `tasks`.
+Configuration lives in [configs/config.example.yml](configs/config.example.yml); every key can be overridden by env vars using `SECTION__KEY` (e.g. `DATABASE__HOST`, `GATEWAY__MODE`). Key sections: `database`, `gateway`, `http`, `fcm`, `sse`, `messages`, `cache`, `pubsub`, `jwt`, `otp`, plus `tasks` (worker only).
 
 ```bash
 export GATEWAY__MODE=private
@@ -98,18 +101,19 @@ export DATABASE__HOST=localhost
 export HTTP__LISTEN=0.0.0.0:3000
 ```
 
-See [configs/config.example.yml](configs/config.example.yml) for all options.
+See [configs/config.example.yml](configs/config.example.yml) for all options and [.env.example](.env.example) for every supported environment variable.
 
 ### Worker Tasks
 
 The background worker runs periodic tasks controlled by the `tasks` config section:
 
-| Task               | Default Interval | Purpose                                                                 |
-| ------------------ | ---------------- | ----------------------------------------------------------------------- |
-| `messages_hashing` | `168h` (7 days)  | Hash processed messages to avoid plain text storage                     |
-| `messages_cleanup` | `24h`            | Delete messages older than `max_age` (default `720h` / 30 days)         |
-| `devices_cleanup`  | `24h`            | Remove inactive devices older than `max_age` (default `8760h` / 1 year) |
-| `tokens_cleanup`   | `24h`            | Revoke expired tokens past `max_age` grace (default `1h`)               |
+| Task               | Default Interval | Purpose                                                                               |
+| ------------------ | ---------------- | ------------------------------------------------------------------------------------- |
+| `messages_hashing` | `168h` (7 days)  | Hash processed messages to avoid plain text storage                                   |
+| `messages_cleanup` | `24h`            | Delete messages older than `max_age` (default `720h` / 30 days)                       |
+| `devices_cleanup`  | `24h`            | Remove inactive devices older than `max_age` (default `8760h` / 1 year)               |
+| `tokens_cleanup`   | `24h`            | Revoke expired tokens past `max_age` grace (default `1h`)                             |
+| `inbox_cleanup`    | `24h`            | Delete inbox messages and attachments older than `max_age` (default `720h` / 30 days) |
 
 ## 🔐 Authentication
 
@@ -119,7 +123,7 @@ The API supports Basic auth and JWT bearer tokens. JWT tokens carry scopes and a
 - `POST /api/3rdparty/v1/auth/token/refresh` - rotate access token (Bearer refresh)
 - `DELETE /api/3rdparty/v1/auth/token/{jti}` - revoke token (Basic auth)
 
-Available scopes: `messages:send`, `messages:list`, `messages:read`, `messages:export`, `messages:cancel`, `devices:list`, `devices:delete`, `inbox:list`, `inbox:refresh`, `logs:read`, `settings:read`, `settings:write`, `tokens:manage`, `tokens:refresh`, `webhooks:list`, `webhooks:write`, `webhooks:delete`.
+Available scopes: `messages:send`, `messages:list`, `messages:read`, `messages:export`, `messages:cancel`, `devices:list`, `devices:delete`, `inbox:list`, `inbox:read`, `inbox:refresh`, `logs:read`, `settings:read`, `settings:write`, `tokens:manage`, `tokens:refresh`, `webhooks:list`, `webhooks:write`, `webhooks:delete`.
 
 Full reference: [integration/authentication](https://docs.sms-gate.app/integration/authentication/).
 
@@ -130,10 +134,17 @@ Full reference: [integration/authentication](https://docs.sms-gate.app/integrati
 | Messages | `/api/3rdparty/v1/messages`                            |
 | Devices  | `/api/3rdparty/v1/devices`                             |
 | Webhooks | `/api/3rdparty/v1/webhooks`                            |
+| Inbox    | `/api/3rdparty/v1/inbox`                               |
+| Settings | `/api/3rdparty/v1/settings`                            |
 | Health   | `/api/3rdparty/v1/health[/live \| /ready \| /startup]` |
 | Auth     | `/api/3rdparty/v1/auth/token`                          |
+| Mobile   | `/api/mobile/v1`                                       |
 
-Also: `/api/3rdparty/v1/inbox`, `/settings`, `/logs`. OpenAPI schema is served when `http.openapi.enabled: true`.
+Also available: root health probes at `/health`, `/health/live`, `/health/ready` and `/health/startup`, Prometheus metrics at `/metrics`, and the API catalog at `/.well-known/api-catalog`.
+
+`GET /api/3rdparty/v1/logs` is registered but always responds `501 Not Implemented`.
+
+Swagger UI is served at `/api/docs/index.html` (spec at `/api/docs/doc.json`) when `http.openapi.enabled: true`. It covers the third-party API; the mobile API is not part of the published schema.
 
 ## 📚 Documentation
 
