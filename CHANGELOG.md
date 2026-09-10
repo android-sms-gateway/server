@@ -6,6 +6,24 @@ All notable changes to this project will be documented in this file.
 
 ### New Features
 
+#### Message status
+
+- **`scheduleAt` in message status** — message state responses now report when the message is scheduled for delivery, as an RFC 3339 timestamp. The field is returned only for scheduled messages and is omitted for all others. Returned by `POST /api/3rdparty/v1/messages`, `GET /api/3rdparty/v1/messages`, `GET /api/3rdparty/v1/messages/{id}`, and `DELETE /api/3rdparty/v1/messages/{id}`.
+
+### Bug Fixes
+
+- **Message list pagination** — `GET /api/3rdparty/v1/messages` now applies the `offset` query parameter, which was previously accepted but ignored, so the second and later pages of a listing can be fetched. The `limit` parameter is now capped at 100 (default 50).
+
+## [1.51.1] - 2026-10-21
+
+### Maintenance
+
+- **Dependency updates** — the OpenTelemetry Go SDK and its instrumentation packages were upgraded from v1.44.0 to v1.46.0 (contrib packages v0.69.0 to v0.71.0), together with updates to the Firebase, Fiber, Redis and MySQL driver libraries.
+
+## [1.51.0] - 2026-10-19
+
+### New Features
+
 #### Device encryption keys
 
 - **Device public key and key version** — `POST /api/mobile/v1/device` and `PATCH /api/mobile/v1/device` now accept `publicKey` (base64-encoded RSA public key) and `keyVersion`, and both are returned by `GET /api/mobile/v1/device` and `GET /api/3rdparty/v1/devices`. Sending a new key with a version overwrites the stored key, so devices can rotate keys; clearing a stored key is not supported. Requires migration `20261002000000` (`make db-upgrade`), which adds the `public_key` and `key_version` columns.
@@ -25,6 +43,12 @@ All notable changes to this project will be documented in this file.
 ### Bug Fixes
 
 - **Clearing a device push token** — `PATCH /api/mobile/v1/device` with `"pushToken": ""` now clears the stored FCM token. Previously the empty value was treated as "no change", so the device kept its old token and continued receiving pushes.
+
+## [1.49.0] - 2026-10-02
+
+### New Features
+
+- **Outgoing MMS** — send requests now accept an `mmsMessage` with an optional subject, an optional text body and a list of attachments, each carrying its MIME type, an optional file name and base64-encoded content. The stored message is returned as `mmsMessage` in status responses when `includeContent=true`. The request shape is provided by `client-go` v1.16.0. Requires migration `20260925000000` (`make db-upgrade`), which widens the `messages.content` column and adds the `Mms` message type.
 
 ## [1.49.1] - 2026-10-09
 
