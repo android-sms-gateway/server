@@ -38,6 +38,7 @@ func (p *thirdPartyGetQueryParams) ToFilter() messages.SelectFilter {
 
 func (p *thirdPartyGetQueryParams) ToOptions() messages.SelectOptions {
 	const defaultLimit = 50
+	const maxLimit = 100
 
 	var options messages.SelectOptions
 	options.WithRecipients = true
@@ -47,7 +48,8 @@ func (p *thirdPartyGetQueryParams) ToOptions() messages.SelectOptions {
 		options.WithContent = *p.IncludeContent
 	}
 
-	options.Limit = lo.FromPtrOr(p.Limit, int(defaultLimit))
+	options.Limit = max(min(lo.FromPtrOr(p.Limit, int(defaultLimit)), maxLimit), 1)
+	options.Offset = lo.FromPtrOr(p.Offset, 0)
 
 	if p.Sort != nil {
 		switch *p.Sort {
