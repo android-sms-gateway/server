@@ -37,6 +37,7 @@ func Module() fx.Option {
 			settings.NewThirdPartyController,
 			settings.NewMobileController,
 			inbox.NewThirdPartyController,
+			inbox.NewMobileController,
 			logs.NewThirdPartyController,
 			events.NewMobileController,
 			fx.Private,
