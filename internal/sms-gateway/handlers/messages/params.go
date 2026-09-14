@@ -3,6 +3,7 @@ package messages
 import (
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
+	"github.com/samber/lo"
 )
 
 // thirdPartyPostQueryParams aliases smsgateway.SendOptions so that the query
@@ -36,6 +37,7 @@ func (p *thirdPartyGetQueryParams) ToFilter() messages.SelectFilter {
 }
 
 func (p *thirdPartyGetQueryParams) ToOptions() messages.SelectOptions {
+	const defaultLimit = 50
 	const maxLimit = 100
 
 	var options messages.SelectOptions
@@ -46,15 +48,8 @@ func (p *thirdPartyGetQueryParams) ToOptions() messages.SelectOptions {
 		options.WithContent = *p.IncludeContent
 	}
 
-	if p.Limit != nil {
-		options.Limit = max(min(*p.Limit, maxLimit), 1)
-	} else {
-		options.Limit = 50
-	}
-
-	if p.Offset != nil {
-		options.Offset = max(*p.Offset, 0)
-	}
+	options.Limit = max(min(lo.FromPtrOr(p.Limit, int(defaultLimit)), maxLimit), 1)
+	options.Offset = lo.FromPtrOr(p.Offset, 0)
 
 	if p.Sort != nil {
 		switch *p.Sort {
