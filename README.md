@@ -17,6 +17,7 @@ Backend for the SMSGate ecosystem: a REST API that dispatches SMS through connec
   - [📦 Prerequisites](#-prerequisites)
   - [🚀 Quickstart](#-quickstart)
   - [⚙️ Configuration](#️-configuration)
+    - [Worker Tasks](#worker-tasks)
   - [🔐 Authentication](#-authentication)
   - [🔌 API Overview](#-api-overview)
   - [📚 Documentation](#-documentation)
@@ -46,7 +47,7 @@ SMSGate Server is the backend of the SMSGate ecosystem. It accepts SMS dispatch 
 
 - MySQL 8.0.13+ or MariaDB 10.2.7+ database (MariaDB LTS recommended)
 - Docker + Docker Compose for container setup
-- Go 1.25.8+ for building from source
+- Go 1.26+ for building from source
 
 ## 🚀 Quickstart
 
