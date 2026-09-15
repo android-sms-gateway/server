@@ -1,6 +1,6 @@
 module github.com/android-sms-gateway/server/test/e2e
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/capcom6/go-helpers v0.2.0

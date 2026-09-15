@@ -147,7 +147,7 @@ func (h *mobileHandler) getDevice(device devices.Device, c *fiber.Ctx) error {
 	}
 
 	if !device.IsEmpty() {
-		res.Device = lo.ToPtr(converters.DeviceToDTO(device))
+		res.Device = new(converters.DeviceToDTO(device))
 	}
 
 	return c.JSON(res)

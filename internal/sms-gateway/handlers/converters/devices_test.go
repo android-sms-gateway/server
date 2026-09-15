@@ -8,7 +8,6 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/converters"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/go-playground/assert/v2"
-	"github.com/samber/lo"
 )
 
 func TestDeviceToDTO(t *testing.T) {
@@ -32,7 +31,7 @@ func TestDeviceToDTO(t *testing.T) {
 				DeviceInput: devices.DeviceInput{
 					DeviceInfo: devices.DeviceInfo{
 						DeviceUpdate: devices.DeviceUpdate{},
-						Name:         lo.ToPtr("test-name"),
+						Name:         new("test-name"),
 					},
 					ID: "test-id",
 				},
@@ -73,9 +72,9 @@ func TestDeviceToDTO(t *testing.T) {
 								{
 									SlotIndex:   0,
 									SimNumber:   1,
-									PhoneNumber: lo.ToPtr("+79990001234"),
-									CarrierName: lo.ToPtr("Carrier"),
-									ICCID:       lo.ToPtr("8901260000000000000"),
+									PhoneNumber: new("+79990001234"),
+									CarrierName: new("Carrier"),
+									ICCID:       new("8901260000000000000"),
 								},
 							},
 						},
@@ -89,9 +88,9 @@ func TestDeviceToDTO(t *testing.T) {
 					{
 						SlotIndex:   0,
 						SimNumber:   1,
-						PhoneNumber: lo.ToPtr("+79990001234"),
-						CarrierName: lo.ToPtr("Carrier"),
-						ICCID:       lo.ToPtr("8901260000000000000"),
+						PhoneNumber: new("+79990001234"),
+						CarrierName: new("Carrier"),
+						ICCID:       new("8901260000000000000"),
 					},
 				},
 			},

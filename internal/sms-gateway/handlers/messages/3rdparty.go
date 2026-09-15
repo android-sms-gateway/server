@@ -307,8 +307,7 @@ func (h *ThirdPartyController) errorHandler(c *fiber.Ctx) error {
 		return nil
 	}
 
-	var fiberError *fiber.Error
-	if errors.As(err, &fiberError) {
+	if fiberError, ok := errors.AsType[*fiber.Error](err); ok {
 		return fiberError
 	}
 

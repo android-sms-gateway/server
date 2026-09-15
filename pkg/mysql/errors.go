@@ -11,8 +11,7 @@ const (
 )
 
 func IsDuplicateKeyViolation(err error) bool {
-	var me *mysql.MySQLError
-	if errors.As(err, &me) {
+	if me, ok := errors.AsType[*mysql.MySQLError](err); ok {
 		return me.Number == ErrCodeDuplicateEntry
 	}
 	return false
