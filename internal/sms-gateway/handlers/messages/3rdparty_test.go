@@ -122,8 +122,7 @@ func TestThirdPartyControllerErrorHandler(t *testing.T) {
 				// Mirrors go-infra-fx/http errorHandler ({"message": err.Error()}).
 				ErrorHandler: func(c *fiber.Ctx, err error) error {
 					code := fiber.StatusInternalServerError
-					var fiberErr *fiber.Error
-					if errors.As(err, &fiberErr) {
+					if fiberErr, ok := errors.AsType[*fiber.Error](err); ok {
 						code = fiberErr.Code
 					}
 					return c.Status(code).JSON(&fiber.Map{"message": err.Error()})
