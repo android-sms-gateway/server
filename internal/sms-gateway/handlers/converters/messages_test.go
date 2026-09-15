@@ -8,7 +8,6 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/handlers/converters"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 	"github.com/go-playground/assert/v2"
-	"github.com/samber/lo"
 )
 
 func TestMessageToDTO(t *testing.T) {
@@ -32,10 +31,10 @@ func TestMessageToDTO(t *testing.T) {
 					ID:                 "msg-123",
 					PhoneNumbers:       []string{"+1234567890", "+9876543210"},
 					IsEncrypted:        true,
-					SimNumber:          lo.ToPtr(uint8(2)),
-					WithDeliveryReport: lo.ToPtr(true),
-					TTL:                lo.ToPtr(uint64(3600)),
-					ValidUntil:         lo.ToPtr(now.Add(24 * time.Hour)),
+					SimNumber:          new(uint8(2)),
+					WithDeliveryReport: new(true),
+					TTL:                new(uint64(3600)),
+					ValidUntil:         new(now.Add(24 * time.Hour)),
 					Priority:           100,
 				},
 				CreatedAt: now,
@@ -47,10 +46,10 @@ func TestMessageToDTO(t *testing.T) {
 					TextMessage:        &smsgateway.TextMessage{Text: "Test message content"},
 					PhoneNumbers:       []string{"+1234567890", "+9876543210"},
 					IsEncrypted:        true,
-					SimNumber:          lo.ToPtr(uint8(2)),
-					WithDeliveryReport: lo.ToPtr(true),
-					TTL:                lo.ToPtr(uint64(3600)),
-					ValidUntil:         lo.ToPtr(now.Add(24 * time.Hour)),
+					SimNumber:          new(uint8(2)),
+					WithDeliveryReport: new(true),
+					TTL:                new(uint64(3600)),
+					ValidUntil:         new(now.Add(24 * time.Hour)),
 					Priority:           100,
 				},
 				CreatedAt: now,

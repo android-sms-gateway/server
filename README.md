@@ -44,7 +44,7 @@ SMSGate Server is the backend of the SMSGate ecosystem. It accepts SMS dispatch 
 
 - MySQL 8.0.13+ or MariaDB 10.2.7+ database (MariaDB LTS recommended)
 - Docker + Docker Compose for container setup
-- Go 1.25+ for building from source
+- Go 1.26+ for building from source
 
 ## 🚀 Quickstart
 
