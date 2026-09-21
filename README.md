@@ -84,6 +84,8 @@ make db-upgrade # apply migrations
 
 Configuration lives in [configs/config.example.yml](configs/config.example.yml); every key can be overridden by env vars using `SECTION__KEY` (e.g. `DATABASE__HOST`, `GATEWAY__MODE`). Key sections: `database`, `gateway`, `http`, `fcm`, `sse`, `messages`, `cache`, `pubsub`, `jwt`, `otp`, `tasks`.
 
+`gateway.mode` accepts only `public` or `private`; any other value fails at startup.
+
 ```bash
 export GATEWAY__MODE=private
 export GATEWAY__PRIVATE_TOKEN=change-me
