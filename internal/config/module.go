@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -67,10 +68,19 @@ func Module() fx.Option {
 				ConnMaxLifetime: 0,
 			}
 		}),
-		fx.Provide(func(cfg Config) push.Config {
-			mode := push.ModeFCM
-			if cfg.Gateway.Mode == GatewayModePrivate {
+		fx.Provide(func(cfg Config) (push.Config, error) {
+			var mode push.Mode
+			switch cfg.Gateway.Mode {
+			case GatewayModePublic:
+				mode = push.ModeFCM
+			case GatewayModePrivate:
 				mode = push.ModeUpstream
+			default:
+				return push.Config{}, fmt.Errorf(
+					"%w: gateway mode must be either 'public' or 'private', got %q",
+					ErrInvalidConfig,
+					cfg.Gateway.Mode,
+				)
 			}
 
 			return push.Config{
@@ -81,7 +91,7 @@ func Module() fx.Option {
 				},
 				Debounce: time.Duration(cfg.FCM.DebounceSeconds) * time.Second,
 				Timeout:  time.Duration(cfg.FCM.TimeoutSeconds) * time.Second,
-			}
+			}, nil
 		}),
 		fx.Provide(func(cfg Config) auth.Config {
 			return auth.Config{
