@@ -258,13 +258,13 @@ func (s *Service) Enqueue(
 		return nil, err
 	}
 
+	if insErr := s.messages.Insert(msg); insErr != nil {
+		return nil, insErr
+	}
+
 	state, err := msg.toStateDomain()
 	if err != nil {
 		return nil, err
-	}
-
-	if insErr := s.messages.Insert(msg); insErr != nil {
-		return state, insErr
 	}
 
 	if cacheErr := s.cache.Set(
