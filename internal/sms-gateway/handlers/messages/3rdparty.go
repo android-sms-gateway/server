@@ -329,13 +329,9 @@ func (h *ThirdPartyController) errorHandler(c *fiber.Ctx) error {
 	case errors.Is(err, messages.ErrMessageNotPending):
 		return fiber.NewError(fiber.StatusConflict, err.Error())
 
-	case errors.Is(err, devices.ErrNotFound):
-		fallthrough
-	case errors.Is(err, devices.ErrInvalidFilter):
-		fallthrough
-	case errors.Is(err, devices.ErrInvalidUser):
-		fallthrough
-	case errors.Is(err, devices.ErrMoreThanOne):
+	case errors.Is(err, devices.ErrNotFound),
+		errors.Is(err, devices.ErrInvalidFilter),
+		errors.Is(err, devices.ErrMoreThanOne):
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
