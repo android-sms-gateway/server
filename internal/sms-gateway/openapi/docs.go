@@ -1677,6 +1677,12 @@ const docTemplate = `{
                         "$ref": "#/definitions/smsgateway.RecipientState"
                     }
                 },
+                "scheduleAt": {
+                    "description": "Scheduled delivery time, if set",
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2020-01-01T08:30:00Z"
+                },
                 "state": {
                     "description": "State",
                     "allOf": [
@@ -2263,6 +2269,12 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/smsgateway.RecipientState"
                     }
+                },
+                "scheduleAt": {
+                    "description": "Scheduled delivery time, if set",
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2020-01-01T08:30:00Z"
                 },
                 "state": {
                     "description": "State",
