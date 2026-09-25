@@ -107,43 +107,15 @@ func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 		return fmt.Errorf("failed to select device: %w", err)
 	}
 
-	var textContent *messages.TextMessageContent
-	var dataContent *messages.DataMessageContent
-	if text := req.GetTextMessage(); text != nil {
-		textContent = &messages.TextMessageContent{
-			Text: text.Text,
-		}
-	} else if data := req.GetDataMessage(); data != nil {
-		dataContent = &messages.DataMessageContent{
-			Data: data.Data,
-			Port: data.Port,
-		}
-	} else {
+	msg := messageInputFromRequest(req)
+	if msg == nil {
 		return fiber.NewError(fiber.StatusBadRequest, "No message content provided")
 	}
 
-	msg := messages.MessageInput{
-		MessageContent: messages.MessageContent{
-			TextContent: textContent,
-			DataContent: dataContent,
-		},
-
-		ID: req.ID,
-
-		PhoneNumbers: req.PhoneNumbers,
-		IsEncrypted:  req.IsEncrypted,
-
-		SimNumber:          req.SimNumber,
-		WithDeliveryReport: req.WithDeliveryReport,
-		TTL:                req.TTL,
-		ValidUntil:         req.ValidUntil,
-		ScheduleAt:         req.ScheduleAt,
-		Priority:           req.Priority,
-	}
 	state, err := h.messagesSvc.Enqueue(
 		c.Context(),
 		*device,
-		msg,
+		*msg,
 		messages.EnqueueOptions{SkipPhoneValidation: lo.FromPtrOr(params.SkipPhoneValidation, false)},
 	)
 	if err != nil {
@@ -175,6 +147,44 @@ func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 		JSON(smsgateway.GetMessageResponse(converters.MessageStateToDTO(*state)))
 }
 
+// messageInputFromRequest maps the parsed request payload into the messages
+// domain input. Returns nil when no content payload is present (unreachable
+// after BodyParserValidator, kept as a safety net).
+func messageInputFromRequest(req smsgateway.Message) *messages.MessageInput {
+	var textContent *messages.TextContent
+	var dataContent *messages.DataContent
+	var mmsContent *messages.MultimediaContent
+	if text := req.GetTextMessage(); text != nil {
+		textContent = text
+	} else if data := req.GetDataMessage(); data != nil {
+		dataContent = data
+	} else if mms := req.GetMmsMessage(); mms != nil {
+		mmsContent = mms
+	} else {
+		return nil
+	}
+
+	return &messages.MessageInput{
+		MessageContent: messages.MessageContent{
+			TextContent: textContent,
+			DataContent: dataContent,
+			MmsContent:  mmsContent,
+		},
+
+		ID: req.ID,
+
+		PhoneNumbers: req.PhoneNumbers,
+		IsEncrypted:  req.IsEncrypted,
+
+		SimNumber:          req.SimNumber,
+		WithDeliveryReport: req.WithDeliveryReport,
+		TTL:                req.TTL,
+		ValidUntil:         req.ValidUntil,
+		ScheduleAt:         req.ScheduleAt,
+		Priority:           req.Priority,
+	}
+}
+
 //	@Summary		Get messages
 //	@Description	Retrieves a list of messages with filtering and pagination
 //	@Security		ApiAuth
@@ -187,7 +197,7 @@ func (h *ThirdPartyController) post(userID string, c *fiber.Ctx) error {
 //	@Param			deviceId		query		string							false	"Filter by device ID"																	minLength(21)	maxLength(21)
 //	@Param			limit			query		int								false	"Pagination limit"																		default(50)		minimum(1)	maximum(100)
 //	@Param			offset			query		int								false	"Pagination offset"																		default(0)
-//	@Param			includeContent	query		bool							false	"Include textMessage/dataMessage content for each message. Default is false"			default(false)
+//	@Param			includeContent	query		bool							false	"Include textMessage/dataMessage/mmsMessage content for each message. Default is false"	default(false)
 //	@Param			sort			query		string							false	"Sort order per JSON:API spec. Use created_at (ascending) or -created_at (descending)"	Enums(created_at, -created_at)	default(-created_at)
 //	@Success		200				{object}	smsgateway.GetMessagesResponse	"A list of messages"
 //	@Header			200				{integer}	X-Total-Count					"Total number of items available"

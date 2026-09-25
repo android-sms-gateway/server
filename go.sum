@@ -42,6 +42,8 @@ github.com/android-sms-gateway/client-go v1.14.6-0.20260818003959-ca8711dc4282 h
 github.com/android-sms-gateway/client-go v1.14.6-0.20260818003959-ca8711dc4282/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
 github.com/android-sms-gateway/client-go v1.15.1-0.20260921073604-9d898598cdad h1:fuZq2lh9xbLXwtmP9cXlhd534gmOaGaT2h49Av/woFw=
 github.com/android-sms-gateway/client-go v1.15.1-0.20260921073604-9d898598cdad/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
+github.com/android-sms-gateway/client-go v1.16.0 h1:6j8hA5Xtm6du35U9SIwhC9V/oN0YHU3NQHtMLClAtv0=
+github.com/android-sms-gateway/client-go v1.16.0/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
 github.com/andybalholm/brotli v1.2.2 h1:HzTuoo2ErYQqf5qvcJInB8uvqSVxRttzkFexPWtnceM=
 github.com/andybalholm/brotli v1.2.2/go.mod h1:rzTDkvFWvIrjDXZHkuS16NPggd91W3kUSvPlQ1pLaKY=
 github.com/ansrivas/fiberprometheus/v2 v2.17.0 h1:p0gqs5LsSCWGoSFF44fCJkyU+XcE6TLRqEMu80b2iCo=

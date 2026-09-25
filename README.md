@@ -6,7 +6,7 @@
 [![Issues][issues-shield]][issues-url]
 [![License][license-shield]][license-url]
 
-Backend for the SMSGate ecosystem: a REST API that dispatches SMS through connected Android devices, with the optional private deployment.
+Backend for the SMSGate ecosystem: a REST API that dispatches SMS/MMS through connected Android devices, with optional private deployment.
 
 ## 📚 Table of Contents
 
@@ -17,6 +17,7 @@ Backend for the SMSGate ecosystem: a REST API that dispatches SMS through connec
   - [📦 Prerequisites](#-prerequisites)
   - [🚀 Quickstart](#-quickstart)
   - [⚙️ Configuration](#️-configuration)
+    - [Worker Tasks](#worker-tasks)
   - [🔐 Authentication](#-authentication)
   - [🔌 API Overview](#-api-overview)
   - [📚 Documentation](#-documentation)
@@ -28,11 +29,11 @@ Backend for the SMSGate ecosystem: a REST API that dispatches SMS through connec
 
 ## 📖 About
 
-SMSGate Server is the backend of the SMSGate ecosystem. It accepts SMS dispatch requests through a REST API, routes them to connected Android devices over Firebase Cloud Messaging, and tracks delivery state. It runs in two modes: public (anonymous device registration, used at [api.sms-gate.app](https://api.sms-gate.app)) and private (token-protected registration, push relayed through the upstream). Deep docs: https://docs.sms-gate.app/.
+SMSGate Server is the backend of the SMSGate ecosystem. It accepts SMS/MMS dispatch requests through a REST API, routes them to connected Android devices over Firebase Cloud Messaging, and tracks delivery state. It runs in two modes: public (anonymous device registration, used at [api.sms-gate.app](https://api.sms-gate.app)) and private (token-protected registration, push relayed through the upstream). Deep docs: https://docs.sms-gate.app/.
 
 ## ⭐ Features
 
-- Text, data, and scheduled SMS dispatch
+- Text, data, scheduled SMS and MMS dispatch
 - Message status tracking and cancellation
 - Device management (list, delete, online state)
 - Health check endpoints (live, ready, startup)
@@ -72,6 +73,12 @@ The worker handles background tasks: message hashing, message/device/token clean
 ./sms-gateway worker
 ```
 
+Or with the Helm chart:
+
+```bash
+helm install sms-gate deployments/helm-chart
+```
+
 Local development:
 
 ```bash
@@ -90,6 +97,8 @@ export GATEWAY__PRIVATE_TOKEN=change-me
 export DATABASE__HOST=localhost
 export HTTP__LISTEN=0.0.0.0:3000
 ```
+
+See [configs/config.example.yml](configs/config.example.yml) for all options.
 
 ### Worker Tasks
 
