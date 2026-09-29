@@ -764,7 +764,7 @@ const docTemplate = `{
                     {
                         "type": "boolean",
                         "default": false,
-                        "description": "Include textMessage/dataMessage content for each message. Default is false",
+                        "description": "Include textMessage/dataMessage/mmsMessage content for each message. Default is false",
                         "name": "includeContent",
                         "in": "query"
                     },

@@ -56,7 +56,7 @@ func TestThirdPartyControllerErrorHandler(t *testing.T) {
 			name:       "wrapped no content keeps err.Error() text (unchanged)",
 			handlerErr: fmt.Errorf(enqueueWrap, messages.ErrNoContent),
 			wantStatus: fiber.StatusBadRequest,
-			wantBody:   `{"message":"failed to enqueue message: no text or data content"}`,
+			wantBody:   `{"message":"failed to enqueue message: no text, data or multimedia content"}`,
 		},
 		{
 			name:       "bare validation error keeps its own text",

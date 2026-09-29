@@ -25,7 +25,7 @@ func TestMessageToDTO(t *testing.T) {
 			input: messages.Message{
 				MessageInput: messages.MessageInput{
 					MessageContent: messages.MessageContent{
-						TextContent: &messages.TextMessageContent{Text: "Test message content"},
+						TextContent: &messages.TextContent{Text: "Test message content"},
 					},
 
 					ID:                 "msg-123",
@@ -60,7 +60,7 @@ func TestMessageToDTO(t *testing.T) {
 			input: messages.Message{
 				MessageInput: messages.MessageInput{
 					MessageContent: messages.MessageContent{
-						TextContent: &messages.TextMessageContent{Text: "Another test message"},
+						TextContent: &messages.TextContent{Text: "Another test message"},
 					},
 
 					ID:           "msg-456",
@@ -73,6 +73,90 @@ func TestMessageToDTO(t *testing.T) {
 					ID:           "msg-456",
 					Message:      "Another test message",
 					TextMessage:  &smsgateway.TextMessage{Text: "Another test message"},
+					PhoneNumbers: []string{"+1122334455"},
+				},
+				CreatedAt: now,
+			},
+		},
+		{
+			name: "Data message",
+			input: messages.Message{
+				MessageInput: messages.MessageInput{
+					MessageContent: messages.MessageContent{
+						DataContent: &messages.DataContent{Data: "SGVsbG8gV29ybGQh", Port: 53739},
+					},
+
+					ID:           "msg-data",
+					PhoneNumbers: []string{"+1122334455"},
+				},
+				CreatedAt: now,
+			},
+			expected: smsgateway.MobileMessage{
+				Message: smsgateway.Message{
+					ID:           "msg-data",
+					DataMessage:  &smsgateway.DataMessage{Data: "SGVsbG8gV29ybGQh", Port: 53739},
+					PhoneNumbers: []string{"+1122334455"},
+				},
+				CreatedAt: now,
+			},
+		},
+		{
+			name: "Mms message with subject, text and attachment",
+			input: messages.Message{
+				MessageInput: messages.MessageInput{
+					MessageContent: messages.MessageContent{
+						MmsContent: &messages.MultimediaContent{
+							Subject: new("MMS subject"),
+							Text:    new("MMS body"),
+							Attachments: []smsgateway.MmsAttachment{
+								{ContentType: "image/png", Name: new("pic.png"), Data: "iVBORw0KGgo="},
+							},
+						},
+					},
+
+					ID:           "msg-mms",
+					PhoneNumbers: []string{"+1122334455"},
+				},
+				CreatedAt: now,
+			},
+			expected: smsgateway.MobileMessage{
+				Message: smsgateway.Message{
+					ID: "msg-mms",
+					MmsMessage: &smsgateway.MmsMessage{
+						Subject: new("MMS subject"),
+						Text:    new("MMS body"),
+						Attachments: []smsgateway.MmsAttachment{
+							{ContentType: "image/png", Name: new("pic.png"), Data: "iVBORw0KGgo="},
+						},
+					},
+					PhoneNumbers: []string{"+1122334455"},
+				},
+				CreatedAt: now,
+			},
+		},
+		{
+			name: "Mms message without attachments",
+			input: messages.Message{
+				MessageInput: messages.MessageInput{
+					MessageContent: messages.MessageContent{
+						MmsContent: &messages.MultimediaContent{
+							Text:        new("text-only MMS"),
+							Attachments: []smsgateway.MmsAttachment{},
+						},
+					},
+
+					ID:           "msg-mms-text",
+					PhoneNumbers: []string{"+1122334455"},
+				},
+				CreatedAt: now,
+			},
+			expected: smsgateway.MobileMessage{
+				Message: smsgateway.Message{
+					ID: "msg-mms-text",
+					MmsMessage: &smsgateway.MmsMessage{
+						Text:        new("text-only MMS"),
+						Attachments: []smsgateway.MmsAttachment{},
+					},
 					PhoneNumbers: []string{"+1122334455"},
 				},
 				CreatedAt: now,
