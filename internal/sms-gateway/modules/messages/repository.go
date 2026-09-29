@@ -179,7 +179,7 @@ func (r *Repository) UpdateState(message *messageModel) error {
 
 func (r *Repository) HashProcessed(ctx context.Context, ids []uint64) (int64, error) {
 	rawSQL := "UPDATE `messages` `m`, `message_recipients` `r`\n" +
-		"SET `m`.`is_hashed` = true, `m`.`content` = SHA2(COALESCE(JSON_VALUE(`content`, '$.text'), JSON_VALUE(`content`, '$.data')), 256), `r`.`phone_number` = LEFT(SHA2(phone_number, 256), 16)\n" +
+		"SET `m`.`is_hashed` = true, `m`.`content` = SHA2(COALESCE(JSON_VALUE(`content`, '$.text'), JSON_VALUE(`content`, '$.data'), JSON_VALUE(`content`, '$.subject'), JSON_EXTRACT(`content`, '$.attachments')), 256), `r`.`phone_number` = LEFT(SHA2(phone_number, 256), 16)\n" +
 		"WHERE `m`.`id` = `r`.`message_id` AND `m`.`is_hashed` = false AND `m`.`is_encrypted` = false AND `m`.`state` NOT IN ('Pending', 'Cancelling')"
 	params := []any{}
 	if len(ids) > 0 {

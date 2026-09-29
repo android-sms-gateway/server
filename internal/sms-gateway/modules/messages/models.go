@@ -26,6 +26,7 @@ const (
 
 	MessageTypeText MessageType = "Text"
 	MessageTypeData MessageType = "Data"
+	MessageTypeMms  MessageType = "Mms"
 )
 
 type messageModel struct {
@@ -35,8 +36,8 @@ type messageModel struct {
 	UserID             string          `gorm:"not null;type:varchar(32);index:idx_messages_user_created_at,priority:1"`
 	DeviceID           string          `gorm:"not null;type:char(21);uniqueIndex:unq_messages_id_device,priority:2;index:idx_messages_device_state;index:idx_messages_device_created_at,priority:1"`
 	ExtID              string          `gorm:"not null;type:varchar(36);uniqueIndex:unq_messages_id_device,priority:1"`
-	Type               MessageType     `gorm:"not null;type:enum('Text','Data');default:Text"`
-	Content            string          `gorm:"not null;type:text"`
+	Type               MessageType     `gorm:"not null;type:enum('Text','Data','Mms');default:Text"`
+	Content            string          `gorm:"not null;type:mediumtext"`
 	State              ProcessingState `gorm:"not null;type:enum('Pending','Cancelling','Cancelled','Processed','Sent','Delivered','Failed');default:Pending;index:idx_messages_device_state;index:idx_messages_unhashed,priority:3"`
 	ValidUntil         *time.Time      `gorm:"type:datetime"`
 	ScheduleAt         *time.Time      `gorm:"type:datetime"`
@@ -93,7 +94,7 @@ func (*messageModel) TableName() string {
 	return "messages"
 }
 
-func (m *messageModel) SetTextContent(content TextMessageContent) error {
+func (m *messageModel) SetTextContent(content TextContent) error {
 	contentJSON, err := json.Marshal(content)
 	if err != nil {
 		return fmt.Errorf("failed to marshal: %w", err)
@@ -105,12 +106,12 @@ func (m *messageModel) SetTextContent(content TextMessageContent) error {
 	return nil
 }
 
-func (m *messageModel) GetTextContent() (*TextMessageContent, error) {
+func (m *messageModel) GetTextContent() (*TextContent, error) {
 	if m.Type != MessageTypeText || m.Content == "" || m.IsHashed {
 		return nil, nil //nolint:nilnil // special meaning
 	}
 
-	content := new(TextMessageContent)
+	content := new(TextContent)
 
 	err := json.Unmarshal([]byte(m.Content), content)
 	if err != nil {
@@ -120,7 +121,7 @@ func (m *messageModel) GetTextContent() (*TextMessageContent, error) {
 	return content, nil
 }
 
-func (m *messageModel) SetDataContent(content DataMessageContent) error {
+func (m *messageModel) SetDataContent(content DataContent) error {
 	contentJSON, err := json.Marshal(content)
 	if err != nil {
 		return fmt.Errorf("failed to marshal: %w", err)
@@ -132,16 +133,43 @@ func (m *messageModel) SetDataContent(content DataMessageContent) error {
 	return nil
 }
 
-func (m *messageModel) GetDataContent() (*DataMessageContent, error) {
+func (m *messageModel) GetDataContent() (*DataContent, error) {
 	if m.Type != MessageTypeData || m.Content == "" || m.IsHashed {
 		return nil, nil //nolint:nilnil // special meaning
 	}
 
-	content := new(DataMessageContent)
+	content := new(DataContent)
 
 	err := json.Unmarshal([]byte(m.Content), content)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal data content: %w", err)
+	}
+
+	return content, nil
+}
+
+func (m *messageModel) SetMultimediaContent(content MultimediaContent) error {
+	contentJSON, err := json.Marshal(content)
+	if err != nil {
+		return fmt.Errorf("failed to marshal: %w", err)
+	}
+
+	m.Type = MessageTypeMms
+	m.Content = string(contentJSON)
+
+	return nil
+}
+
+func (m *messageModel) GetMultimediaContent() (*MultimediaContent, error) {
+	if m.Type != MessageTypeMms || m.Content == "" || m.IsHashed {
+		return nil, nil //nolint:nilnil // special meaning
+	}
+
+	content := new(MultimediaContent)
+
+	err := json.Unmarshal([]byte(m.Content), content)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal mms content: %w", err)
 	}
 
 	return content, nil
@@ -168,6 +196,11 @@ func (m *messageModel) toStateDomain() (*MessageState, error) {
 		return nil, fmt.Errorf("failed to decode data content: %w", err)
 	}
 
+	mmsContent, err := m.GetMultimediaContent()
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode mms content: %w", err)
+	}
+
 	hashedContent, err := m.GetHashedContent()
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode hashed content: %w", err)
@@ -177,6 +210,7 @@ func (m *messageModel) toStateDomain() (*MessageState, error) {
 		MessageContent: MessageContent{
 			TextContent: textContent,
 			DataContent: dataContent,
+			MmsContent:  mmsContent,
 		},
 		HashedContent: hashedContent,
 	}
