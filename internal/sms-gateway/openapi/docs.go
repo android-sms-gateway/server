@@ -1623,6 +1623,12 @@ const docTemplate = `{
                 "state"
             ],
             "properties": {
+                "createdAt": {
+                    "description": "Message creation time",
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2020-01-01T00:00:00Z"
+                },
                 "dataMessage": {
                     "description": "Present only when ` + "`" + `includeContent=true` + "`" + ` and the message type is data.",
                     "allOf": [
@@ -2210,6 +2216,12 @@ const docTemplate = `{
                 "state"
             ],
             "properties": {
+                "createdAt": {
+                    "description": "Message creation time",
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2020-01-01T00:00:00Z"
+                },
                 "dataMessage": {
                     "description": "Present only when ` + "`" + `includeContent=true` + "`" + ` and the message type is data.",
                     "allOf": [
