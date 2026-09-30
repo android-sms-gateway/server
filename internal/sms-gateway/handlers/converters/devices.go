@@ -17,8 +17,8 @@ func DeviceToDTO(device devices.Device) smsgateway.Device {
 		LastSeen:  device.LastSeen,
 		SimCards:  mapSimCards(device.SimCards),
 		VersionedPublicKey: smsgateway.VersionedPublicKey{
-			PublicKey:  nil,
-			KeyVersion: nil,
+			PublicKey:  device.PublicKey,
+			KeyVersion: device.KeyVersion,
 		},
 	}
 }
