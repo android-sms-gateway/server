@@ -207,7 +207,7 @@ func TestMessageStateToDTO(t *testing.T) {
 				},
 				MessageStateContent: messages.MessageStateContent{
 					MessageContent: messages.MessageContent{
-						TextContent: &messages.TextMessageContent{Text: "Test message content"},
+						TextContent: &messages.TextContent{Text: "Test message content"},
 					},
 				},
 				DeviceID:    "device-1",
@@ -246,7 +246,7 @@ func TestMessageStateToDTO(t *testing.T) {
 				},
 				MessageStateContent: messages.MessageStateContent{
 					MessageContent: messages.MessageContent{
-						DataContent: &messages.DataMessageContent{Data: "SGVsbG8gV29ybGQh", Port: uint16(53739)},
+						DataContent: &messages.DataContent{Data: "SGVsbG8gV29ybGQh", Port: uint16(53739)},
 					},
 					HashedContent: &messages.HashedMessageContent{Hash: "1d4b6e3b1b6e3b1b6e3b1b6e3b1b6e3b1b6e3b1b"},
 				},
