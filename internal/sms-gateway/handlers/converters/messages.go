@@ -59,5 +59,6 @@ func MessageStateToDTO(state messages.MessageState) smsgateway.MessageState {
 		DataMessage:   state.DataContent,
 		MmsMessage:    state.MmsContent,
 		HashedMessage: state.HashedContent,
+		ScheduleAt:    state.ScheduleAt,
 	}
 }
