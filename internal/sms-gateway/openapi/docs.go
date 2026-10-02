@@ -1512,6 +1512,12 @@ const docTemplate = `{
                     "type": "string",
                     "example": "PyDmBQZZXYmyxMwED8Fzy"
                 },
+                "keyVersion": {
+                    "description": "Key version for rotation tracking",
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 1
+                },
                 "lastSeen": {
                     "description": "Time at which the device was last seen, read only.",
                     "type": "string",
@@ -1521,6 +1527,11 @@ const docTemplate = `{
                     "description": "Device name.",
                     "type": "string",
                     "example": "My Device"
+                },
+                "publicKey": {
+                    "description": "Base64-encoded RSA public key for E2E encryption (nullable)",
+                    "type": "string",
+                    "example": "MIIBIjANBgkqh..."
                 },
                 "simCards": {
                     "description": "List of SIM cards in the device.",
@@ -1682,6 +1693,12 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/smsgateway.RecipientState"
                     }
+                },
+                "scheduleAt": {
+                    "description": "Scheduled delivery time, if set",
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2020-01-01T08:30:00Z"
                 },
                 "state": {
                     "description": "State",
@@ -2276,6 +2293,12 @@ const docTemplate = `{
                         "$ref": "#/definitions/smsgateway.RecipientState"
                     }
                 },
+                "scheduleAt": {
+                    "description": "Scheduled delivery time, if set",
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2020-01-01T08:30:00Z"
+                },
                 "state": {
                     "description": "State",
                     "allOf": [
@@ -2413,7 +2436,7 @@ const docTemplate = `{
                 "phoneNumber": {
                     "description": "Phone number or first 16 symbols of SHA256 hash",
                     "type": "string",
-                    "maxLength": 128,
+                    "maxLength": 512,
                     "minLength": 1,
                     "example": "79990001234"
                 },
