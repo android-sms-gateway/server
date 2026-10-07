@@ -91,7 +91,8 @@ type messagesQueueConfig struct {
 }
 
 type Cache struct {
-	URL string `yaml:"url" envconfig:"CACHE__URL"`
+	URL           string   `yaml:"url"            envconfig:"CACHE__URL"`
+	SweepInterval Duration `yaml:"sweep_interval" envconfig:"CACHE__SWEEP_INTERVAL"`
 }
 
 type PubSub struct {
@@ -153,7 +154,8 @@ func Default() Config {
 			},
 		},
 		Cache: Cache{
-			URL: "memory://",
+			URL:           "memory://",
+			SweepInterval: Duration(time.Minute),
 		},
 		PubSub: PubSub{
 			URL:        "memory://",

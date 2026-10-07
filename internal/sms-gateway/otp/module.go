@@ -1,7 +1,7 @@
 package otp
 
 import (
-	"github.com/go-core-fx/cachefx"
+	appCache "github.com/android-sms-gateway/server/internal/sms-gateway/cache"
 	"github.com/go-core-fx/cachefx/cache"
 	"github.com/go-core-fx/logger"
 	"go.uber.org/fx"
@@ -12,7 +12,9 @@ func Module() fx.Option {
 		"otp",
 		logger.WithNamedLogger("otp"),
 		fx.Provide(
-			func(factory cachefx.Factory) (cache.Cache, error) {
+			// The cache is created through the prefixed factory, so the
+			// cachefx sweeper reclaims the expired one-time codes.
+			func(factory appCache.Factory) (cache.Cache, error) {
 				return factory.New("otp")
 			},
 			NewStorage,
