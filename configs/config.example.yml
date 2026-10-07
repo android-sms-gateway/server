@@ -39,6 +39,7 @@ messages:
   hashing_interval_seconds: 60 # real-time message hashing interval in seconds [MESSAGES__HASHING_INTERVAL_SECONDS]
 cache: # cache config
   url: memory:// # cache url (memory:// or redis://) [CACHE__URL]
+  sweep_interval: 1m # cache sweep interval [CACHE__SWEEP_INTERVAL]
 pubsub: # pubsub config
   url: memory:// # pubsub url (memory:// or redis://) [PUBSUB__URL]
 jwt:
