@@ -8,7 +8,7 @@ require (
 	github.com/ansrivas/fiberprometheus/v2 v2.17.0
 	github.com/capcom6/go-helpers v0.4.0
 	github.com/capcom6/go-infra-fx v0.5.9
-	github.com/go-core-fx/cachefx v0.0.3
+	github.com/go-core-fx/cachefx v0.0.4-0.20261007100559-8f9e304b7725
 	github.com/go-core-fx/fiberfx v0.5.1
 	github.com/go-core-fx/fxutil v0.0.2
 	github.com/go-core-fx/logger v0.0.1
@@ -22,9 +22,9 @@ require (
 	github.com/jaevor/go-nanoid v1.4.0
 	github.com/nyaruka/phonenumbers v1.8.1
 	github.com/prometheus/client_golang v1.24.1
-	github.com/redis/go-redis/v9 v9.21.0
+	github.com/redis/go-redis/v9 v9.23.0
 	github.com/samber/lo v1.53.0
-	github.com/stretchr/testify v1.11.1
+	github.com/stretchr/testify v1.12.1
 	github.com/swaggo/swag v1.16.6
 	go.uber.org/fx v1.24.0
 	go.uber.org/zap v1.28.0
@@ -121,10 +121,10 @@ require (
 	go.opentelemetry.io/otel/sdk v1.44.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.44.0 // indirect
 	go.opentelemetry.io/otel/trace v1.44.0 // indirect
-	go.uber.org/atomic v1.11.0 // indirect
+	go.uber.org/atomic v1.12.0 // indirect
 	go.uber.org/dig v1.19.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.yaml.in/yaml/v3 v3.0.4 // indirect
+	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/mod v0.41.0 // indirect
 	golang.org/x/net v0.59.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
