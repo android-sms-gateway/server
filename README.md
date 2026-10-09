@@ -35,11 +35,11 @@ SMSGate Server is the backend of the SMSGate ecosystem. It accepts SMS/MMS dispa
 
 - Text, data, scheduled SMS and MMS dispatch
 - Message status tracking and cancellation
-- Device management (list, delete, online state)
+- Device management (list, delete)
 - Health check endpoints (live, ready, startup)
 - JWT authentication with scopes and token refresh
 - OTP-based device registration
-- Inbox, settings, and logs APIs
+- Inbox and settings APIs
 - Public and private deployment modes
 - MySQL 8.0.13+ / MariaDB 10.2.7+ storage (MariaDB LTS recommended)
 
@@ -52,7 +52,7 @@ SMSGate Server is the backend of the SMSGate ecosystem. It accepts SMS/MMS dispa
 ## 🚀 Quickstart
 
 1. Create `configs/config.yml` from [configs/config.example.yml](configs/config.example.yml).
-2. For private mode set `gateway.mode: private` and `gateway.private_token`.
+2. For private mode set `gateway.mode: private`, `gateway.private_token`, and optionally `gateway.upstream_url`.
 3. Start the server:
 
 ```bash
@@ -67,7 +67,7 @@ Or with Compose (backend + background worker + MariaDB):
 docker compose -f deployments/docker-compose/docker-compose.yml up --build
 ```
 
-The worker handles background tasks: message hashing, message/device/token cleanup. Run it as a separate process or via the `worker` subcommand:
+The worker handles background tasks: message hashing, message/device/token/inbox cleanup. Run it as a separate process or via the `worker` subcommand:
 
 ```bash
 ./sms-gateway worker
@@ -109,7 +109,8 @@ The background worker runs periodic tasks controlled by the `tasks` config secti
 | `messages_hashing` | `168h` (7 days)  | Hash processed messages to avoid plain text storage                     |
 | `messages_cleanup` | `24h`            | Delete messages older than `max_age` (default `720h` / 30 days)         |
 | `devices_cleanup`  | `24h`            | Remove inactive devices older than `max_age` (default `8760h` / 1 year) |
-| `tokens_cleanup`   | `24h`            | Revoke expired tokens past `max_age` grace (default `1h`)               |
+| `tokens_cleanup`   | `24h`            | Delete expired tokens past `max_age` grace (default `1h`)               |
+| `inbox_cleanup`    | `24h`            | Delete inbox messages older than `max_age` (default `720h` / 30 days)   |
 
 ## 🔐 Authentication
 
@@ -119,7 +120,7 @@ The API supports Basic auth and JWT bearer tokens. JWT tokens carry scopes and a
 - `POST /api/3rdparty/v1/auth/token/refresh` - rotate access token (Bearer refresh)
 - `DELETE /api/3rdparty/v1/auth/token/{jti}` - revoke token (Basic auth)
 
-Available scopes: `messages:send`, `messages:list`, `messages:read`, `messages:export`, `messages:cancel`, `devices:list`, `devices:delete`, `inbox:list`, `inbox:refresh`, `logs:read`, `settings:read`, `settings:write`, `tokens:manage`, `tokens:refresh`, `webhooks:list`, `webhooks:write`, `webhooks:delete`.
+Available scopes: `messages:send`, `messages:list`, `messages:read`, `messages:export`, `messages:cancel`, `devices:list`, `devices:delete`, `inbox:list`, `inbox:read`, `inbox:refresh`, `logs:read`, `settings:read`, `settings:write`, `tokens:manage`, `tokens:refresh`, `webhooks:list`, `webhooks:write`, `webhooks:delete`.
 
 Full reference: [integration/authentication](https://docs.sms-gate.app/integration/authentication/).
 
@@ -133,7 +134,7 @@ Full reference: [integration/authentication](https://docs.sms-gate.app/integrati
 | Health   | `/api/3rdparty/v1/health[/live \| /ready \| /startup]` |
 | Auth     | `/api/3rdparty/v1/auth/token`                          |
 
-Also: `/api/3rdparty/v1/inbox`, `/settings`, `/logs`. OpenAPI schema is served when `http.openapi.enabled: true`.
+Also: `/api/3rdparty/v1/inbox`, `/settings`, `/logs`. The `logs` endpoint is registered but always responds `501 Not Implemented` — for privacy reasons device logs are not accessible through the cloud server. OpenAPI schema is served when `http.openapi.enabled: true`.
 
 ## 📚 Documentation
 
