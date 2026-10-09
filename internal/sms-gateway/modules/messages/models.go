@@ -235,6 +235,8 @@ func (m *messageModel) toStateDomain() (*MessageState, error) {
 		DeviceID:    m.DeviceID,
 		IsHashed:    m.IsHashed,
 		IsEncrypted: m.IsEncrypted,
+
+		ScheduleAt: m.ScheduleAt,
 	}, nil
 }
 

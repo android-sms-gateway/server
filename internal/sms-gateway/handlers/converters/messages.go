@@ -1,6 +1,8 @@
 package converters
 
 import (
+	"time"
+
 	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 )
@@ -47,17 +49,18 @@ func MessageToMobileDTO(m messages.Message) smsgateway.MobileMessage {
 
 func MessageStateToDTO(state messages.MessageState) smsgateway.MessageState {
 	return smsgateway.MessageState{
-		ID:          state.ID,
-		DeviceID:    state.DeviceID,
-		State:       smsgateway.ProcessingState(state.State),
-		IsHashed:    state.IsHashed,
-		IsEncrypted: state.IsEncrypted,
-		Recipients:  state.Recipients,
-		States:      state.States,
-
+		ID:            state.ID,
+		DeviceID:      state.DeviceID,
+		State:         smsgateway.ProcessingState(state.State),
+		IsHashed:      state.IsHashed,
+		IsEncrypted:   state.IsEncrypted,
+		Recipients:    state.Recipients,
+		States:        state.States,
 		TextMessage:   state.TextContent,
 		DataMessage:   state.DataContent,
 		MmsMessage:    state.MmsContent,
 		HashedMessage: state.HashedContent,
+		ScheduleAt:    state.ScheduleAt,
+		CreatedAt:     time.Time{},
 	}
 }
