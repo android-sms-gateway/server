@@ -244,7 +244,7 @@ func (h *mobileHandler) patchDevice(device devices.Device, c *fiber.Ctx) error {
 	}
 
 	err := h.devicesSvc.Update(c.Context(), req.Id, devices.DeviceUpdate{
-		PushToken: lo.EmptyableToPtr(req.PushToken),
+		PushToken: req.PushToken,
 		SimCards:  h.simCardsToDomain(req.SimCards),
 	})
 	if err != nil {
