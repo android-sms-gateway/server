@@ -96,7 +96,7 @@ func (r *Repository) Update(ctx context.Context, id string, device DeviceUpdate)
 	updates := map[string]any{}
 
 	if device.PushToken != nil {
-		updates["push_token"] = device.PushToken
+		updates["push_token"] = lo.EmptyableToPtr(*device.PushToken)
 	}
 
 	if device.SimCards != nil {
