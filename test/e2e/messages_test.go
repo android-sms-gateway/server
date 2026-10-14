@@ -3,23 +3,26 @@ package e2e
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 )
 
 type messageState struct {
-	ID          string   `json:"id"`
-	DeviceID    string   `json:"deviceId"`
-	State       string   `json:"state"`
-	IsHashed    bool     `json:"isHashed"`
-	IsEncrypted bool     `json:"isEncrypted"`
-	Recipients  []string `json:"recipients"`
-	States      []state  `json:"states"`
+	ID          string               `json:"id"`
+	DeviceID    string               `json:"deviceId"`
+	State       string               `json:"state"`
+	IsHashed    bool                 `json:"isHashed"`
+	IsEncrypted bool                 `json:"isEncrypted"`
+	Recipients  []recipientState     `json:"recipients"`
+	States      map[string]time.Time `json:"states"`
+	CreatedAt   string               `json:"createdAt"`
 }
 
-type state struct {
+type recipientState struct {
 	PhoneNumber string `json:"phoneNumber"`
 	State       string `json:"state"`
+	Error       string `json:"error"`
 }
 
 type errorResponse struct {
@@ -468,4 +471,78 @@ func TestMessages_PostDuplicateMessageID(t *testing.T) {
 			t.Errorf("expected message %q, got %q", "Message with the same ID already exists", resp.Message)
 		}
 	})
+}
+
+// TestMessages_CreatedAt pins the creation time reported on enqueue to the value stored in the
+// database. The enqueued state is built from the freshly inserted model, so it only agrees with a
+// later read when `created_at` is read back from the row. GORM reads such DB-generated columns
+// through RETURNING, which its MySQL driver enables for MariaDB only - without an explicit read the
+// accepted response reports the zero time on MySQL and the cached state carries it until it expires.
+func TestMessages_CreatedAt(t *testing.T) {
+	credentials := mobileDeviceRegister(t, publicMobileClient)
+	authorizedClient := publicUserClient.Clone().SetBasicAuth(credentials.Login, credentials.Password)
+
+	res, err := authorizedClient.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(map[string]any{
+			"id":           "e2e-created-at",
+			"message":      "test",
+			"deviceId":     credentials.ID,
+			"phoneNumbers": []string{"+79990001234"},
+		}).
+		Post("messages")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if res.StatusCode() != 202 {
+		t.Fatal(res.StatusCode(), res.String())
+	}
+
+	var enqueued messageState
+	if err := json.Unmarshal(res.Body(), &enqueued); err != nil {
+		t.Fatal(err)
+	}
+
+	createdAt, err := time.Parse(time.RFC3339, enqueued.CreatedAt)
+	if err != nil {
+		t.Fatalf("createdAt %q is not an RFC 3339 timestamp: %v", enqueued.CreatedAt, err)
+	}
+
+	if createdAt.IsZero() {
+		t.Error("createdAt reports the zero time")
+	}
+
+	// The enqueue path caches the state it just built, so compare against the history endpoint,
+	// which reads the row from the database instead of the cache.
+	getRes, err := authorizedClient.R().SetQueryParam("deviceId", credentials.ID).Get("messages")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if getRes.StatusCode() != 200 {
+		t.Fatal(getRes.StatusCode(), getRes.String())
+	}
+
+	var listed []messageState
+	if err := json.Unmarshal(getRes.Body(), &listed); err != nil {
+		t.Fatal(err)
+	}
+
+	var stored *messageState
+	for i, msg := range listed {
+		if msg.ID == enqueued.ID {
+			stored = &listed[i]
+
+			break
+		}
+	}
+
+	if stored == nil {
+		t.Fatalf("message %q is missing from the history response", enqueued.ID)
+	}
+
+	if stored.CreatedAt != enqueued.CreatedAt {
+		t.Errorf("createdAt stored as %q does not match enqueued %q", stored.CreatedAt, enqueued.CreatedAt)
+	}
 }

@@ -10,10 +10,23 @@ concurrency:
 
 jobs:
   e2e:
-    name: E2E
+    name: E2E (${{ matrix.db.name }})
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # The documented floors from README.md and the long-term support releases.
+        db:
+          - name: mariadb 10.2
+            image: mariadb:10.2.7
+          - name: mariadb lts
+            image: mariadb:lts
+          - name: mysql 8.0
+            image: mysql:8.0.13
+          - name: mysql lts
+            image: mysql:lts
     steps:
       # step 1: checkout repository code
       - name: Checkout code into workspace directory
@@ -29,6 +42,7 @@ jobs:
       # step 3: start services
       - name: Start services
         env:
+          "DB_IMAGE": ${{ matrix.db.image }}
           "FCM__CREDENTIALS_JSON": ${{ secrets.FCM__CREDENTIALS_JSON }}
         run: docker compose -f test/e2e/docker-compose.yml up -d --build
 
