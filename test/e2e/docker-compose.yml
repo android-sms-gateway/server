@@ -56,16 +56,25 @@ services:
         condition: service_healthy
 
   db:
-    image: mariadb:lts
+    # Every supported engine is exercised in CI by overriding DB_IMAGE:
+    # mariadb:10.2.7, mariadb:lts, mysql:8.0.13, mysql:lts.
+    image: ${DB_IMAGE:-mariadb:lts}
     environment:
+      # Each image ignores the other's variables, so both are set to cover either engine.
+      - MYSQL_ROOT_PASSWORD=root
       - MARIADB_ROOT_PASSWORD=root
       - MARIADB_AUTO_UPGRADE=1
     volumes:
       - ./data/10-init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
     restart: "unless-stopped"
+    # No single admin binary exists on every supported engine: current MariaDB images ship
+    # `mariadb-admin` while MySQL and MariaDB 10.2 ship `mysqladmin`, so both are tried.
+    # `ping` reports success over TCP even when it is refused, and the temporary server the
+    # entrypoint runs for the init scripts listens on the socket only, so this stays unhealthy
+    # until initialization finishes.
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      start_period: 4s
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 --silent || mysqladmin ping -h 127.0.0.1 --silent"]
+      start_period: 30s
       interval: 4s
       timeout: 2s
-      retries: 3
+      retries: 15
