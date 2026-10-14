@@ -131,16 +131,38 @@ func (r *Repository) get(filter SelectFilter, options SelectOptions) (messageMod
 }
 
 func (r *Repository) Insert(message *messageModel) error {
-	err := r.db.Omit("Device").Create(message).Error
-	if err == nil {
+	if err := r.db.Omit("Device").Create(message).Error; err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) || mysql.IsDuplicateKeyViolation(err) {
+			return ErrMessageAlreadyExists
+		}
+
+		return fmt.Errorf("failed to insert message: %w", err)
+	}
+
+	return r.loadCreatedAt(message)
+}
+
+// loadCreatedAt reads the creation time assigned by the database back into the message.
+//
+// `created_at` is read-only for GORM (`gorm:"->"`), so the column is excluded from the INSERT and
+// is filled in by its `DEFAULT CURRENT_TIMESTAMP(3)`. GORM reads such DB-generated columns back
+// only through RETURNING, which the MySQL driver enables for MariaDB >= 10.5 only - on MySQL the
+// in-memory value stays zero. Reading the column keeps the state returned by Enqueue identical to
+// the one every later read observes.
+func (r *Repository) loadCreatedAt(message *messageModel) error {
+	if !message.CreatedAt.IsZero() {
 		return nil
 	}
 
-	if errors.Is(err, gorm.ErrDuplicatedKey) || mysql.IsDuplicateKeyViolation(err) {
-		return ErrMessageAlreadyExists
+	if err := r.db.
+		Model(message).
+		Select("created_at").
+		Where("id = ?", message.ID).
+		Take(message).Error; err != nil {
+		return fmt.Errorf("failed to read created_at of inserted message: %w", err)
 	}
 
-	return fmt.Errorf("failed to insert message: %w", err)
+	return nil
 }
 
 func (r *Repository) UpdateState(message *messageModel) error {
