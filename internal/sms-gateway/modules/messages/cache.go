@@ -69,6 +69,12 @@ func (c *stateCache) Get(ctx context.Context, userID, id string) (*MessageState,
 		return nil, fmt.Errorf("failed to unmarshal message: %w", jsonErr)
 	}
 
+	// Entries cached before `createdAt` existed still decode, but carry a zero creation time.
+	// Report them as a miss so the caller reloads from the database instead of renewing them.
+	if message.CreatedAt.IsZero() {
+		return nil, ErrStaleCacheEntry
+	}
+
 	return message, nil
 }
 

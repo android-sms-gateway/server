@@ -8,6 +8,7 @@ var (
 	ErrMultipleMessagesFound = errors.New("multiple messages found")
 	ErrNoContent             = errors.New("no text, data or multimedia content")
 	ErrMessageNotPending     = errors.New("message is not pending")
+	ErrStaleCacheEntry       = errors.New("stale cache entry")
 
 	ErrQueueLimitExceeded = errors.New("queue limits exceeded")
 )
