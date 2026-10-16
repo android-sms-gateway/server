@@ -242,7 +242,7 @@ func (m *messageModel) toStateDomain() (*MessageState, error) {
 type messageRecipientModel struct {
 	ID          uint64          `gorm:"primaryKey;type:BIGINT UNSIGNED;autoIncrement"`
 	MessageID   uint64          `gorm:"uniqueIndex:unq_message_recipients_message_id_phone_number,priority:1;type:BIGINT UNSIGNED"`
-	PhoneNumber string          `gorm:"uniqueIndex:unq_message_recipients_message_id_phone_number,priority:2;type:varchar(128)"`
+	PhoneNumber string          `gorm:"uniqueIndex:unq_message_recipients_message_id_phone_number,priority:2;type:varchar(512)"`
 	State       ProcessingState `gorm:"not null;type:enum('Pending','Cancelling','Cancelled','Processed','Sent','Delivered','Failed');default:Pending"`
 	Error       *string         `gorm:"type:varchar(256)"`
 }
