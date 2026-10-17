@@ -27,7 +27,7 @@ func (h *rootHandler) Register(app *fiber.App) {
 				c.Set(fiber.HeaderLocation, path.Join(h.config.PublicPath, after))
 			}
 
-			return err //nolint:wrapcheck // passed through to fiber's error handler
+			return err
 		})
 	}
 
@@ -44,7 +44,7 @@ func (h *rootHandler) setLinkHeaders(c *fiber.Ctx) error {
 			`<https://docs.sms-gate.app/>; rel="service-doc", `+
 			`</.well-known/api-catalog>; rel="describedby"`,
 	)
-	return c.Next() //nolint:wrapcheck // passed through to fiber's error handler
+	return c.Next()
 }
 
 func (h *rootHandler) registerOpenAPI(router fiber.Router) {

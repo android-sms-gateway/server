@@ -8,6 +8,8 @@ import (
 )
 
 func TestConfigValidate(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		cfg     jwt.Config
@@ -71,6 +73,8 @@ func TestConfigValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			err := tt.cfg.Validate()
 			if tt.wantErr && err == nil {
 				t.Fatalf("expected error")

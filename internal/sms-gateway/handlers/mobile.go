@@ -338,5 +338,5 @@ func (h *mobileHandler) errorsHandler(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusNotImplemented, err.Error())
 	}
 
-	return err //nolint:wrapcheck // passed through to fiber's error handler
+	return err
 }

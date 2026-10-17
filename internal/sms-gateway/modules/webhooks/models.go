@@ -27,7 +27,7 @@ type Webhook struct {
 }
 
 func newWebhook(extID string, url string, event smsgateway.WebhookEvent, userID string, deviceID *string) *Webhook {
-	//nolint:exhaustruct // partial constructor
+	//nolint:exhaustruct_v5 // partial constructor
 	return &Webhook{
 		ExtID:    extID,
 		URL:      url,
