@@ -11,6 +11,8 @@ import (
 )
 
 func TestDeviceToDTO(t *testing.T) {
+	t.Parallel()
+
 	createdAt := time.Now()
 	updatedAt := time.Now()
 	lastSeenAt := time.Now()
@@ -120,6 +122,8 @@ func TestDeviceToDTO(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
 			actual := converters.DeviceToDTO(test.device)
 			assert.Equal(t, test.expected, actual)
 		})

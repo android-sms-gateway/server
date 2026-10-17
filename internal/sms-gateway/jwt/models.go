@@ -27,7 +27,7 @@ type tokenModel struct {
 }
 
 func newAccessTokenModel(userID string, token TokenInfo) *tokenModel {
-	//nolint:exhaustruct // partial constructor
+	//nolint:exhaustruct_v5 // partial constructor
 	return &tokenModel{
 		ID:        token.ID,
 		UserID:    userID,
@@ -37,7 +37,7 @@ func newAccessTokenModel(userID string, token TokenInfo) *tokenModel {
 }
 
 func newRefreshTokenModel(userID string, parentJTI string, token TokenInfo) *tokenModel {
-	//nolint:exhaustruct // partial constructor
+	//nolint:exhaustruct_v5 // partial constructor
 	return &tokenModel{
 		ID:        token.ID,
 		UserID:    userID,
