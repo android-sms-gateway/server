@@ -171,5 +171,5 @@ func (h *AuthHandler) errorHandler(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusNotImplemented, "token service disabled, contact your administrator")
 	}
 
-	return err //nolint:wrapcheck // passed through to fiber's error handler
+	return err
 }

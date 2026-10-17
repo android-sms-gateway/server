@@ -22,5 +22,5 @@ func errorHandler(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	return err //nolint:wrapcheck // passed through to fiber's error handler
+	return err
 }
