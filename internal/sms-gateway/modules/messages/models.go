@@ -65,7 +65,7 @@ func newMessageModel(
 	withDeliveryReport bool,
 	isEncrypted bool,
 ) *messageModel {
-	//nolint:exhaustruct // partial constructor
+	//nolint:exhaustruct_v5 // partial constructor
 	return &messageModel{
 		ExtID:    extID,
 		UserID:   userID,

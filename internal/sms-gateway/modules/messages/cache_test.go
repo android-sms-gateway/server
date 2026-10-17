@@ -42,6 +42,8 @@ func newCacheTestState(createdAt time.Time) *MessageState {
 // the message from the database instead of returning a payload that predates the
 // currently deployed fields (e.g. `scheduleAt`).
 func TestStateCacheGetIgnoresUnversionedEntry(t *testing.T) {
+	t.Parallel()
+
 	storage := cacheImpl.NewMemory(time.Minute)
 	c := newCache(Config{CacheTTL: time.Minute}, storage)
 
@@ -60,6 +62,8 @@ func TestStateCacheGetIgnoresUnversionedEntry(t *testing.T) {
 // TestStateCacheRoundTripPreservesScheduleAt pins that a state cached through the
 // current key layout returns its scheduled delivery time intact.
 func TestStateCacheRoundTripPreservesScheduleAt(t *testing.T) {
+	t.Parallel()
+
 	c := newCache(Config{CacheTTL: time.Minute}, cacheImpl.NewMemory(time.Minute))
 
 	createdAt := time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC)
@@ -81,6 +85,8 @@ func TestStateCacheRoundTripPreservesScheduleAt(t *testing.T) {
 // TestStateCacheSetNilCachesNotFound pins the nil sentinel: a nil state is stored as
 // an empty value and read back as (nil, nil), which callers translate to "not found".
 func TestStateCacheSetNilCachesNotFound(t *testing.T) {
+	t.Parallel()
+
 	c := newCache(Config{CacheTTL: time.Minute}, cacheImpl.NewMemory(time.Minute))
 
 	require.NoError(t, c.Set(context.Background(), cacheTestUserID, cacheTestMessageID, nil))
@@ -93,6 +99,8 @@ func TestStateCacheSetNilCachesNotFound(t *testing.T) {
 // TestStateCacheDeleteUsesVersionedKey pins that invalidation targets the same
 // versioned key as Set, so a stale unversioned entry is never resurrected.
 func TestStateCacheDeleteUsesVersionedKey(t *testing.T) {
+	t.Parallel()
+
 	storage := cacheImpl.NewMemory(time.Minute)
 	c := newCache(Config{CacheTTL: time.Minute}, storage)
 
@@ -109,6 +117,8 @@ func TestStateCacheDeleteUsesVersionedKey(t *testing.T) {
 // payloads that decode without a creation time are reported as stale so the caller
 // reloads them instead of renewing their expiry.
 func TestStateCacheGetRejectsStalePayload(t *testing.T) {
+	t.Parallel()
+
 	storage := cacheImpl.NewMemory(time.Minute)
 	c := newCache(Config{CacheTTL: time.Minute}, storage)
 
