@@ -15,7 +15,7 @@ type userModel struct {
 }
 
 func newUserModel(id string, passwordHash string) *userModel {
-	//nolint:exhaustruct // partial constructor
+	//nolint:exhaustruct_v5 // partial constructor
 	return &userModel{
 		ID:           id,
 		PasswordHash: passwordHash,

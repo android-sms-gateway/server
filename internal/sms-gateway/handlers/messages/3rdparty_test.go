@@ -26,6 +26,8 @@ func newTestThirdPartyController() *ThirdPartyController {
 }
 
 func TestThirdPartyControllerErrorHandler(t *testing.T) {
+	t.Parallel()
+
 	const enqueueWrap = "failed to enqueue message: %w"
 
 	tests := []struct {
@@ -116,6 +118,8 @@ func TestThirdPartyControllerErrorHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			h := newTestThirdPartyController()
 
 			app := fiber.New(fiber.Config{

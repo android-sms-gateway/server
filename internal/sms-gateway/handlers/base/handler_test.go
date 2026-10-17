@@ -56,6 +56,8 @@ func (t *testRequestParams) Validate() error {
 }
 
 func TestHandler_BodyParserValidator(t *testing.T) {
+	t.Parallel()
+
 	logger := zaptest.NewLogger(t)
 	validate := validator.New()
 
@@ -114,6 +116,8 @@ func TestHandler_BodyParserValidator(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
+			t.Parallel()
+
 			var req *http.Request
 			if test.payload != nil {
 				bodyBytes, _ := json.Marshal(test.payload)
@@ -135,6 +139,8 @@ func TestHandler_BodyParserValidator(t *testing.T) {
 }
 
 func TestHandler_QueryParserValidator(t *testing.T) {
+	t.Parallel()
+
 	logger := zaptest.NewLogger(t)
 	validate := validator.New()
 
@@ -183,6 +189,8 @@ func TestHandler_QueryParserValidator(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
+			t.Parallel()
+
 			req := httptest.NewRequest(http.MethodGet, test.path, nil)
 
 			resp, err := app.Test(req)
@@ -197,6 +205,8 @@ func TestHandler_QueryParserValidator(t *testing.T) {
 }
 
 func TestHandler_ParamsParserValidator(t *testing.T) {
+	t.Parallel()
+
 	logger := zaptest.NewLogger(t)
 	validate := validator.New()
 
@@ -240,6 +250,8 @@ func TestHandler_ParamsParserValidator(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
+			t.Parallel()
+
 			req := httptest.NewRequest(http.MethodGet, test.path, nil)
 
 			resp, err := app.Test(req)
@@ -254,6 +266,8 @@ func TestHandler_ParamsParserValidator(t *testing.T) {
 }
 
 func TestHandler_ValidateStruct(t *testing.T) {
+	t.Parallel()
+
 	logger := zaptest.NewLogger(t)
 	validate := validator.New()
 
@@ -321,6 +335,8 @@ func TestHandler_ValidateStruct(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
+			t.Parallel()
+
 			err := test.handler.ValidateStruct(test.input)
 
 			if test.expectedStatus == fiber.StatusOK && err != nil {

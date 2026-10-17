@@ -11,6 +11,8 @@ import (
 )
 
 func TestMessageToDTO(t *testing.T) {
+	t.Parallel()
+
 	// Set up a fixed time for testing
 	now := time.Now().UTC()
 
@@ -167,6 +169,8 @@ func TestMessageToDTO(t *testing.T) {
 	// Execute tests
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			// Call the function under test
 			result := converters.MessageToMobileDTO(tc.input)
 
@@ -177,6 +181,8 @@ func TestMessageToDTO(t *testing.T) {
 }
 
 func TestMessageStateToDTO(t *testing.T) {
+	t.Parallel()
+
 	// Set up a fixed time for testing
 	now := time.Date(2023, 6, 15, 12, 30, 45, 123456789, time.UTC)
 
@@ -281,6 +287,8 @@ func TestMessageStateToDTO(t *testing.T) {
 	// Execute tests
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			// Call the function under test
 			result := converters.MessageStateToDTO(tc.input)
 
