@@ -12,7 +12,16 @@ import (
 
 const (
 	cacheTimeout = 100 * time.Millisecond
+
+	// stateCacheKeyVersion namespaces cached message states. Bump it whenever the
+	// cached payload changes shape, so entries written by an older release are
+	// never read back and missing fields cannot survive the deployment.
+	stateCacheKeyVersion = "v2"
 )
+
+func stateCacheKey(userID, id string) string {
+	return stateCacheKeyVersion + ":" + userID + ":" + id
+}
 
 type stateCache struct {
 	ttl time.Duration
@@ -44,7 +53,7 @@ func (c *stateCache) Set(ctx context.Context, userID, id string, message *Messag
 	ctx, cancel := context.WithTimeout(ctx, cacheTimeout)
 	defer cancel()
 
-	if setErr := c.storage.Set(ctx, userID+":"+id, data, cacheImpl.WithTTL(c.ttl)); setErr != nil {
+	if setErr := c.storage.Set(ctx, stateCacheKey(userID, id), data, cacheImpl.WithTTL(c.ttl)); setErr != nil {
 		return fmt.Errorf("failed to set message in cache: %w", setErr)
 	}
 
@@ -55,7 +64,7 @@ func (c *stateCache) Get(ctx context.Context, userID, id string) (*MessageState,
 	ctx, cancel := context.WithTimeout(ctx, cacheTimeout)
 	defer cancel()
 
-	data, err := c.storage.Get(ctx, userID+":"+id, cacheImpl.AndSetTTL(c.ttl))
+	data, err := c.storage.Get(ctx, stateCacheKey(userID, id), cacheImpl.AndSetTTL(c.ttl))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get message from cache: %w", err)
 	}
@@ -79,7 +88,7 @@ func (c *stateCache) Get(ctx context.Context, userID, id string) (*MessageState,
 }
 
 func (c *stateCache) Delete(ctx context.Context, userID, id string) error {
-	err := c.storage.Delete(ctx, userID+":"+id)
+	err := c.storage.Delete(ctx, stateCacheKey(userID, id))
 	if err == nil || errors.Is(err, cacheImpl.ErrKeyNotFound) {
 		return nil
 	}
