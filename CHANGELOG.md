@@ -6,13 +6,25 @@ All notable changes to this project will be documented in this file.
 
 ### New Features
 
+#### Device encryption keys
+
+- **Device public key and key version** — `POST /api/mobile/v1/device` and `PATCH /api/mobile/v1/device` now accept `publicKey` (base64-encoded RSA public key) and `keyVersion`, and both are returned by `GET /api/mobile/v1/device` and `GET /api/3rdparty/v1/devices`. Sending a new key with a version overwrites the stored key, so devices can rotate keys; clearing a stored key is not supported. Requires migration `20261002000000` (`make db-upgrade`), which adds the `public_key` and `key_version` columns.
+
+#### Phone number validation
+
+- **Phone number length limit raised to 512 characters** — recipients in `phoneNumbers` on send requests are no longer rejected past 128 characters at request validation. The same migration widens `message_recipients.phone_number` to `varchar(512)`; until `make db-upgrade` is run, un-hashed recipients longer than 128 characters (encrypted requests, or requests with phone validation skipped) are still rejected by the database.
+
+## [1.50.0] - 2026-10-16
+
+### New Features
+
 #### Message status
 
 - **`createdAt` in message status** — message state responses now report when the message was created, as an RFC 3339 timestamp. Returned by `POST /api/3rdparty/v1/messages`, `GET /api/3rdparty/v1/messages`, `GET /api/3rdparty/v1/messages/{id}`, and `DELETE /api/3rdparty/v1/messages/{id}`.
 
-#### Phone number validation
+### Bug Fixes
 
-- **Phone number length limit raised to 512 characters** — recipients in `phoneNumbers` on send requests are no longer rejected past 128 characters at request validation. Note that `message_recipients.phone_number` is `varchar(128)`, so un-hashed recipients longer than 128 characters (encrypted requests, or requests with phone validation skipped) are still rejected by the database.
+- **Clearing a device push token** — `PATCH /api/mobile/v1/device` with `"pushToken": ""` now clears the stored FCM token. Previously the empty value was treated as "no change", so the device kept its old token and continued receiving pushes.
 
 ## [1.49.1] - 2026-10-09
 
