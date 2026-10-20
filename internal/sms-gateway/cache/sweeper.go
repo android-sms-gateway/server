@@ -14,9 +14,9 @@ import (
 // sweeperInterval is how often the sweeper evicts expired entries from every
 // cache created by the Factory.
 //
-// The interval must be shorter than the shortest TTL handed out by the
-// application (the limiter uses 60s), otherwise expired entries accumulate
-// between sweeps and the process keeps the memory until the next tick.
+// It matches the shortest TTL handed out by the application (the one-time codes
+// and the queue limiter use 60s), so an expired entry is reclaimed within one
+// interval after it expires.
 const sweeperInterval = time.Minute
 
 // Factory is the cachefx factory, extended with a group sweep for every cache
@@ -34,11 +34,35 @@ type Factory interface {
 	CleanupAll(ctx context.Context) error
 }
 
+// cacheTracker holds the caches handed out by a tracking factory.
+//
+// It is shared between a factory and the factories derived from it, so a cache
+// is swept no matter which of them created it.
+type cacheTracker struct {
+	mu     sync.Mutex
+	caches []cache.Cache
+}
+
+func (t *cacheTracker) add(c cache.Cache) {
+	t.mu.Lock()
+	t.caches = append(t.caches, c)
+	t.mu.Unlock()
+}
+
+func (t *cacheTracker) list() []cache.Cache {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	caches := make([]cache.Cache, len(t.caches))
+	copy(caches, t.caches)
+
+	return caches
+}
+
 type trackingFactory struct {
 	cachefx.Factory
 
-	cachesMu sync.Mutex
-	caches   []cache.Cache
+	tracker *cacheTracker
 }
 
 func (f *trackingFactory) New(name string) (cache.Cache, error) {
@@ -47,30 +71,24 @@ func (f *trackingFactory) New(name string) (cache.Cache, error) {
 		return nil, fmt.Errorf("failed to create cache %q: %w", name, err)
 	}
 
-	f.cachesMu.Lock()
-	f.caches = append(f.caches, inner)
-	f.cachesMu.Unlock()
+	f.tracker.add(inner)
 
 	return inner, nil
 }
 
+// WithName returns a factory that shares the tracker with its parent, so the
+// caches it hands out are swept by the parent's CleanupAll as well.
 func (f *trackingFactory) WithName(prefix string) cachefx.Factory {
 	return &trackingFactory{
 		Factory: f.Factory.WithName(prefix),
 
-		cachesMu: sync.Mutex{},
-		caches:   []cache.Cache{},
+		tracker: f.tracker,
 	}
 }
 
 func (f *trackingFactory) CleanupAll(ctx context.Context) error {
-	f.cachesMu.Lock()
-	caches := make([]cache.Cache, len(f.caches))
-	copy(caches, f.caches)
-	f.cachesMu.Unlock()
-
 	var errs []error
-	for _, c := range caches {
+	for _, c := range f.tracker.list() {
 		if err := c.Cleanup(ctx); err != nil {
 			errs = append(errs, err)
 		}

@@ -1,9 +1,11 @@
 package cache
 
 import (
+	"sync"
 	"time"
 
 	"github.com/go-core-fx/cachefx"
+	"github.com/go-core-fx/cachefx/cache"
 	"go.uber.org/zap"
 )
 
@@ -15,7 +17,20 @@ func NewTestFactory(name string) (Factory, error) {
 		return nil, err
 	}
 
-	return &trackingFactory{Factory: inner.WithName(name)}, nil
+	return NewTestFactoryWith(inner.WithName(name)), nil
+}
+
+// NewTestFactoryWith exposes the package-private tracking factory to the
+// external test package, so a test can substitute its own cache implementation.
+func NewTestFactoryWith(inner cachefx.Factory) Factory {
+	return &trackingFactory{
+		Factory: inner,
+
+		tracker: &cacheTracker{
+			mu:     sync.Mutex{},
+			caches: []cache.Cache{},
+		},
+	}
 }
 
 // NewTestSweeper exposes the package-private sweeper constructor to the

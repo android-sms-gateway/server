@@ -18,8 +18,10 @@ func Module() fx.Option {
 			return &trackingFactory{
 				Factory: factory.WithName("sms-gateway"),
 
-				cachesMu: sync.Mutex{},
-				caches:   []cache.Cache{},
+				tracker: &cacheTracker{
+					mu:     sync.Mutex{},
+					caches: []cache.Cache{},
+				},
 			}
 		}),
 		fx.Provide(NewSweeper, fx.Private),
