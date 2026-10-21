@@ -1628,6 +1628,7 @@ const docTemplate = `{
         "smsgateway.GetMessageResponse": {
             "type": "object",
             "required": [
+                "createdAt",
                 "deviceId",
                 "id",
                 "recipients",
@@ -2227,6 +2228,7 @@ const docTemplate = `{
         "smsgateway.MessageState": {
             "type": "object",
             "required": [
+                "createdAt",
                 "deviceId",
                 "id",
                 "recipients",

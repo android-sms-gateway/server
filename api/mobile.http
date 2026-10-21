@@ -121,13 +121,13 @@ Content-Type: application/json
         "contentType": "image/jpeg",
         "name": "enc_photo.jpg",
         "size": 102400,
-        "data": "base64encodeddata"
+        "data": "$rsa-oaep-aes-256-gcm$v=1$k=1$3q2+7w==$8YmJ3Zg==$n0T2kZ1jQ0l0bXg="
       },
       {
         "partId": 2,
         "contentType": "text/plain",
         "name": "enc_text.txt",
-        "data": "base64encodeddata"
+        "data": "$rsa-oaep-aes-256-gcm$v=1$k=1$3q2+7w==$8YmJ3Zg==$n0T2kZ1jQ0l0bXg="
       }
     ]
   }
@@ -170,7 +170,7 @@ Content-Type: application/json
         "contentType": "image/png",
         "name": "enc_image.png",
         "size": 204800,
-        "data": "base64encodeddata"
+        "data": "$rsa-oaep-aes-256-gcm$v=1$k=1$3q2+7w==$8YmJ3Zg==$n0T2kZ1jQ0l0bXg="
       }
     ]
   }
