@@ -1,7 +1,7 @@
 # This file is licensed under the terms of the MIT license https://opensource.org/license/mit
 # Copyright (c) 2021-2025 Marat Reimers
 
-## Golden config for golangci-lint v2.9.0
+## Golden config for golangci-lint v2.12.2
 #
 # This is the best config for golangci-lint based on my experience and opinion.
 # It is very strict, but not extremely strict.
@@ -54,7 +54,7 @@ linters:
     - errname # checks that sentinel errors are prefixed with the Err and error types are suffixed with the Error
     - errorlint # finds code that will cause problems with the error wrapping scheme introduced in Go 1.13
     - exhaustive # checks exhaustiveness of enum switch statements
-    - exhaustruct # [highly recommend to enable] checks if all structure fields are initialized
+    - exhaustruct_v5 # [highly recommend to enable] checks if all structure fields are initialized
     - exptostd # detects functions from golang.org/x/exp/ that can be replaced by std functions
     - fatcontext # detects nested contexts in loops
     - forbidigo # forbids identifiers
@@ -93,6 +93,7 @@ linters:
     - nolintlint # reports ill-formed or insufficient nolint directives
     - nonamedreturns # reports all named returns
     - nosprintfhostport # checks for misuse of Sprintf to construct a host with port in a URL
+    - paralleltest # detects missing usage of t.Parallel() method in your Go test
     - perfsprint # checks that fmt.Sprintf can be replaced with a faster alternative
     - predeclared # finds code that shadows one of Go's predeclared identifiers
     - promlinter # checks Prometheus metrics naming via promlint
@@ -141,7 +142,7 @@ linters:
     #- dupword # [useless without config] checks for duplicate words in the source code
     #- errchkjson # [don't see profit + I'm against of omitting errors like in the first example https://github.com/breml/errchkjson] checks types passed to the json encoding functions. Reports unsupported types and optionally reports occasions, where the check for the returned error can be omitted
     #- forcetypeassert # [replaced by errcheck] finds forced type assertions
-    #- gomodguard # [use more powerful depguard] allow and block lists linter for direct Go module dependencies
+    #- gomodguard_v2: [use more powerful depguard] allow and blocklist linter for direct Go module dependencies
     #- gosmopolitan # reports certain i18n/l10n anti-patterns in your Go codebase
     #- grouper # analyzes expression groups
     #- importas # enforces consistent import aliases
@@ -149,10 +150,8 @@ linters:
     #- maintidx # measures the maintainability index of each function
     #- misspell # [useless] finds commonly misspelled English words in comments
     #- nlreturn # [too strict and mostly code is not more readable] checks for a new line before return and branch statements to increase code clarity
-    #- paralleltest # [too many false positives] detects missing usage of t.Parallel() method in your Go test
     #- tagliatelle # checks the struct tags
     #- thelper # detects golang test helpers without t.Helper() call and checks the consistency of test helpers
-    #- wsl # [too strict and mostly code is not more readable] whitespace linter forces you to use empty lines
     #- wsl_v5 # [too strict and mostly code is not more readable] add or remove empty lines
 
   # All settings can be found here https://github.com/golangci/golangci-lint/blob/HEAD/.golangci.reference.yml
@@ -230,17 +229,17 @@ linters:
       # Default: [ switch ]
       check:
         - switch
-        - map
+        - mapliteral
 
-    exhaustruct:
-      # List of regular expressions to match type names that should be excluded from processing.
+    exhaustruct_v5:
+      # List of regular expressions to match type names that should be skipped from checking.
       # Anonymous structs can be matched by '<anonymous>' alias.
       # Has precedence over `include`.
       # Each regular expression must match the full type name, including package path.
       # For example, to match type `net/http.Cookie` regular expression should be `.*/http\.Cookie`,
       # but not `http\.Cookie`.
       # Default: []
-      exclude:
+      ignore-patterns:
         # std libs
         - ^net.ListenConfig$
         - ^net/http.Client$
@@ -255,6 +254,7 @@ linters:
         # public libs
         - ^firebase.google.com/go/v4/messaging.AndroidConfig$
         - ^firebase.google.com/go/v4/messaging.Message$
+        - ^github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager.+Input$
         - ^github.com/aws/aws-sdk-go-v2/service/s3.+Input$
         - ^github.com/aws/aws-sdk-go-v2/service/s3/types.ObjectIdentifier$
         - ^github.com/go-telegram-bot-api/telegram-bot-api/.+Config$
@@ -262,8 +262,13 @@ linters:
         - ^github.com/go-telegram/bot/models.+$
         - ^github.com/gofiber/.+Config$
         - ^github.com/golang-jwt/jwt/v5.+Claims$
+        - ^github.com/invopop/jsonschema.Reflector$
         - ^github.com/mitchellh/mapstructure.DecoderConfig$
-        - ^github.com/mymmrac/telego.+Parameters$
+        - ^github.com/mymmrac/telego.+Params$
+        - ^github.com/openai/openai-go/v3/shared\.ResponseFormatJSONSchemaJSONSchemaParam$
+        - ^github.com/openai/openai-go/v3/shared\.ResponseFormatJSONSchemaParam$
+        - ^github.com/openai/openai-go/v3\.ChatCompletionNewParams$
+        - ^github.com/openai/openai-go/v3\.ChatCompletionNewParamsResponseFormatUnion$
         - ^github.com/prometheus/client_golang/.+Opts$
         - ^github.com/revrost/go-openrouter.+$
         - ^github.com/secsy/goftp.Config$
@@ -278,6 +283,7 @@ linters:
         - ^github.com/urfave/cli.v3.ArgumentBase$
         - ^github.com/urfave/cli.v3.Command$
         - ^github.com/urfave/cli.v3.FlagBase$
+        - ^github.com/valyala/fasthttp.Client$
         - ^golang.org/x/tools/go/analysis.Analyzer$
         - ^google.golang.org/protobuf/.+Options$
         - ^gopkg.in/telebot.v4.LongPoller$
@@ -406,6 +412,9 @@ linters:
       # Optimizes into strings concatenation.
       # Default: true
       strconcat: false
+      # Enable/disable optimization of error formatting.
+      # Default: true
+      error-format: false # https://github.com/catenacyber/perfsprint/issues/62
 
     reassign:
       # Patterns for global variable names that are checked for reassignment.
@@ -421,21 +430,15 @@ linters:
         - github.com/jmoiron/sqlx
 
     sloglint:
-      # Enforce not using global loggers.
-      # Values:
-      # - "": disabled
-      # - "all": report all global loggers
-      # - "default": report only the default slog logger
-      # https://github.com/go-simpler/sloglint?tab=readme-ov-file#no-global
-      # Default: ""
+      # Report the use of global loggers.
+      # https://github.com/go-simpler/sloglint#no-global-logger
+      # Values: "all", "default"
+      # Default: "" (disabled)
       no-global: all
-      # Enforce using methods that accept a context.
-      # Values:
-      # - "": disabled
-      # - "all": report all contextless calls
-      # - "scope": report only if a context exists in the scope of the outermost function
-      # https://github.com/go-simpler/sloglint?tab=readme-ov-file#context-only
-      # Default: ""
+      # Report the use of functions without a context.Context.
+      # https://github.com/go-simpler/sloglint#context-only
+      # Values: "all", "scope"
+      # Default: "" (disabled)
       context: scope
 
     staticcheck:
@@ -462,11 +465,16 @@ linters:
     wrapcheck:
       extra-ignore-sigs:
         - .JSON(
+        - .NewError(
+        - .Next(
         - .Send(
         - .SendStatus(
 
   exclusions:
     generated: lax
+    # Log a warning if an exclusion rule is unused.
+    # Default: false
+    warn-unused: true
     # Predefined exclusion rules.
     # Default: []
     presets:
@@ -494,7 +502,7 @@ linters:
           - dupl
           - err113
           - errcheck
-          - exhaustruct
+          - exhaustruct_v5
           - funlen
           - gocognit
           - goconst

@@ -14,6 +14,8 @@ import (
 )
 
 func TestNewService(t *testing.T) {
+	t.Parallel()
+
 	storage := otp.NewStorage(cache.NewMemory(time.Hour))
 	logger := zap.NewNop()
 
@@ -99,6 +101,8 @@ func TestNewService(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			svc, err := otp.NewService(tt.cfg, tt.storage, tt.logger)
 			if tt.wantErr != nil {
 				assert.Equal(t, true, errors.Is(err, tt.wantErr))
@@ -112,9 +116,13 @@ func TestNewService(t *testing.T) {
 }
 
 func TestGenerate(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	t.Run("disabled", func(t *testing.T) {
+		t.Parallel()
+
 		svc, err := otp.NewService(
 			otp.Config{Enabled: false, Length: 8, TTL: time.Minute, Retries: 3},
 			otp.NewStorage(cache.NewMemory(time.Hour)),
@@ -128,6 +136,8 @@ func TestGenerate(t *testing.T) {
 	})
 
 	t.Run("enabled code length and alphabet", func(t *testing.T) {
+		t.Parallel()
+
 		const length = 10
 		svc, err := otp.NewService(
 			otp.Config{Enabled: true, Length: length, TTL: time.Minute, Retries: 3},
@@ -148,9 +158,13 @@ func TestGenerate(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	t.Run("disabled", func(t *testing.T) {
+		t.Parallel()
+
 		svc, err := otp.NewService(
 			otp.Config{Enabled: false, Length: 8, TTL: time.Minute, Retries: 3},
 			otp.NewStorage(cache.NewMemory(time.Hour)),
@@ -164,6 +178,8 @@ func TestValidate(t *testing.T) {
 	})
 
 	t.Run("valid code", func(t *testing.T) {
+		t.Parallel()
+
 		svc, err := otp.NewService(
 			otp.Config{Enabled: true, Length: 8, TTL: time.Minute, Retries: 3},
 			otp.NewStorage(cache.NewMemory(time.Hour)),
@@ -180,6 +196,8 @@ func TestValidate(t *testing.T) {
 	})
 
 	t.Run("mixed case lookup", func(t *testing.T) {
+		t.Parallel()
+
 		svc, err := otp.NewService(
 			otp.Config{Enabled: true, Length: 8, TTL: time.Minute, Retries: 3},
 			otp.NewStorage(cache.NewMemory(time.Hour)),
@@ -197,6 +215,8 @@ func TestValidate(t *testing.T) {
 	})
 
 	t.Run("invalid code", func(t *testing.T) {
+		t.Parallel()
+
 		svc, err := otp.NewService(
 			otp.Config{Enabled: true, Length: 8, TTL: time.Minute, Retries: 3},
 			otp.NewStorage(cache.NewMemory(time.Hour)),

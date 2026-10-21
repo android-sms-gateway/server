@@ -18,7 +18,7 @@ type DeviceSettings struct {
 }
 
 func NewDeviceSettings(userID string, settings map[string]any) *DeviceSettings {
-	//nolint:exhaustruct // partial constructor
+	//nolint:exhaustruct_v5 // partial constructor
 	return &DeviceSettings{
 		UserID:   userID,
 		Settings: settings,

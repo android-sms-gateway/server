@@ -44,7 +44,7 @@ type InboxCleanup struct {
 }
 
 func Default() Config {
-	//nolint:exhaustruct,mnd,goconst // default values
+	//nolint:exhaustruct_v5,mnd,goconst // default values
 	return Config{
 		Tasks: Tasks{
 			MessagesHashing: MessagesHashing{
