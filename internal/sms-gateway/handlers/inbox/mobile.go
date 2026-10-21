@@ -56,19 +56,19 @@ func (h *MobileController) post(device devices.Device, c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
+	msgs := toMessageInputs(req)
+
+	if err := h.inboxSvc.InsertBatch(c.Context(), device.ID, msgs); err != nil {
+		return fmt.Errorf("failed to insert inbox messages: %w", err)
+	}
+
+	return c.SendStatus(fiber.StatusCreated)
+}
+
+// toMessageInputs maps the upload request to the domain inputs.
+func toMessageInputs(req smsgateway.MobilePostInboxRequest) []inbox.MessageInput {
 	msgs := make([]inbox.MessageInput, 0, len(req))
 	for _, r := range req {
-		atts := make([]inbox.AttachmentInput, 0, len(r.Attachments))
-		for _, a := range r.Attachments {
-			atts = append(atts, inbox.AttachmentInput{
-				PartID:      a.PartID,
-				ContentType: a.ContentType,
-				Name:        a.Name,
-				Size:        a.Size,
-				Data:        a.Data,
-			})
-		}
-
 		msgs = append(msgs, inbox.MessageInput{
 			MessageBody: inbox.MessageBody{
 				ExtID:       r.ID,
@@ -81,13 +81,28 @@ func (h *MobileController) post(device devices.Device, c *fiber.Ctx) error {
 				CreatedAt:   r.CreatedAt,
 			},
 
-			Attachments: atts,
+			Attachments: toAttachmentInputs(r.Attachments),
 		})
 	}
 
-	if err := h.inboxSvc.InsertBatch(c.Context(), device.ID, msgs); err != nil {
-		return fmt.Errorf("failed to insert inbox messages: %w", err)
+	return msgs
+}
+
+// toAttachmentInputs maps the upload attachments to the domain inputs.
+//
+// The attachment payload is the opaque encryption envelope of the device, it is
+// stored and served verbatim.
+func toAttachmentInputs(atts []smsgateway.MobilePostInboxRequestItemAttachment) []inbox.AttachmentInput {
+	inputs := make([]inbox.AttachmentInput, 0, len(atts))
+	for _, a := range atts {
+		inputs = append(inputs, inbox.AttachmentInput{
+			PartID:      a.PartID,
+			ContentType: a.ContentType,
+			Name:        a.Name,
+			Size:        a.Size,
+			Data:        []byte(a.Data),
+		})
 	}
 
-	return c.SendStatus(fiber.StatusCreated)
+	return inputs
 }
