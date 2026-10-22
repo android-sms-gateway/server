@@ -119,7 +119,7 @@ resource "docker_service" "app" {
   }
   labels {
     label = "traefik.http.routers.${var.app-name}.tls.certresolver"
-    value = "le"
+    value = "cloudflare"
   }
   #endregion
 
@@ -138,7 +138,7 @@ resource "docker_service" "app" {
   }
   labels {
     label = "traefik.http.routers.${var.app-name}_limited.tls.certresolver"
-    value = "le"
+    value = "cloudflare"
   }
   #endregion
 
@@ -157,7 +157,7 @@ resource "docker_service" "app" {
   }
   labels {
     label = "traefik.http.routers.${var.app-name}-new.tls.certresolver"
-    value = "le"
+    value = "cloudflare"
   }
 
   labels {
@@ -170,7 +170,7 @@ resource "docker_service" "app" {
   }
   labels {
     label = "traefik.http.routers.${var.app-name}-wellknown.tls.certresolver"
-    value = "le"
+    value = "cloudflare"
   }
   #endregion
 
@@ -190,7 +190,7 @@ resource "docker_service" "app" {
   }
   labels {
     label = "traefik.http.routers.${var.app-name}-new_limited.tls.certresolver"
-    value = "le"
+    value = "cloudflare"
   }
   #endregion
   #region User Operations
@@ -208,7 +208,7 @@ resource "docker_service" "app" {
   }
   labels {
     label = "traefik.http.routers.${var.app-name}-new_limited-user.tls.certresolver"
-    value = "le"
+    value = "cloudflare"
   }
   #endregion
   #endregion
