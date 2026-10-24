@@ -12,8 +12,8 @@ func Module() fx.Option {
 		"otp",
 		logger.WithNamedLogger("otp"),
 		fx.Provide(
-			// The cache is created through the tracked factory, so the sweeper
-			// reclaims the expired one-time codes.
+			// The cache is created through the prefixed factory, so the
+			// cachefx sweeper reclaims the expired one-time codes.
 			func(factory appCache.Factory) (cache.Cache, error) {
 				return factory.New("otp")
 			},
