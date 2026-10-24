@@ -41,7 +41,7 @@ func Module() fx.Option {
 		logger.Module(),
 		http.Module,
 		validator.Module,
-		cachefx.Module(),
+		cachefx.Module(cachefx.WithSweeper()),
 
 		appconfig.Module(),
 		appdb.Module(),
