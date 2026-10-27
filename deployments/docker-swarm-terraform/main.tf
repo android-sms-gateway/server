@@ -63,6 +63,10 @@ resource "docker_service" "app" {
       name = data.docker_network.internal.id
     }
 
+    placement {
+      constraints = ["node.labels.traefik!=true"]
+    }
+
     resources {
       limits {
         memory_bytes = var.memory-limit
