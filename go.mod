@@ -8,7 +8,7 @@ require (
 	github.com/ansrivas/fiberprometheus/v2 v2.18.0
 	github.com/capcom6/go-helpers v0.4.0
 	github.com/capcom6/go-infra-fx v0.5.9
-	github.com/go-core-fx/cachefx v0.0.3
+	github.com/go-core-fx/cachefx v0.1.1-0.20261024103257-63f6f7f39719
 	github.com/go-core-fx/fiberfx v0.6.0
 	github.com/go-core-fx/fxutil v0.0.2
 	github.com/go-core-fx/logger v0.0.1
@@ -22,7 +22,7 @@ require (
 	github.com/jaevor/go-nanoid v1.4.0
 	github.com/nyaruka/phonenumbers v1.8.1
 	github.com/prometheus/client_golang v1.24.1
-	github.com/redis/go-redis/v9 v9.22.0
+	github.com/redis/go-redis/v9 v9.23.0
 	github.com/samber/lo v1.53.0
 	github.com/stretchr/testify v1.12.1
 	github.com/swaggo/swag v1.16.6
@@ -127,7 +127,7 @@ require (
 	golang.org/x/net v0.59.0 // indirect
 	golang.org/x/oauth2 v0.37.0 // indirect
 	golang.org/x/sync v0.23.0 // indirect
-	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
 	golang.org/x/tools v0.50.0 // indirect

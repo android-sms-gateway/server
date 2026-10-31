@@ -149,7 +149,8 @@ func Module() fx.Option {
 		}),
 		fx.Provide(func(cfg Config) cachefx.Config {
 			return cachefx.Config{
-				URL: cfg.Cache.URL,
+				URL:           cfg.Cache.URL,
+				SweepInterval: time.Duration(cfg.Cache.SweepInterval),
 			}
 		}),
 		fx.Provide(func(cfg Config) pubsub.Config {
