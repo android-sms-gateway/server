@@ -2,10 +2,13 @@ package main
 
 import (
 	"os"
+	"runtime"
 
 	"github.com/android-sms-gateway/server/internal/health"
 	smsgateway "github.com/android-sms-gateway/server/internal/sms-gateway"
+	"github.com/android-sms-gateway/server/internal/version"
 	"github.com/android-sms-gateway/server/internal/worker"
+	"github.com/go-core-fx/healthfx"
 )
 
 const (
@@ -64,7 +67,13 @@ func main() {
 		health.Run()
 		return
 	case cmdWorker:
-		worker.Run()
+		worker.Run(healthfx.Version{
+			Version:   version.AppVersion,
+			ReleaseID: version.AppReleaseID(),
+			BuildDate: "unknown",
+			GitCommit: "unknown",
+			GoVersion: runtime.Version(),
+		})
 		return
 	}
 

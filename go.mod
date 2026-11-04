@@ -11,11 +11,13 @@ require (
 	github.com/go-core-fx/cachefx v0.2.0
 	github.com/go-core-fx/fiberfx v1.0.0
 	github.com/go-core-fx/fxutil v0.0.2
+	github.com/go-core-fx/healthfx v0.1.0
 	github.com/go-core-fx/logger v0.0.1
 	github.com/go-playground/assert/v2 v2.2.0
 	github.com/go-playground/validator/v10 v10.30.6
 	github.com/go-sql-driver/mysql v1.10.1
 	github.com/gofiber/fiber/v2 v2.52.16
+	github.com/gofiber/fiber/v3 v3.6.1
 	github.com/gofiber/swagger v1.1.1
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
@@ -77,7 +79,6 @@ require (
 	github.com/gofiber/contrib/fiberzap/v2 v2.1.6 // indirect
 	github.com/gofiber/contrib/v3/prometheus v0.1.2 // indirect
 	github.com/gofiber/contrib/v3/zap v1.0.16 // indirect
-	github.com/gofiber/fiber/v3 v3.6.1 // indirect
 	github.com/gofiber/schema v1.9.2 // indirect
 	github.com/gofiber/utils/v2 v2.6.3 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect

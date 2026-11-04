@@ -81,8 +81,8 @@ github.com/go-core-fx/fiberfx v1.0.0 h1:6hVoj/E+eukESULZXeWVnZoqfwYAEpRoPNzarE9U
 github.com/go-core-fx/fiberfx v1.0.0/go.mod h1:M8kPzTaR11ReA9L4kF5778BY8Cc6a8OVHLTtBBy7kOk=
 github.com/go-core-fx/fxutil v0.0.2 h1:T2uo4o3Gm4AltdI7ABdWkcX6zMhfpsylkPL208O7c88=
 github.com/go-core-fx/fxutil v0.0.2/go.mod h1:nljLWn+Ck1Rrqv9DPdD7Czdd0j5uF+9YRPNs/DpCfnw=
-github.com/go-core-fx/healthfx v0.0.2-0.20260109013230-f7729a0a06bc h1:jJTE0YeQwyqsr9qhvKZxDmxoR322tBZjvwFjQTauM84=
-github.com/go-core-fx/healthfx v0.0.2-0.20260109013230-f7729a0a06bc/go.mod h1:MxESD5T1NpBqcuVwn6bWHPqMdvhkzI+cKbJClftaRfI=
+github.com/go-core-fx/healthfx v0.1.0 h1:m/BkwnNTqxZPDNhgXApI3FwbhKnQDb9hd0R7s8mwYfw=
+github.com/go-core-fx/healthfx v0.1.0/go.mod h1:MxESD5T1NpBqcuVwn6bWHPqMdvhkzI+cKbJClftaRfI=
 github.com/go-core-fx/logger v0.0.1 h1:e3iJPEfV09fAZnVdROhcpDEbw7DHaNfY/OWCLX0wipA=
 github.com/go-core-fx/logger v0.0.1/go.mod h1:dvExTnpqUry/Qr0x0rg8UiKVUPv3PBb1JT/0llX5NWc=
 github.com/go-jose/go-jose/v4 v4.1.8 h1:k38WifTutpGuqt6Imq9xW1OgCvnWFri0Nz7FnfiACM8=
