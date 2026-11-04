@@ -106,7 +106,7 @@ resource "docker_service" "app" {
 
   labels {
     label = "traefik.http.middlewares.${var.app-name}-3rdparty-ratelimit.ratelimit.average"
-    value = "1"
+    value = "10"
   }
 
   labels {
@@ -116,11 +116,21 @@ resource "docker_service" "app" {
 
   labels {
     label = "traefik.http.middlewares.${var.app-name}-3rdparty-ratelimit.ratelimit.burst"
-    value = "10000"
+    value = "30"
   }
 
   labels {
     label = "traefik.http.middlewares.${var.app-name}-3rdparty-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth"
+    value = "1"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.${var.app-name}-3rdparty-inflight.inflightreq.amount"
+    value = "20"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.${var.app-name}-3rdparty-inflight.inflightreq.sourcecriterion.ipstrategy.depth"
     value = "1"
   }
 
@@ -208,7 +218,7 @@ resource "docker_service" "app" {
   }
   labels {
     label = "traefik.http.routers.${var.app-name}_3rdparty.middlewares"
-    value = "${var.app-name}-3rdparty-ratelimit"
+    value = "${var.app-name}-3rdparty-inflight,${var.app-name}-3rdparty-ratelimit"
   }
   labels {
     label = "traefik.http.routers.${var.app-name}_3rdparty.entrypoints"
@@ -310,7 +320,7 @@ resource "docker_service" "app" {
   }
   labels {
     label = "traefik.http.routers.${var.app-name}-new-3rdparty.middlewares"
-    value = "${var.app-name}-3rdparty-ratelimit,${var.app-name}-new-addprefix"
+    value = "${var.app-name}-3rdparty-inflight,${var.app-name}-3rdparty-ratelimit,${var.app-name}-new-addprefix"
   }
   labels {
     label = "traefik.http.routers.${var.app-name}-new-3rdparty.entrypoints"
