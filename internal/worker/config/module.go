@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/android-sms-gateway/server/internal/worker/server"
 	"github.com/android-sms-gateway/server/internal/worker/tasks/devices"
 	"github.com/android-sms-gateway/server/internal/worker/tasks/inbox"
 	"github.com/android-sms-gateway/server/internal/worker/tasks/messages"
 	"github.com/android-sms-gateway/server/internal/worker/tasks/tokens"
 	"github.com/capcom6/go-infra-fx/config"
 	"github.com/capcom6/go-infra-fx/db"
+	"github.com/go-core-fx/fiberfx"
+	"github.com/gofiber/fiber/v3"
 	"go.uber.org/fx"
 )
 
@@ -78,10 +79,11 @@ func Module() fx.Option {
 				},
 			}
 		}),
-		fx.Provide(func(cfg Config) server.Config {
-			return server.Config{
-				Address: cfg.HTTP.Listen,
-				Proxies: cfg.HTTP.Proxies,
+		fx.Provide(func(cfg Config) fiberfx.Config {
+			return fiberfx.Config{
+				Address:     cfg.HTTP.Listen,
+				ProxyHeader: fiber.HeaderXForwardedFor,
+				Proxies:     cfg.HTTP.Proxies,
 			}
 		}),
 	)
