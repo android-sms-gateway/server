@@ -1,5 +1,4 @@
-//nolint:testpackage // stateCache and its key layout are unexported; in-package test required.
-package messages
+package messages_test
 
 import (
 	"context"
@@ -8,6 +7,7 @@ import (
 	"time"
 
 	"github.com/android-sms-gateway/client-go/smsgateway"
+	messages "github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 	cacheImpl "github.com/go-core-fx/cachefx/cache"
 	"github.com/stretchr/testify/require"
 )
@@ -17,19 +17,19 @@ const (
 	cacheTestMessageID = "msg-12345678901234"
 )
 
-func newCacheTestState(createdAt time.Time) *MessageState {
-	return &MessageState{
-		MessageStateInput: MessageStateInput{
+func newCacheTestState(createdAt time.Time) *messages.MessageState {
+	return &messages.MessageState{
+		MessageStateInput: messages.MessageStateInput{
 			ID:    cacheTestMessageID,
-			State: ProcessingStatePending,
+			State: messages.ProcessingStatePending,
 			Recipients: []smsgateway.RecipientState{
 				{PhoneNumber: "+1234567890", State: smsgateway.ProcessingStatePending},
 			},
-			States: map[string]time.Time{string(ProcessingStatePending): createdAt},
+			States: map[string]time.Time{string(messages.ProcessingStatePending): createdAt},
 		},
-		MessageStateContent: MessageStateContent{
-			MessageContent: MessageContent{
-				TextContent: &TextContent{Text: "test message"},
+		MessageStateContent: messages.MessageStateContent{
+			MessageContent: messages.MessageContent{
+				TextContent: &messages.TextContent{Text: "test message"},
 			},
 		},
 		DeviceID:  "device-12345678901234",
@@ -45,7 +45,7 @@ func TestStateCacheGetIgnoresUnversionedEntry(t *testing.T) {
 	t.Parallel()
 
 	storage := cacheImpl.NewMemory(time.Minute)
-	c := newCache(Config{CacheTTL: time.Minute}, storage)
+	c := messages.NewStateCacheForTest(messages.Config{CacheTTL: time.Minute}, storage)
 
 	createdAt := time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC)
 	data, err := json.Marshal(newCacheTestState(createdAt))
@@ -64,7 +64,7 @@ func TestStateCacheGetIgnoresUnversionedEntry(t *testing.T) {
 func TestStateCacheRoundTripPreservesScheduleAt(t *testing.T) {
 	t.Parallel()
 
-	c := newCache(Config{CacheTTL: time.Minute}, cacheImpl.NewMemory(time.Minute))
+	c := messages.NewStateCacheForTest(messages.Config{CacheTTL: time.Minute}, cacheImpl.NewMemory(time.Minute))
 
 	createdAt := time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC)
 	scheduleAt := createdAt.Add(time.Hour)
@@ -87,7 +87,7 @@ func TestStateCacheRoundTripPreservesScheduleAt(t *testing.T) {
 func TestStateCacheSetNilCachesNotFound(t *testing.T) {
 	t.Parallel()
 
-	c := newCache(Config{CacheTTL: time.Minute}, cacheImpl.NewMemory(time.Minute))
+	c := messages.NewStateCacheForTest(messages.Config{CacheTTL: time.Minute}, cacheImpl.NewMemory(time.Minute))
 
 	require.NoError(t, c.Set(context.Background(), cacheTestUserID, cacheTestMessageID, nil))
 
@@ -102,7 +102,7 @@ func TestStateCacheDeleteUsesVersionedKey(t *testing.T) {
 	t.Parallel()
 
 	storage := cacheImpl.NewMemory(time.Minute)
-	c := newCache(Config{CacheTTL: time.Minute}, storage)
+	c := messages.NewStateCacheForTest(messages.Config{CacheTTL: time.Minute}, storage)
 
 	createdAt := time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC)
 	require.NoError(t, c.Set(context.Background(), cacheTestUserID, cacheTestMessageID, newCacheTestState(createdAt)))
@@ -120,14 +120,17 @@ func TestStateCacheGetRejectsStalePayload(t *testing.T) {
 	t.Parallel()
 
 	storage := cacheImpl.NewMemory(time.Minute)
-	c := newCache(Config{CacheTTL: time.Minute}, storage)
+	c := messages.NewStateCacheForTest(messages.Config{CacheTTL: time.Minute}, storage)
 
 	data, err := json.Marshal(newCacheTestState(time.Time{}))
 	require.NoError(t, err)
 
-	require.NoError(t, storage.Set(context.Background(), stateCacheKey(cacheTestUserID, cacheTestMessageID), data))
+	require.NoError(
+		t,
+		storage.Set(context.Background(), messages.StateCacheKeyForTest(cacheTestUserID, cacheTestMessageID), data),
+	)
 
 	state, err := c.Get(context.Background(), cacheTestUserID, cacheTestMessageID)
 	require.Nil(t, state)
-	require.ErrorIs(t, err, ErrStaleCacheEntry)
+	require.ErrorIs(t, err, messages.ErrStaleCacheEntry)
 }

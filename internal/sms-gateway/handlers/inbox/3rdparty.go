@@ -104,7 +104,7 @@ func (h *ThirdPartyController) list(userID string, c *fiber.Ctx) error {
 		}
 	}
 
-	c.Set("X-Total-Count", strconv.Itoa(int(total)))
+	c.Set("X-Total-Count", strconv.FormatInt(total, 10))
 	return c.JSON(result)
 }
 

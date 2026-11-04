@@ -23,42 +23,17 @@ func NewRepository(db *gorm.DB) *Repository {
 	}
 }
 
-func (r *Repository) list(filter SelectFilter, options SelectOptions) ([]messageModel, int64, error) {
-	query := r.db.Model((*messageModel)(nil))
-
-	// Apply date range filter
-	if !filter.StartDate.IsZero() {
-		query = query.Where("messages.created_at >= ?", filter.StartDate)
-	}
-	if !filter.EndDate.IsZero() {
-		query = query.Where("messages.created_at < ?", filter.EndDate)
-	}
-
-	// Apply ID filter
-	if filter.ExtID != "" {
-		query = query.Where("messages.ext_id = ?", filter.ExtID)
-	}
-
-	// Apply user filter
-	if filter.UserID != "" {
-		query = query.Where("messages.user_id = ?", filter.UserID)
-	}
-
-	// Apply state filter
-	if len(filter.State) > 0 {
-		query = query.Where("messages.state IN ?", filter.State)
-	}
-
-	// Apply device filter
-	if filter.DeviceID != "" {
-		query = query.Where("messages.device_id = ?", filter.DeviceID)
-	}
-
-	// Get total count
+func (r *Repository) count(filter SelectFilter) (int64, error) {
 	var total int64
-	if err := query.Count(&total).Error; err != nil {
-		return nil, 0, err
+	if err := filter.apply(r.db.Model((*messageModel)(nil))).Count(&total).Error; err != nil {
+		return 0, err
 	}
+
+	return total, nil
+}
+
+func (r *Repository) find(filter SelectFilter, options SelectOptions) ([]messageModel, error) {
+	query := filter.apply(r.db.Model((*messageModel)(nil)))
 
 	// Apply pagination
 	if options.Limit > 0 {
@@ -96,21 +71,38 @@ func (r *Repository) list(filter SelectFilter, options SelectOptions) ([]message
 		query = query.Omit("Content")
 	}
 
-	messages := make([]messageModel, 0, min(options.Limit, int(total)))
+	messages := make([]messageModel, 0, options.Limit)
 	if err := query.Find(&messages).Error; err != nil {
-		return nil, 0, fmt.Errorf("failed to select messages: %w", err)
+		return nil, fmt.Errorf("failed to select messages: %w", err)
+	}
+
+	return messages, nil
+}
+
+func (r *Repository) list(filter SelectFilter, options SelectOptions) ([]messageModel, int64, error) {
+	total, err := r.count(filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	messages, err := r.find(filter, options)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	return messages, total, nil
 }
 
 func (r *Repository) listPending(deviceID string, order Order) ([]messageModel, error) {
-	messages, _, err := r.list(
+	messages, err := r.find(
 		*new(SelectFilter).WithDeviceID(deviceID).WithState(ProcessingStatePending).WithState(ProcessingStateCancelling),
 		*new(SelectOptions).IncludeContent().IncludeRecipients().WithLimit(maxPendingBatch).WithOrderBy(order),
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	return messages, err
+	return messages, nil
 }
 
 func (r *Repository) get(filter SelectFilter, options SelectOptions) (messageModel, error) {

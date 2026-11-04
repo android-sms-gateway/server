@@ -32,6 +32,7 @@ type Service struct {
 
 	metrics       *metrics
 	cache         *stateCache
+	countCache    *countCache
 	hashingWorker *hashingWorker
 
 	logger *zap.Logger
@@ -47,6 +48,7 @@ func NewService(
 
 	metrics *metrics,
 	cache *stateCache,
+	countCache *countCache,
 	hashingTask *hashingWorker,
 
 	logger *zap.Logger,
@@ -61,6 +63,7 @@ func NewService(
 
 		metrics:       metrics,
 		cache:         cache,
+		countCache:    countCache,
 		hashingWorker: hashingTask,
 
 		logger: logger,
@@ -147,7 +150,15 @@ func (s *Service) SelectStates(
 ) ([]MessageState, int64, error) {
 	filter.UserID = userID
 
-	messages, total, err := s.messages.list(filter, options)
+	total, hit, err := s.countCache.Count(filter.hash(), func() (int64, error) {
+		return s.messages.count(filter)
+	})
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count messages: %w", err)
+	}
+	s.metrics.IncCountCache(hit)
+
+	messages, err := s.messages.find(filter, options)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to select messages: %w", err)
 	}

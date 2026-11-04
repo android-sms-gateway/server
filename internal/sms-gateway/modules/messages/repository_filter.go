@@ -1,6 +1,14 @@
 package messages
 
-import "time"
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"strconv"
+	"strings"
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // Order defines supported ordering for message selection.
 // Valid values: "lifo" (default), "fifo".
@@ -59,6 +67,61 @@ func (f *SelectFilter) WithDateRange(start, end time.Time) *SelectFilter {
 func (f *SelectFilter) WithState(state ProcessingState) *SelectFilter {
 	f.State = append(f.State, state)
 	return f
+}
+
+// hash returns the identity of the row set this filter selects, as a
+// cache key: every field that changes the counted rows is hashed, while
+// pagination is deliberately absent because a total does not depend on the
+// requested page.
+func (f *SelectFilter) hash() string {
+	key := f.UserID + "\x00" + f.ExtID + "\x00" + f.DeviceID + "\x00" +
+		strconv.FormatInt(f.StartDate.UnixNano(), 10) + "\x00" +
+		strconv.FormatInt(f.EndDate.UnixNano(), 10)
+
+	if len(f.State) > 0 {
+		states := make([]string, 0, len(f.State))
+		for _, state := range f.State {
+			states = append(states, string(state))
+		}
+		key += "\x00" + strings.Join(states, ",")
+	}
+
+	sum := sha256.Sum256([]byte(key))
+
+	return hex.EncodeToString(sum[:])
+}
+
+// apply adds the WHERE clauses shared by every message selection to query.
+func (f *SelectFilter) apply(query *gorm.DB) *gorm.DB {
+	// Apply date range filter
+	if !f.StartDate.IsZero() {
+		query = query.Where("messages.created_at >= ?", f.StartDate)
+	}
+	if !f.EndDate.IsZero() {
+		query = query.Where("messages.created_at < ?", f.EndDate)
+	}
+
+	// Apply ID filter
+	if f.ExtID != "" {
+		query = query.Where("messages.ext_id = ?", f.ExtID)
+	}
+
+	// Apply user filter
+	if f.UserID != "" {
+		query = query.Where("messages.user_id = ?", f.UserID)
+	}
+
+	// Apply state filter
+	if len(f.State) > 0 {
+		query = query.Where("messages.state IN ?", f.State)
+	}
+
+	// Apply device filter
+	if f.DeviceID != "" {
+		query = query.Where("messages.device_id = ?", f.DeviceID)
+	}
+
+	return query
 }
 
 type SelectOptions struct {
