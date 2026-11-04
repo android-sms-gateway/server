@@ -75,9 +75,10 @@ type SSE struct {
 }
 
 type Messages struct {
-	CacheTTLSeconds        uint16              `yaml:"cache_ttl_seconds"        envconfig:"MESSAGES__CACHE_TTL_SECONDS"`
-	HashingIntervalSeconds uint16              `yaml:"hashing_interval_seconds" envconfig:"MESSAGES__HASHING_INTERVAL_SECONDS"`
-	Queue                  messagesQueueConfig `yaml:"queue"`
+	CacheTTLSeconds          uint16              `yaml:"cache_ttl_seconds"            envconfig:"MESSAGES__CACHE_TTL_SECONDS"`
+	HashingIntervalSeconds   uint16              `yaml:"hashing_interval_seconds"     envconfig:"MESSAGES__HASHING_INTERVAL_SECONDS"`
+	ListCountCacheTTLSeconds uint16              `yaml:"list_count_cache_ttl_seconds" envconfig:"MESSAGES__LIST_COUNT_CACHE_TTL_SECONDS"`
+	Queue                    messagesQueueConfig `yaml:"queue"`
 }
 
 type messagesQueueConfig struct {
@@ -141,8 +142,9 @@ func Default() Config {
 			KeepAlivePeriodSeconds: 15,
 		},
 		Messages: Messages{
-			CacheTTLSeconds:        300, // 5 minutes
-			HashingIntervalSeconds: 60,
+			CacheTTLSeconds:          300, // 5 minutes
+			HashingIntervalSeconds:   60,
+			ListCountCacheTTLSeconds: 5, // message list totals are refreshed every 5 seconds, 0 disables storing them
 			Queue: messagesQueueConfig{
 				MaxPending:    0,
 				MaxPendingAge: 0,

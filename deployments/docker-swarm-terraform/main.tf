@@ -88,7 +88,7 @@ resource "docker_service" "app" {
     value = data.docker_network.proxy.name
   }
 
-  #region rate-limit_5-per-1m Middleware
+  #region Rate limit Middlewares
   labels {
     label = "traefik.http.middlewares.rate-limit_5-per-1m.ratelimit.average"
     value = "5"
@@ -101,6 +101,76 @@ resource "docker_service" "app" {
 
   labels {
     label = "traefik.http.middlewares.rate-limit_5-per-1m.ratelimit.sourcecriterion.ipstrategy.depth"
+    value = "1"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.${var.app-name}-3rdparty-ratelimit.ratelimit.average"
+    value = "10"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.${var.app-name}-3rdparty-ratelimit.ratelimit.period"
+    value = "1s"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.${var.app-name}-3rdparty-ratelimit.ratelimit.burst"
+    value = "30"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.${var.app-name}-3rdparty-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth"
+    value = "1"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.${var.app-name}-3rdparty-inflight.inflightreq.amount"
+    value = "20"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.${var.app-name}-3rdparty-inflight.inflightreq.sourcecriterion.ipstrategy.depth"
+    value = "1"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.${var.app-name}-upstream-ratelimit.ratelimit.average"
+    value = "5"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.${var.app-name}-upstream-ratelimit.ratelimit.period"
+    value = "1m"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.${var.app-name}-upstream-ratelimit.ratelimit.burst"
+    value = "5"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.${var.app-name}-upstream-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth"
+    value = "1"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.${var.app-name}-mobile-ratelimit.ratelimit.average"
+    value = "20"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.${var.app-name}-mobile-ratelimit.ratelimit.period"
+    value = "1s"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.${var.app-name}-mobile-ratelimit.ratelimit.burst"
+    value = "400"
+  }
+
+  labels {
+    label = "traefik.http.middlewares.${var.app-name}-mobile-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth"
     value = "1"
   }
   #endregion
@@ -146,6 +216,76 @@ resource "docker_service" "app" {
   }
   #endregion
 
+  #region Deprecated Rate-limited
+  labels {
+    label = "traefik.http.routers.${var.app-name}_3rdparty.rule"
+    value = "Host(`${var.app-host}`) && PathPrefix(`/api/3rdparty`)"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}_3rdparty.middlewares"
+    value = "${var.app-name}-3rdparty-inflight,${var.app-name}-3rdparty-ratelimit"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}_3rdparty.entrypoints"
+    value = "https"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}_3rdparty.tls.certresolver"
+    value = "cloudflare"
+  }
+
+  labels {
+    label = "traefik.http.routers.${var.app-name}_upstream.rule"
+    value = "Host(`${var.app-host}`) && PathPrefix(`/api/upstream`)"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}_upstream.middlewares"
+    value = "${var.app-name}-upstream-ratelimit"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}_upstream.entrypoints"
+    value = "https"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}_upstream.tls.certresolver"
+    value = "cloudflare"
+  }
+
+  labels {
+    label = "traefik.http.routers.${var.app-name}_mobile.rule"
+    value = "Host(`${var.app-host}`) && PathPrefix(`/api/mobile`)"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}_mobile.middlewares"
+    value = "${var.app-name}-mobile-ratelimit"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}_mobile.entrypoints"
+    value = "https"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}_mobile.tls.certresolver"
+    value = "cloudflare"
+  }
+
+  labels {
+    label = "traefik.http.routers.${var.app-name}_limited-user.rule"
+    value = "Host(`${var.app-host}`) && PathPrefix(`/api/mobile/v1/user`)"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}_limited-user.middlewares"
+    value = "rate-limit_5-per-1m"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}_limited-user.entrypoints"
+    value = "https"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}_limited-user.tls.certresolver"
+    value = "cloudflare"
+  }
+  #endregion
+
   #region Primary
   labels {
     label = "traefik.http.routers.${var.app-name}-new.rule"
@@ -174,6 +314,59 @@ resource "docker_service" "app" {
   }
   labels {
     label = "traefik.http.routers.${var.app-name}-wellknown.tls.certresolver"
+    value = "cloudflare"
+  }
+  #endregion
+
+  #region Primary Rate-limited
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new-3rdparty.rule"
+    value = "Host(`api.sms-gate.app`) && PathPrefix(`/3rdparty`)"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new-3rdparty.middlewares"
+    value = "${var.app-name}-3rdparty-inflight,${var.app-name}-3rdparty-ratelimit,${var.app-name}-new-addprefix"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new-3rdparty.entrypoints"
+    value = "https"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new-3rdparty.tls.certresolver"
+    value = "cloudflare"
+  }
+
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new-upstream.rule"
+    value = "Host(`api.sms-gate.app`) && PathPrefix(`/upstream`)"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new-upstream.middlewares"
+    value = "${var.app-name}-upstream-ratelimit,${var.app-name}-new-addprefix"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new-upstream.entrypoints"
+    value = "https"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new-upstream.tls.certresolver"
+    value = "cloudflare"
+  }
+
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new-mobile.rule"
+    value = "Host(`api.sms-gate.app`) && PathPrefix(`/mobile`)"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new-mobile.middlewares"
+    value = "${var.app-name}-mobile-ratelimit,${var.app-name}-new-addprefix"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new-mobile.entrypoints"
+    value = "https"
+  }
+  labels {
+    label = "traefik.http.routers.${var.app-name}-new-mobile.tls.certresolver"
     value = "cloudflare"
   }
   #endregion
