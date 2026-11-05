@@ -38,15 +38,15 @@ type messageModel struct {
 	ExtID              string          `gorm:"not null;type:varchar(36);uniqueIndex:unq_messages_id_device,priority:1"`
 	Type               MessageType     `gorm:"not null;type:enum('Text','Data','Mms');default:Text"`
 	Content            string          `gorm:"not null;type:mediumtext"`
-	State              ProcessingState `gorm:"not null;type:enum('Pending','Cancelling','Cancelled','Processed','Sent','Delivered','Failed');default:Pending;index:idx_messages_device_state;index:idx_messages_unhashed,priority:3"`
+	State              ProcessingState `gorm:"not null;type:enum('Pending','Cancelling','Cancelled','Processed','Sent','Delivered','Failed');default:Pending;index:idx_messages_device_state"`
 	ValidUntil         *time.Time      `gorm:"type:datetime"`
 	ScheduleAt         *time.Time      `gorm:"type:datetime"`
 	SimNumber          *uint8          `gorm:"type:tinyint(1) unsigned"`
 	WithDeliveryReport bool            `gorm:"not null;type:tinyint(1) unsigned"`
 	Priority           int8            `gorm:"not null;type:tinyint;default:0"`
 
-	IsHashed    bool `gorm:"not null;type:tinyint(1) unsigned;default:0;index:idx_messages_unhashed,priority:1"`
-	IsEncrypted bool `gorm:"not null;type:tinyint(1) unsigned;default:0;index:idx_messages_unhashed,priority:2"`
+	IsHashed    bool `gorm:"not null;type:tinyint(1) unsigned;default:0"`
+	IsEncrypted bool `gorm:"not null;type:tinyint(1) unsigned;default:0"`
 
 	Device     devices.DeviceModel     `gorm:"foreignKey:DeviceID;constraint:OnDelete:CASCADE"`
 	Recipients []messageRecipientModel `gorm:"foreignKey:MessageID;constraint:OnDelete:CASCADE"`
