@@ -9,6 +9,7 @@ var (
 	ErrNoContent             = errors.New("no text, data or multimedia content")
 	ErrMessageNotPending     = errors.New("message is not pending")
 	ErrStaleCacheEntry       = errors.New("stale cache entry")
+	ErrCountCacheResult      = errors.New("count cache returned an unexpected result")
 
 	ErrQueueLimitExceeded = errors.New("queue limits exceeded")
 )

@@ -6,6 +6,10 @@ type Config struct {
 	HashingInterval time.Duration
 	CacheTTL        time.Duration
 
+	// ListCountCacheTTL bounds how long a message list total stays fresh.
+	// A non-positive value disables storing totals.
+	ListCountCacheTTL time.Duration
+
 	Queue QueueConfig
 }
 

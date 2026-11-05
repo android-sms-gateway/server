@@ -25,6 +25,7 @@ func Module() fx.Option {
 		fx.Provide(newMetrics, fx.Private),
 		fx.Provide(newHashingWorker, fx.Private),
 		fx.Provide(newCache, fx.Private),
+		fx.Provide(newCountCache, fx.Private),
 
 		fx.Provide(
 			NewRepository,
