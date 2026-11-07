@@ -12,6 +12,8 @@ const (
 	metricMessagesTotal           = "total"
 	metricCacheHits               = "cache_hits_total"
 	metricCacheMisses             = "cache_misses_total"
+	metricCountCacheHits          = "count_cache_hits_total"
+	metricCountCacheMisses        = "count_cache_misses_total"
 	metricLimiterChecksTotal      = "limiter_checks_total"
 	metricLimiterRefreshesTotal   = "limiter_refreshes_total"
 	metricLimiterBatchSize        = "limiter_batch_size"
@@ -34,6 +36,9 @@ type metrics struct {
 
 	cacheHits   prometheus.Counter
 	cacheMisses prometheus.Counter
+
+	countCacheHits   prometheus.Counter
+	countCacheMisses prometheus.Counter
 
 	limiterChecksTotal    *prometheus.CounterVec
 	limiterRefreshesTotal prometheus.Counter
@@ -61,6 +66,19 @@ func newMetrics() *metrics {
 			Subsystem: metricsSubsystem,
 			Name:      metricCacheMisses,
 			Help:      "Number of cache misses",
+		}),
+
+		countCacheHits: promauto.NewCounter(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      metricCountCacheHits,
+			Help:      "Number of list total cache hits",
+		}),
+		countCacheMisses: promauto.NewCounter(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      metricCountCacheMisses,
+			Help:      "Number of list total cache misses",
 		}),
 
 		limiterChecksTotal: promauto.NewCounterVec(prometheus.CounterOpts{
@@ -102,6 +120,14 @@ func (m *metrics) IncCache(hit bool) {
 		m.cacheHits.Inc()
 	} else {
 		m.cacheMisses.Inc()
+	}
+}
+
+func (m *metrics) IncCountCache(hit bool) {
+	if hit {
+		m.countCacheHits.Inc()
+	} else {
+		m.countCacheMisses.Inc()
 	}
 }
 

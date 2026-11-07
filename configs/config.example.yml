@@ -37,6 +37,7 @@ sse:
 messages:
   cache_ttl_seconds: 300 # message cache TTL in seconds [MESSAGES__CACHE_TTL_SECONDS]
   hashing_interval_seconds: 60 # real-time message hashing interval in seconds [MESSAGES__HASHING_INTERVAL_SECONDS]
+  list_count_cache_ttl_seconds: 5 # message list total cache TTL in seconds, 0 disables storing them [MESSAGES__LIST_COUNT_CACHE_TTL_SECONDS]
 cache: # cache config
   url: memory:// # cache url (memory:// or redis://) [CACHE__URL]
   sweep_interval: 1m # cache sweep interval [CACHE__SWEEP_INTERVAL]

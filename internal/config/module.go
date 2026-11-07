@@ -123,8 +123,9 @@ func Module() fx.Option {
 		}),
 		fx.Provide(func(cfg Config) messages.Config {
 			return messages.Config{
-				CacheTTL:        time.Duration(cfg.Messages.CacheTTLSeconds) * time.Second,
-				HashingInterval: time.Duration(cfg.Messages.HashingIntervalSeconds) * time.Second,
+				CacheTTL:          time.Duration(cfg.Messages.CacheTTLSeconds) * time.Second,
+				HashingInterval:   time.Duration(cfg.Messages.HashingIntervalSeconds) * time.Second,
+				ListCountCacheTTL: time.Duration(cfg.Messages.ListCountCacheTTLSeconds) * time.Second,
 				Queue: messages.QueueConfig{
 					MaxPending:    int64(cfg.Messages.Queue.MaxPending),
 					MaxPendingAge: cfg.Messages.Queue.MaxPendingAge.Duration(),
