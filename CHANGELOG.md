@@ -2,7 +2,51 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.52.7] - 2026-11-15
+
+### New Features
+
+#### Request throttling
+
+- **API rate limits** — the Swarm deployment applies per-client-IP rate limits and in-flight request caps to the third-party API, upstream and mobile API routes.
+
+#### Message listing
+
+- **Cached message list totals** — `GET /api/3rdparty/v1/messages` reuses cached total counts instead of recomputing them on every request. The cache lifetime is set with `MESSAGES__LIST_COUNT_CACHE_TTL_SECONDS` (default `5` seconds); `0` disables storing totals.
+
+## [1.52.6] - 2026-11-10
+
+### Maintenance
+
+- **Message indexes** — added an index on user, device and deletion time for message lookups, and removed the unused index on unhashed recipients.
+
+## [1.52.5] - 2026-11-07
+
+### Maintenance
+
+- **Worker HTTP server** — the background worker's HTTP wiring now uses Fiber v3.
+- **Dependency updates** — go-jose/go-jose upgraded from v4.1.5 to v4.1.8.
+
+## [1.52.4] - 2026-11-05
+
+### Bug Fixes
+
+- **Inbox attachment payloads** — MMS attachments uploaded to `POST /api/mobile/v1/inbox` are stored and served verbatim as the device's opaque encryption envelope, without transforming the payload.
+
+## [1.52.3] - 2026-11-03
+
+### Maintenance
+
+- **Cache sweeping** — cached entries are now evicted periodically by a background sweep.
+- **Deployment** — TLS certificates are issued through a CloudFlare cert resolver, and nodes labelled for Traefik are excluded from the application service placement.
+
+## [1.52.1] - 2026-10-28
+
+### Maintenance
+
+- **Linting** — support for golangci-lint v2.15.
+
+## [1.52.0] - 2026-10-23
 
 ### New Features
 
