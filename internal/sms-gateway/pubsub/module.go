@@ -1,33 +1,27 @@
 package pubsub
 
 import (
-	"context"
-	"fmt"
-
+	"github.com/go-core-fx/logger"
+	"github.com/go-core-fx/pubsubfx"
 	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
+// topicPrefix namespaces every topic this application publishes, so instances
+// sharing one Redis server do not see each other's messages.
+const topicPrefix = "sms-gateway:"
+
+// Module maps the application config onto pubsubfx.Config. The PubSub itself
+// is provided by pubsubfx.Module(), which also closes it on app stop.
 func Module() fx.Option {
 	return fx.Module(
 		"pubsub",
-		fx.Decorate(func(log *zap.Logger) *zap.Logger {
-			return log.Named("pubsub")
-		}),
-		fx.Provide(New),
-		fx.Invoke(func(ps PubSub, logger *zap.Logger, lc fx.Lifecycle) {
-			lc.Append(fx.Hook{
-				OnStart: func(_ context.Context) error {
-					return nil
-				},
-				OnStop: func(_ context.Context) error {
-					if err := ps.Close(); err != nil {
-						logger.Error("pubsub close failed", zap.Error(err))
-						return fmt.Errorf("failed to close pubsub: %w", err)
-					}
-					return nil
-				},
-			})
+		logger.WithNamedLogger("pubsub"),
+		fx.Provide(func(cfg Config) pubsubfx.Config {
+			return pubsubfx.Config{
+				URL:        cfg.URL,
+				BufferSize: cfg.BufferSize,
+				Prefix:     topicPrefix,
+			}
 		}),
 	)
 }
