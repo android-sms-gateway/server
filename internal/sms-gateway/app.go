@@ -31,6 +31,7 @@ import (
 	"github.com/capcom6/go-infra-fx/validator"
 	"github.com/go-core-fx/cachefx"
 	"github.com/go-core-fx/logger"
+	"github.com/go-core-fx/pubsubfx"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -42,6 +43,7 @@ func Module() fx.Option {
 		http.Module,
 		validator.Module,
 		cachefx.Module(cachefx.WithSweeper()),
+		pubsubfx.Module(),
 
 		appconfig.Module(),
 		appdb.Module(),
