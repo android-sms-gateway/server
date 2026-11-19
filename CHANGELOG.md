@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### New Features
+
+#### Device state
+
+- **Device state and selection** — devices now carry an `Active` or `Disabled` state, returned by `GET /api/3rdparty/v1/devices`. `PATCH /api/3rdparty/v1/devices/{id}` sets the state with the `devices:update` scope. Only `Active` devices are eligible for delivery: explicit sends to a disabled device are rejected and random selection skips them. New devices default to `Active`. Requires migration `20261119000000` (`make db-upgrade`), which adds the `state` column.
+
+## [1.52.8] - 2026-11-24
+
+### Maintenance
+
+- **Pub/Sub transport** — the internal pub/sub layer now uses `go-core-fx/pubsubfx`.
+
 ## [1.52.7] - 2026-11-15
 
 ### New Features
