@@ -42,10 +42,8 @@ github.com/MicahParks/keyfunc v1.9.0 h1:lhKd5xrFHLNOWrDc4Tyb/Q1AJ4LCzQ48GVJyVIID
 github.com/MicahParks/keyfunc v1.9.0/go.mod h1:IdnCilugA0O/99dW+/MkvlyrsX8+L8+x95xuVNtM5jw=
 github.com/Microsoft/go-winio v0.6.3 h1:M/52tsoyTfwaxajLnXZm7PqkbMGRH8iSWP+8fcg9MQ4=
 github.com/Microsoft/go-winio v0.6.3/go.mod h1:ma0QpxizD4fyyzJ1C7MIblymTD2Nxz5Mho/3CepwIZg=
-github.com/android-sms-gateway/client-go v1.18.1-0.20261119015132-4831834dd435 h1:Ku4m6CuDu+5IOpZttFDUFiJlqxffhfvIqcOrloVzGFA=
-github.com/android-sms-gateway/client-go v1.18.1-0.20261119015132-4831834dd435/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
-github.com/android-sms-gateway/client-go v1.19.0 h1:HwvQXogznQ1WsczxFUSbdhLVfW1q1nxBv78eJpxMFh8=
-github.com/android-sms-gateway/client-go v1.19.0/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
+github.com/android-sms-gateway/client-go v1.19.1-0.20261127015452-680c50bd481f h1:XwfrYPsb5Z59bYNQcw2fVgwhY9qxea+nJHEYDQW3+eY=
+github.com/android-sms-gateway/client-go v1.19.1-0.20261127015452-680c50bd481f/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
 github.com/ansrivas/fiberprometheus/v2 v2.18.0 h1:cxjAl2urLYbUu0/2KusrA8Vxkk/8v2WRzmlrhvsR3GE=
 github.com/ansrivas/fiberprometheus/v2 v2.18.0/go.mod h1:3YCvolUcblrr6IPZqPmHvWw5NJHHNrKS58XIrYXMinY=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=

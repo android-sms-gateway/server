@@ -125,11 +125,12 @@ func (h *ThirdPartyController) patch(userID string, c *fiber.Ctx) error {
 	}
 
 	update := devices.DeviceUpdate{
-		PushToken:  nil,
-		SimCards:   nil,
-		State:      new(req.State),
-		PublicKey:  nil,
-		KeyVersion: nil,
+		PushToken:     nil,
+		PushTokenType: nil,
+		SimCards:      nil,
+		State:         new(req.State),
+		PublicKey:     nil,
+		KeyVersion:    nil,
 	}
 	if err := h.devicesSvc.Update(c.Context(), id, update); err != nil {
 		return fmt.Errorf("failed to update device: %w", err)

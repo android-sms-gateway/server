@@ -93,6 +93,10 @@ func (r *Repository) Update(ctx context.Context, id string, device DeviceUpdate)
 		updates["push_token"] = lo.EmptyableToPtr(*device.PushToken)
 	}
 
+	if device.PushTokenType != nil {
+		updates["push_token_type"] = lo.EmptyableToPtr(*device.PushTokenType)
+	}
+
 	if device.SimCards != nil {
 		updates["sim_cards"] = datatypes.NewJSONSlice(lo.Map(
 			device.SimCards,
