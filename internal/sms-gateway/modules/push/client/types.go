@@ -12,9 +12,15 @@ type Client interface {
 	Close(ctx context.Context) error
 }
 
+const (
+	TokenTypeFID   = "fid"
+	TokenTypeToken = "token"
+)
+
 type Message struct {
-	Token string
-	Event Event
+	Token     string
+	TokenType string
+	Event     Event
 }
 
 type Event struct {

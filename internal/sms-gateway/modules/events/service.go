@@ -132,7 +132,12 @@ func (s *Service) processEvent(ctx context.Context, wrapper *eventWrapper) {
 	for _, device := range devices {
 		if device.PushToken != nil {
 			// Device has push token, use push service
-			if enqErr := s.pushSvc.Enqueue(*device.PushToken, push.Event{
+			var tokenType string
+			if device.PushTokenType != nil {
+				tokenType = *device.PushTokenType
+			}
+
+			if enqErr := s.pushSvc.Enqueue(*device.PushToken, tokenType, push.Event{
 				Type: wrapper.Event.EventType,
 				Data: wrapper.Event.Data,
 			}); enqErr != nil {

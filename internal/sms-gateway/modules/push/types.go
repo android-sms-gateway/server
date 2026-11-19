@@ -17,13 +17,14 @@ const (
 type Event = client.Event
 
 type eventWrapper struct {
-	Token   string `json:"token"`
-	Event   Event  `json:"event"`
-	Retries int    `json:"retries"`
+	Token     string `json:"token"`
+	TokenType string `json:"tokenType,omitempty"`
+	Event     Event  `json:"event"`
+	Retries   int    `json:"retries"`
 }
 
 func (e *eventWrapper) key() string {
-	return e.Token + ":" + string(e.Event.Type)
+	return e.TokenType + ":" + e.Token + ":" + string(e.Event.Type)
 }
 
 func (e *eventWrapper) serialize() ([]byte, error) {

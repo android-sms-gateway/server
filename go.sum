@@ -38,6 +38,8 @@ github.com/MicahParks/keyfunc v1.9.0 h1:lhKd5xrFHLNOWrDc4Tyb/Q1AJ4LCzQ48GVJyVIID
 github.com/MicahParks/keyfunc v1.9.0/go.mod h1:IdnCilugA0O/99dW+/MkvlyrsX8+L8+x95xuVNtM5jw=
 github.com/android-sms-gateway/client-go v1.17.0 h1:F00xgy6fWukJ+ilb87pjx7fKc9MQ6fz01tBlMIHwGfk=
 github.com/android-sms-gateway/client-go v1.17.0/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
+github.com/android-sms-gateway/client-go v1.18.1-0.20261119223829-bf7429adb95e h1:+8hz8LjexeJwwwFcafq3NnkdzbJCq2Ce9OhztqAhc4w=
+github.com/android-sms-gateway/client-go v1.18.1-0.20261119223829-bf7429adb95e/go.mod h1:DQsReciU1xcaVW3T5Z2bqslNdsAwCFCtghawmA6g6L4=
 github.com/ansrivas/fiberprometheus/v2 v2.18.0 h1:cxjAl2urLYbUu0/2KusrA8Vxkk/8v2WRzmlrhvsR3GE=
 github.com/ansrivas/fiberprometheus/v2 v2.18.0/go.mod h1:3YCvolUcblrr6IPZqPmHvWw5NJHHNrKS58XIrYXMinY=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
