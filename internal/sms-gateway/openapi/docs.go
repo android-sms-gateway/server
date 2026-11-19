@@ -324,6 +324,78 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "ApiAuth": []
+                    },
+                    {
+                        "JWTAuth": []
+                    }
+                ],
+                "description": "Updates device state; only Active devices are selected for sending",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User",
+                    "Devices"
+                ],
+                "summary": "Update device",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Device update request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.DeviceUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully updated"
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Device not found",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/smsgateway.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/3rdparty/v1/health": {
@@ -1540,6 +1612,15 @@ const docTemplate = `{
                         "$ref": "#/definitions/smsgateway.SimCard"
                     }
                 },
+                "state": {
+                    "description": "Device state, read only.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.DeviceState"
+                        }
+                    ],
+                    "example": "Active"
+                },
                 "updatedAt": {
                     "description": "Time at which the device was last updated, read only.",
                     "type": "string",
@@ -1605,6 +1686,37 @@ const docTemplate = `{
                             "$ref": "#/definitions/smsgateway.SettingsWebhooks"
                         }
                     ]
+                }
+            }
+        },
+        "smsgateway.DeviceState": {
+            "type": "string",
+            "enum": [
+                "Active",
+                "Disabled"
+            ],
+            "x-enum-varnames": [
+                "DeviceStateActive",
+                "DeviceStateDisabled"
+            ]
+        },
+        "smsgateway.DeviceUpdateRequest": {
+            "type": "object",
+            "required": [
+                "state"
+            ],
+            "properties": {
+                "state": {
+                    "enum": [
+                        "Active",
+                        "Disabled"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsgateway.DeviceState"
+                        }
+                    ],
+                    "example": "Disabled"
                 }
             }
         },
@@ -1986,6 +2098,7 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "devices:list",
+                "devices:update",
                 "devices:delete",
                 "inbox:list",
                 "inbox:refresh",
@@ -2005,6 +2118,7 @@ const docTemplate = `{
             ],
             "x-enum-varnames": [
                 "ScopeDevicesList",
+                "ScopeDevicesUpdate",
                 "ScopeDevicesDelete",
                 "ScopeInboxList",
                 "ScopeInboxRefresh",
