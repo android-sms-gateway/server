@@ -202,6 +202,7 @@ func (h *mobileHandler) postDevice(c *fiber.Ctx) error {
 			DeviceUpdate: devices.DeviceUpdate{
 				PushToken:  req.PushToken,
 				SimCards:   h.simCardsToDomain(req.SimCards),
+				State:      nil,
 				PublicKey:  req.PublicKey,
 				KeyVersion: req.KeyVersion,
 			},
@@ -248,6 +249,7 @@ func (h *mobileHandler) patchDevice(device devices.Device, c *fiber.Ctx) error {
 	err := h.devicesSvc.Update(c.Context(), req.Id, devices.DeviceUpdate{
 		PushToken:  req.PushToken,
 		SimCards:   h.simCardsToDomain(req.SimCards),
+		State:      nil,
 		PublicKey:  req.PublicKey,
 		KeyVersion: req.KeyVersion,
 	})

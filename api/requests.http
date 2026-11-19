@@ -132,6 +132,14 @@ GET {{baseUrl}}/3rdparty/v1/devices HTTP/1.1
 Authorization: Basic {{credentials}}
 # Authorization: Bearer {{jwtToken}}
 
+###
+PATCH {{baseUrl}}/3rdparty/v1/devices/{{deviceId}} HTTP/1.1
+Authorization: Basic {{credentials}}
+Content-Type: application/json
+
+{
+    "state": "Active"
+}
 
 ###
 DELETE {{baseUrl}}/3rdparty/v1/devices/gF0jEYiaG_x9sI1YFWa7a HTTP/1.1

@@ -2,6 +2,15 @@ package devices
 
 import (
 	"time"
+
+	"github.com/android-sms-gateway/client-go/smsgateway"
+)
+
+type DeviceState = smsgateway.DeviceState
+
+const (
+	DeviceStateActive   = smsgateway.DeviceStateActive
+	DeviceStateDisabled = smsgateway.DeviceStateDisabled
 )
 
 type DeviceInput struct {
@@ -22,6 +31,8 @@ type DeviceInfo struct {
 type DeviceUpdate struct {
 	PushToken *string
 	SimCards  []SimCard
+	State     *DeviceState
+
 	// PublicKey is a base64-encoded RSA public key (nil if no E2E).
 	// Setting a new key together with KeyVersion overwrites the previous key;
 	// clearing an existing key is intentionally unsupported. On insert, nil

@@ -108,6 +108,10 @@ func (r *Repository) Update(ctx context.Context, id string, device DeviceUpdate)
 		updates["key_version"] = *device.KeyVersion
 	}
 
+	if device.State != nil {
+		updates["state"] = *device.State
+	}
+
 	if len(updates) == 0 {
 		return nil
 	}

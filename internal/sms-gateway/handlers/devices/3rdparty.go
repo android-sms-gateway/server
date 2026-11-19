@@ -94,7 +94,52 @@ func (h *ThirdPartyController) remove(userID string, c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
+//	@Summary		Update device
+//	@Description	Updates device state; only Active devices are selected for sending
+//	@Security		ApiAuth
+//	@Security		JWTAuth
+//	@Tags			User, Devices
+//	@Accept			json
+//	@Param			id		path	string							true	"Device ID"
+//	@Param			request	body	smsgateway.DeviceUpdateRequest	true	"Device update request"
+//	@Success		204		"Successfully updated"
+//	@Failure		400		{object}	smsgateway.ErrorResponse	"Invalid request"
+//	@Failure		401		{object}	smsgateway.ErrorResponse	"Unauthorized"
+//	@Failure		403		{object}	smsgateway.ErrorResponse	"Forbidden"
+//	@Failure		404		{object}	smsgateway.ErrorResponse	"Device not found"
+//	@Failure		500		{object}	smsgateway.ErrorResponse	"Internal server error"
+//	@Router			/3rdparty/v1/devices/{id} [patch]
+//
+// Update device.
+func (h *ThirdPartyController) patch(userID string, c *fiber.Ctx) error {
+	req := new(smsgateway.DeviceUpdateRequest)
+	if err := h.BodyParserValidator(c, req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+	id := c.Params("id")
+	if _, err := h.devicesSvc.Get(c.Context(), userID, devices.WithID(id)); err != nil {
+		if errors.Is(err, devices.ErrNotFound) {
+			return fiber.NewError(fiber.StatusNotFound, err.Error())
+		}
+		return fmt.Errorf("failed to get device: %w", err)
+	}
+
+	update := devices.DeviceUpdate{
+		PushToken:  nil,
+		SimCards:   nil,
+		State:      new(req.State),
+		PublicKey:  nil,
+		KeyVersion: nil,
+	}
+	if err := h.devicesSvc.Update(c.Context(), id, update); err != nil {
+		return fmt.Errorf("failed to update device: %w", err)
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
+}
+
 func (h *ThirdPartyController) Register(router fiber.Router) {
 	router.Get("", permissions.RequireScope(ScopeList), userauth.WithUserID(h.get))
+	router.Patch(":id", permissions.RequireScope(ScopeUpdate), userauth.WithUserID(h.patch))
 	router.Delete(":id", permissions.RequireScope(ScopeDelete), userauth.WithUserID(h.remove))
 }

@@ -36,7 +36,7 @@ SMSGate Server is the backend of the SMSGate ecosystem. It accepts SMS/MMS dispa
 - Text, data, scheduled SMS and MMS dispatch
 - Message status tracking and cancellation
 - Message listing with filtering, sorting and limit/offset pagination
-- Device management (list, delete, last-seen and SIM card info)
+- Device management (list, delete, enable/disable state, last-seen and SIM card info); only Active devices are selected for message delivery
 - Health check endpoints (live, ready, startup)
 - JWT authentication with scopes and token refresh
 - OTP-based device registration
@@ -123,7 +123,7 @@ The API supports Basic auth and JWT bearer tokens. JWT tokens carry scopes and a
 - `POST /api/3rdparty/v1/auth/token/refresh` - rotate access token (Bearer refresh)
 - `DELETE /api/3rdparty/v1/auth/token/{jti}` - revoke token (Basic auth)
 
-Available scopes: `messages:send`, `messages:list`, `messages:read`, `messages:export`, `messages:cancel`, `devices:list`, `devices:delete`, `inbox:list`, `inbox:read`, `inbox:refresh`, `logs:read`, `settings:read`, `settings:write`, `tokens:manage`, `tokens:refresh`, `webhooks:list`, `webhooks:write`, `webhooks:delete`.
+Available scopes: `messages:send`, `messages:list`, `messages:read`, `messages:export`, `messages:cancel`, `devices:list`, `devices:update`, `devices:delete`, `inbox:list`, `inbox:read`, `inbox:refresh`, `logs:read`, `settings:read`, `settings:write`, `tokens:manage`, `tokens:refresh`, `webhooks:list`, `webhooks:write`, `webhooks:delete`.
 
 Full reference: [integration/authentication](https://docs.sms-gate.app/integration/authentication/).
 

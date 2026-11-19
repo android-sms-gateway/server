@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	firebase.google.com/go/v4 v4.22.0
-	github.com/android-sms-gateway/client-go v1.17.0
+	github.com/android-sms-gateway/client-go v1.19.0
 	github.com/ansrivas/fiberprometheus/v2 v2.18.0
 	github.com/capcom6/go-helpers v0.4.0
 	github.com/capcom6/go-infra-fx v0.5.9
@@ -35,6 +35,7 @@ require (
 	google.golang.org/api v0.310.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/datatypes v1.2.7
+	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.31.2
 )
 
@@ -147,6 +148,5 @@ require (
 	google.golang.org/protobuf v1.36.12 // indirect
 	gorm.io/driver/mysql v1.6.0 // indirect
 	gorm.io/driver/postgres v1.6.3 // indirect
-	gorm.io/driver/sqlite v1.6.0 // indirect
 	moul.io/zapgorm2 v1.3.0 // indirect
 )

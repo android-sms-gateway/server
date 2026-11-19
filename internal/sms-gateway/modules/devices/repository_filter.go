@@ -32,11 +32,18 @@ func ActiveWithin(duration time.Duration) SelectFilter {
 	}
 }
 
+func WithState(state DeviceState) SelectFilter {
+	return func(f *selectFilter) {
+		f.state = &state
+	}
+}
+
 type selectFilter struct {
 	id           *string
 	userID       *string
 	token        *string
 	activeWithin time.Duration
+	state        *DeviceState
 }
 
 func newFilter(filters ...SelectFilter) *selectFilter {
@@ -63,6 +70,9 @@ func (f *selectFilter) apply(query *gorm.DB) *gorm.DB {
 	}
 	if f.activeWithin != 0 {
 		query = query.Where("last_seen > ?", time.Now().Add(-f.activeWithin))
+	}
+	if f.state != nil {
+		query = query.Where("state = ?", *f.state)
 	}
 	return query
 }

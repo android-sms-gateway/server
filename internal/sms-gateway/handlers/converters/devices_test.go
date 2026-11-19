@@ -25,7 +25,7 @@ func TestDeviceToDTO(t *testing.T) {
 		{
 			name:     "empty device",
 			device:   devices.Device{},
-			expected: smsgateway.Device{},
+			expected: smsgateway.Device{State: smsgateway.DeviceStateActive},
 		},
 		{
 			name: "non-empty device",
@@ -44,6 +44,7 @@ func TestDeviceToDTO(t *testing.T) {
 			expected: smsgateway.Device{
 				ID:        "test-id",
 				Name:      "test-name",
+				State:     smsgateway.DeviceStateActive,
 				CreatedAt: createdAt,
 				UpdatedAt: updatedAt,
 				LastSeen:  lastSeenAt,
@@ -60,8 +61,9 @@ func TestDeviceToDTO(t *testing.T) {
 				},
 			},
 			expected: smsgateway.Device{
-				ID:   "test-id",
-				Name: "",
+				ID:    "test-id",
+				Name:  "",
+				State: smsgateway.DeviceStateActive,
 			},
 		},
 		{
@@ -78,7 +80,8 @@ func TestDeviceToDTO(t *testing.T) {
 				},
 			},
 			expected: smsgateway.Device{
-				ID: "test-id",
+				ID:    "test-id",
+				State: smsgateway.DeviceStateActive,
 				VersionedPublicKey: smsgateway.VersionedPublicKey{
 					PublicKey:  new("test-public-key"),
 					KeyVersion: new(1),
@@ -106,7 +109,8 @@ func TestDeviceToDTO(t *testing.T) {
 				},
 			},
 			expected: smsgateway.Device{
-				ID: "test-id",
+				ID:    "test-id",
+				State: smsgateway.DeviceStateActive,
 				SimCards: []smsgateway.SimCard{
 					{
 						SlotIndex:   0,
