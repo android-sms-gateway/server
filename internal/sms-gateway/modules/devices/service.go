@@ -81,6 +81,7 @@ func (s *Service) Get(ctx context.Context, userID string, filter ...SelectFilter
 func (s *Service) GetAny(ctx context.Context, userID string, deviceID string, duration time.Duration) (*Device, error) {
 	filter := []SelectFilter{
 		WithUserID(userID),
+		WithState(DeviceStateActive),
 	}
 	if deviceID != "" {
 		filter = append(filter, WithID(deviceID))

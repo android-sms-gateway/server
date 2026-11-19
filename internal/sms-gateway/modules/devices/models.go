@@ -26,6 +26,8 @@ type DeviceModel struct {
 
 	PublicKey  *string `gorm:"type:text"`
 	KeyVersion *int    `gorm:"default:null"`
+
+	State DeviceState `gorm:"not null;type:enum('Active','Disabled');default:Active"`
 }
 
 func newDeviceModel(device DeviceInput) *DeviceModel {
@@ -52,6 +54,8 @@ func newDeviceModel(device DeviceInput) *DeviceModel {
 
 		PublicKey:  device.PublicKey,
 		KeyVersion: device.KeyVersion,
+
+		State: lo.FromPtrOr(device.State, DeviceStateActive),
 	}
 }
 
@@ -72,6 +76,7 @@ func (m *DeviceModel) toDomain() *Device {
 					SimCards:   lo.Map(m.SimCards, func(m simCardModel, _ int) SimCard { return m.toDomain() }),
 					PublicKey:  m.PublicKey,
 					KeyVersion: m.KeyVersion,
+					State:      &m.State,
 				},
 
 				Name: m.Name,
