@@ -200,10 +200,11 @@ func (h *mobileHandler) postDevice(c *fiber.Ctx) error {
 		userID,
 		devices.DeviceInfo{
 			DeviceUpdate: devices.DeviceUpdate{
-				PushToken:  req.PushToken,
-				SimCards:   h.simCardsToDomain(req.SimCards),
-				PublicKey:  req.PublicKey,
-				KeyVersion: req.KeyVersion,
+				PushToken:     req.PushToken,
+				PushTokenType: pushTokenTypeToDomain(req.PushTokenType),
+				SimCards:      h.simCardsToDomain(req.SimCards),
+				PublicKey:     req.PublicKey,
+				KeyVersion:    req.KeyVersion,
 			},
 			Name: req.Name,
 		},
@@ -246,10 +247,11 @@ func (h *mobileHandler) patchDevice(device devices.Device, c *fiber.Ctx) error {
 	}
 
 	err := h.devicesSvc.Update(c.Context(), req.Id, devices.DeviceUpdate{
-		PushToken:  req.PushToken,
-		SimCards:   h.simCardsToDomain(req.SimCards),
-		PublicKey:  req.PublicKey,
-		KeyVersion: req.KeyVersion,
+		PushToken:     req.PushToken,
+		PushTokenType: pushTokenTypeToDomain(req.PushTokenType),
+		SimCards:      h.simCardsToDomain(req.SimCards),
+		PublicKey:     req.PublicKey,
+		KeyVersion:    req.KeyVersion,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update device: %w", err)
@@ -321,6 +323,14 @@ func (h *mobileHandler) simCardsToDomain(simCards []smsgateway.SimCard) []device
 			ICCID:       sc.ICCID,
 		}
 	})
+}
+
+func pushTokenTypeToDomain(tokenType *smsgateway.PushTokenType) *string {
+	if tokenType == nil {
+		return nil
+	}
+
+	return new(string(*tokenType))
 }
 
 func (h *mobileHandler) errorsHandler(c *fiber.Ctx) error {

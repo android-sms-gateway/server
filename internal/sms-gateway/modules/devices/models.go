@@ -13,10 +13,11 @@ import (
 type DeviceModel struct {
 	models.SoftDeletableModel
 
-	ID        string  `gorm:"primaryKey;type:char(21)"`
-	Name      *string `gorm:"type:varchar(128)"`
-	AuthToken string  `gorm:"not null;uniqueIndex;type:char(21)"`
-	PushToken *string `gorm:"type:varchar(256)"`
+	ID            string  `gorm:"primaryKey;type:char(21)"`
+	Name          *string `gorm:"type:varchar(128)"`
+	AuthToken     string  `gorm:"not null;uniqueIndex;type:char(21)"`
+	PushToken     *string `gorm:"type:varchar(256)"`
+	PushTokenType *string `gorm:"type:varchar(16)"`
 
 	LastSeen time.Time `gorm:"not null;autocreatetime:false;default:CURRENT_TIMESTAMP(3);index:idx_devices_last_seen"`
 
@@ -39,12 +40,13 @@ func newDeviceModel(device DeviceInput) *DeviceModel {
 			DeletedAt: nil,
 		},
 
-		ID:        device.ID,
-		Name:      device.Name,
-		AuthToken: device.AuthToken,
-		PushToken: device.PushToken,
-		LastSeen:  now,
-		UserID:    device.UserID,
+		ID:            device.ID,
+		Name:          device.Name,
+		AuthToken:     device.AuthToken,
+		PushToken:     device.PushToken,
+		PushTokenType: device.PushTokenType,
+		LastSeen:      now,
+		UserID:        device.UserID,
 		SimCards: lo.Map(
 			device.SimCards,
 			func(simCard SimCard, _ int) simCardModel { return newSimCardModel(simCard) },
@@ -68,10 +70,11 @@ func (m *DeviceModel) toDomain() *Device {
 		DeviceInput: DeviceInput{
 			DeviceInfo: DeviceInfo{
 				DeviceUpdate: DeviceUpdate{
-					PushToken:  m.PushToken,
-					SimCards:   lo.Map(m.SimCards, func(m simCardModel, _ int) SimCard { return m.toDomain() }),
-					PublicKey:  m.PublicKey,
-					KeyVersion: m.KeyVersion,
+					PushToken:     m.PushToken,
+					PushTokenType: m.PushTokenType,
+					SimCards:      lo.Map(m.SimCards, func(m simCardModel, _ int) SimCard { return m.toDomain() }),
+					PublicKey:     m.PublicKey,
+					KeyVersion:    m.KeyVersion,
 				},
 
 				Name: m.Name,

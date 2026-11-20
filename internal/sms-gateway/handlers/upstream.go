@@ -73,7 +73,7 @@ func (h *upstreamHandler) postPush(c *fiber.Ctx) error {
 			Data: v.Data,
 		}
 
-		if err := h.pushSvc.Enqueue(v.Token, event); err != nil {
+		if err := h.pushSvc.Enqueue(v.Token, "", event); err != nil {
 			h.Logger.Error("failed to push message", zap.Error(err))
 		}
 	}

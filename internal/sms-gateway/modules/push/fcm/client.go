@@ -64,19 +64,29 @@ func (c *Client) Send(ctx context.Context, messages []client.Message) ([]error, 
 			continue
 		}
 
-		_, err = c.client.Send(ctx, &messaging.Message{
-			Data: data,
-			Android: &messaging.AndroidConfig{
-				Priority: "high",
-			},
-			Token: message.Token, //nolint:staticcheck //migration to Fid is planned
-		})
+		_, err = c.client.Send(ctx, newMessage(data, message.Token, message.TokenType))
 		if err != nil {
 			errs[i] = fmt.Errorf("failed to send message: %w", err)
 		}
 	}
 
 	return errs, nil
+}
+
+func newMessage(data map[string]string, token, tokenType string) *messaging.Message {
+	message := &messaging.Message{
+		Data: data,
+		Android: &messaging.AndroidConfig{
+			Priority: "high",
+		},
+	}
+	if tokenType == client.TokenTypeFID {
+		message.Fid = token
+	} else {
+		message.Token = token //nolint:staticcheck // legacy registration tokens are still valid during the FCM transition
+	}
+
+	return message
 }
 
 func (c *Client) Close(_ context.Context) error {
