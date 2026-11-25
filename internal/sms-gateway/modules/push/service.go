@@ -93,6 +93,7 @@ func (s *Service) Enqueue(token, tokenType string, event Event) error {
 	ctx, cancel := context.WithTimeout(context.Background(), s.config.Timeout)
 	defer cancel()
 
+	tokenType = normalizeTokenType(tokenType)
 	blacklistKey := tokenType + ":" + token
 	if _, err := s.blacklist.Get(ctx, blacklistKey); err == nil {
 		s.metrics.IncBlacklist(BlacklistOperationSkipped)
@@ -205,7 +206,7 @@ func (s *Service) sendAll(ctx context.Context) {
 
 func (s *Service) retry(ctx context.Context, events []*eventWrapper) {
 	for _, wrapper := range events {
-		blacklistKey := wrapper.TokenType + ":" + wrapper.Token
+		blacklistKey := normalizeTokenType(wrapper.TokenType) + ":" + wrapper.Token
 
 		wrapper.Retries++
 

@@ -16,6 +16,14 @@ const (
 
 type Event = client.Event
 
+func normalizeTokenType(tokenType string) string {
+	if tokenType == "" {
+		return client.TokenTypeToken
+	}
+
+	return tokenType
+}
+
 type eventWrapper struct {
 	Token     string `json:"token"`
 	TokenType string `json:"tokenType,omitempty"`
@@ -24,7 +32,7 @@ type eventWrapper struct {
 }
 
 func (e *eventWrapper) key() string {
-	return e.TokenType + ":" + e.Token + ":" + string(e.Event.Type)
+	return normalizeTokenType(e.TokenType) + ":" + e.Token + ":" + string(e.Event.Type)
 }
 
 func (e *eventWrapper) serialize() ([]byte, error) {
