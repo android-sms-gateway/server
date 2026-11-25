@@ -55,12 +55,17 @@ func (c *Client) Send(ctx context.Context, messages []client.Message) ([]error, 
 	payload := lo.Map(
 		messages,
 		func(item client.Message, _ int) smsgateway.PushNotification {
-			return smsgateway.PushNotification{
-				Token:     item.Token,
-				TokenType: (*smsgateway.PushTokenType)(&item.TokenType),
-				Event:     item.Event.Type,
-				Data:      item.Event.Data,
+			notification := smsgateway.PushNotification{
+				Token:         item.Token,
+				Event:         item.Event.Type,
+				Data:          item.Event.Data,
+				PushTokenType: nil,
 			}
+			if item.TokenType != "" {
+				notification.PushTokenType = new(smsgateway.PushTokenType(item.TokenType))
+			}
+
+			return notification
 		},
 	)
 
