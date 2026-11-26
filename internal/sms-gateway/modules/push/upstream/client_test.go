@@ -46,7 +46,7 @@ func TestClientSendCarriesTokenType(t *testing.T) {
 	_, err = c.Send(ctx, []client.Message{
 		{
 			Token:     "device-fid",
-			TokenType: client.TokenTypeFID,
+			TokenType: smsgateway.PushTokenTypeFID,
 			Event: client.Event{
 				Type: smsgateway.PushMessageEnqueued,
 				Data: map[string]string{"event": "MessageEnqueued"},
@@ -65,8 +65,8 @@ func TestClientSendCarriesTokenType(t *testing.T) {
 	if len(payload) != 1 {
 		t.Fatalf("payload length = %d, want 1", len(payload))
 	}
-	if payload[0].PushTokenType == nil || *payload[0].PushTokenType != smsgateway.PushTokenTypeFID {
-		t.Errorf("pushTokenType = %v, want %q", payload[0].PushTokenType, smsgateway.PushTokenTypeFID)
+	if payload[0].TokenType == nil || *payload[0].TokenType != smsgateway.PushTokenTypeFID {
+		t.Errorf("pushTokenType = %v, want %q", payload[0].TokenType, smsgateway.PushTokenTypeFID)
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/android-sms-gateway/client-go/smsgateway"
 	cacheFactory "github.com/android-sms-gateway/server/internal/sms-gateway/cache"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/client"
 	"github.com/go-core-fx/cachefx/cache"
@@ -89,12 +90,11 @@ func (s *Service) Run(ctx context.Context) {
 }
 
 // Enqueue adds the data to the cache and immediately sends all messages if the debounce is 0.
-func (s *Service) Enqueue(token, tokenType string, event Event) error {
+func (s *Service) Enqueue(token string, tokenType smsgateway.PushTokenType, event Event) error {
 	ctx, cancel := context.WithTimeout(context.Background(), s.config.Timeout)
 	defer cancel()
 
-	tokenType = normalizeTokenType(tokenType)
-	blacklistKey := tokenType + ":" + token
+	blacklistKey := string(tokenType) + ":" + token
 	if _, err := s.blacklist.Get(ctx, blacklistKey); err == nil {
 		s.metrics.IncBlacklist(BlacklistOperationSkipped)
 		s.logger.Debug("Skipping blacklisted token", zap.String("token", token))
@@ -206,7 +206,7 @@ func (s *Service) sendAll(ctx context.Context) {
 
 func (s *Service) retry(ctx context.Context, events []*eventWrapper) {
 	for _, wrapper := range events {
-		blacklistKey := normalizeTokenType(wrapper.TokenType) + ":" + wrapper.Token
+		blacklistKey := string(wrapper.TokenType) + ":" + wrapper.Token
 
 		wrapper.Retries++
 

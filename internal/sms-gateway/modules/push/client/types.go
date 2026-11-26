@@ -12,14 +12,9 @@ type Client interface {
 	Close(ctx context.Context) error
 }
 
-const (
-	TokenTypeFID   = "fid"
-	TokenTypeToken = "token"
-)
-
 type Message struct {
 	Token     string
-	TokenType string
+	TokenType smsgateway.PushTokenType
 	Event     Event
 }
 

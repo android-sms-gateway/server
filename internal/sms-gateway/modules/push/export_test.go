@@ -1,6 +1,8 @@
 package push
 
-func NewEventWrapper(token, tokenType string) *eventWrapper {
+import "github.com/android-sms-gateway/client-go/smsgateway"
+
+func NewEventWrapper(token string, tokenType smsgateway.PushTokenType) *eventWrapper {
 	return &eventWrapper{Token: token, TokenType: tokenType}
 }
 

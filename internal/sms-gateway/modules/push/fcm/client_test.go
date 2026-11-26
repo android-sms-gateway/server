@@ -5,14 +5,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/client"
+	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/fcm"
 )
 
 func TestNewMessageTargetsFID(t *testing.T) {
 	t.Parallel()
 
-	message := fcm.NewMessage(map[string]string{"event": "MessageEnqueued"}, "device-fid", client.TokenTypeFID)
+	message := fcm.NewMessage(map[string]string{"event": "MessageEnqueued"}, "device-fid", smsgateway.PushTokenTypeFID)
 
 	body, err := json.Marshal(message)
 	if err != nil {
@@ -30,7 +30,11 @@ func TestNewMessageTargetsFID(t *testing.T) {
 func TestNewMessageTargetsLegacyToken(t *testing.T) {
 	t.Parallel()
 
-	message := fcm.NewMessage(map[string]string{"event": "MessageEnqueued"}, "legacy-token", client.TokenTypeToken)
+	message := fcm.NewMessage(
+		map[string]string{"event": "MessageEnqueued"},
+		"legacy-token",
+		smsgateway.PushTokenTypeToken,
+	)
 
 	body, err := json.Marshal(message)
 	if err != nil {

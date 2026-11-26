@@ -56,13 +56,13 @@ func (c *Client) Send(ctx context.Context, messages []client.Message) ([]error, 
 		messages,
 		func(item client.Message, _ int) smsgateway.PushNotification {
 			notification := smsgateway.PushNotification{
-				Token:         item.Token,
-				Event:         item.Event.Type,
-				Data:          item.Event.Data,
-				PushTokenType: nil,
+				Token:     item.Token,
+				Event:     item.Event.Type,
+				Data:      item.Event.Data,
+				TokenType: nil,
 			}
 			if item.TokenType != "" {
-				notification.PushTokenType = new(smsgateway.PushTokenType(item.TokenType))
+				notification.TokenType = new(item.TokenType)
 			}
 
 			return notification
