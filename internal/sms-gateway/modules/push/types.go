@@ -17,6 +17,14 @@ const (
 
 type Event = client.Event
 
+func normalizeTokenType(tokenType smsgateway.PushTokenType) smsgateway.PushTokenType {
+	if tokenType == "" {
+		return smsgateway.PushTokenTypeToken
+	}
+
+	return tokenType
+}
+
 type eventWrapper struct {
 	Token     string                   `json:"token"`
 	TokenType smsgateway.PushTokenType `json:"tokenType,omitempty"`
@@ -25,7 +33,7 @@ type eventWrapper struct {
 }
 
 func (e *eventWrapper) key() string {
-	return string(e.TokenType) + ":" + e.Token + ":" + string(e.Event.Type)
+	return string(normalizeTokenType(e.TokenType)) + ":" + e.Token + ":" + string(e.Event.Type)
 }
 
 func (e *eventWrapper) serialize() ([]byte, error) {

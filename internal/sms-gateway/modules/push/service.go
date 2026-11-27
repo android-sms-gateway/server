@@ -94,7 +94,7 @@ func (s *Service) Enqueue(token string, tokenType smsgateway.PushTokenType, even
 	ctx, cancel := context.WithTimeout(context.Background(), s.config.Timeout)
 	defer cancel()
 
-	blacklistKey := string(tokenType) + ":" + token
+	blacklistKey := string(normalizeTokenType(tokenType)) + ":" + token
 	if _, err := s.blacklist.Get(ctx, blacklistKey); err == nil {
 		s.metrics.IncBlacklist(BlacklistOperationSkipped)
 		s.logger.Debug("Skipping blacklisted token", zap.String("token", token))
@@ -206,7 +206,7 @@ func (s *Service) sendAll(ctx context.Context) {
 
 func (s *Service) retry(ctx context.Context, events []*eventWrapper) {
 	for _, wrapper := range events {
-		blacklistKey := string(wrapper.TokenType) + ":" + wrapper.Token
+		blacklistKey := string(normalizeTokenType(wrapper.TokenType)) + ":" + wrapper.Token
 
 		wrapper.Retries++
 
