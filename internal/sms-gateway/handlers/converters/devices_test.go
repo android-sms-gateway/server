@@ -48,7 +48,6 @@ func TestDeviceToDTO(t *testing.T) {
 				CreatedAt: createdAt,
 				UpdatedAt: updatedAt,
 				LastSeen:  lastSeenAt,
-				State:     smsgateway.DeviceStateActive,
 			},
 		},
 		{

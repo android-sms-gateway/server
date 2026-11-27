@@ -31,6 +31,7 @@ func newTestService(t *testing.T) *devices.Service {
 		name text,
 		auth_token text NOT NULL,
 		push_token text,
+		push_token_type text,
 		last_seen datetime NOT NULL,
 		user_id text NOT NULL,
 		sim_cards text,
