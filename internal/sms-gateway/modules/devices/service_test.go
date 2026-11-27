@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
@@ -163,4 +164,55 @@ func TestInsertedDeviceIsActiveByDefault(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, got.State)
 	require.Equal(t, devices.DeviceStateActive, *got.State)
+}
+
+func TestUpdateTokenWithoutTypeResetsToLegacy(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	const userID = "user-5"
+
+	svc := newTestService(t)
+	device, err := svc.Insert(ctx, userID, devices.DeviceInfo{
+		DeviceUpdate: devices.DeviceUpdate{
+			PushToken:     new("fid-token"),
+			PushTokenType: lo.ToPtr(string(smsgateway.PushTokenTypeFID)),
+		},
+	})
+	require.NoError(t, err)
+
+	require.NoError(t, svc.Update(ctx, device.ID, devices.DeviceUpdate{
+		PushToken: new("reg-token"),
+	}))
+
+	got, err := svc.Get(ctx, userID, devices.WithID(device.ID))
+	require.NoError(t, err)
+	require.Equal(t, "reg-token", *got.PushToken)
+	require.NotNil(t, got.PushTokenType)
+	require.Equal(t, string(smsgateway.PushTokenTypeToken), *got.PushTokenType)
+}
+
+func TestUpdateWithoutTokenOrTypeKeepsStoredType(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	const userID = "user-6"
+
+	svc := newTestService(t)
+	device, err := svc.Insert(ctx, userID, devices.DeviceInfo{
+		DeviceUpdate: devices.DeviceUpdate{
+			PushToken:     new("fid-token"),
+			PushTokenType: lo.ToPtr(string(smsgateway.PushTokenTypeFID)),
+		},
+	})
+	require.NoError(t, err)
+
+	require.NoError(t, svc.Update(ctx, device.ID, devices.DeviceUpdate{
+		State: lo.ToPtr(devices.DeviceStateDisabled),
+	}))
+
+	got, err := svc.Get(ctx, userID, devices.WithID(device.ID))
+	require.NoError(t, err)
+	require.NotNil(t, got.PushTokenType)
+	require.Equal(t, string(smsgateway.PushTokenTypeFID), *got.PushTokenType)
 }
