@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/sse"
@@ -132,7 +133,12 @@ func (s *Service) processEvent(ctx context.Context, wrapper *eventWrapper) {
 	for _, device := range devices {
 		if device.PushToken != nil {
 			// Device has push token, use push service
-			if enqErr := s.pushSvc.Enqueue(*device.PushToken, push.Event{
+			var tokenType smsgateway.PushTokenType
+			if device.PushTokenType != nil {
+				tokenType = smsgateway.PushTokenType(*device.PushTokenType)
+			}
+
+			if enqErr := s.pushSvc.Enqueue(*device.PushToken, tokenType, push.Event{
 				Type: wrapper.Event.EventType,
 				Data: wrapper.Event.Data,
 			}); enqErr != nil {

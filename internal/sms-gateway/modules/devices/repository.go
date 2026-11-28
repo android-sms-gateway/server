@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/samber/lo"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -91,6 +92,13 @@ func (r *Repository) Update(ctx context.Context, id string, device DeviceUpdate)
 
 	if device.PushToken != nil {
 		updates["push_token"] = lo.EmptyableToPtr(*device.PushToken)
+		if device.PushTokenType == nil {
+			updates["push_token_type"] = string(smsgateway.PushTokenTypeToken)
+		}
+	}
+
+	if device.PushTokenType != nil {
+		updates["push_token_type"] = lo.EmptyableToPtr(*device.PushTokenType)
 	}
 
 	if device.SimCards != nil {

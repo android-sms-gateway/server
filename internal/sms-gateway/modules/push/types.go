@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/client"
 )
 
@@ -16,14 +17,23 @@ const (
 
 type Event = client.Event
 
+func normalizeTokenType(tokenType smsgateway.PushTokenType) smsgateway.PushTokenType {
+	if tokenType == "" {
+		return smsgateway.PushTokenTypeToken
+	}
+
+	return tokenType
+}
+
 type eventWrapper struct {
-	Token   string `json:"token"`
-	Event   Event  `json:"event"`
-	Retries int    `json:"retries"`
+	Token     string                   `json:"token"`
+	TokenType smsgateway.PushTokenType `json:"tokenType,omitempty"`
+	Event     Event                    `json:"event"`
+	Retries   int                      `json:"retries"`
 }
 
 func (e *eventWrapper) key() string {
-	return e.Token + ":" + string(e.Event.Type)
+	return string(normalizeTokenType(e.TokenType)) + ":" + e.Token + ":" + string(e.Event.Type)
 }
 
 func (e *eventWrapper) serialize() ([]byte, error) {

@@ -10,6 +10,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
+	"github.com/samber/lo"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -73,7 +74,11 @@ func (h *upstreamHandler) postPush(c *fiber.Ctx) error {
 			Data: v.Data,
 		}
 
-		if err := h.pushSvc.Enqueue(v.Token, event); err != nil {
+		if err := h.pushSvc.Enqueue(
+			v.Token,
+			lo.FromPtrOr(v.TokenType, smsgateway.PushTokenTypeToken),
+			event,
+		); err != nil {
 			h.Logger.Error("failed to push message", zap.Error(err))
 		}
 	}

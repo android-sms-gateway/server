@@ -7,6 +7,7 @@ import (
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/messaging"
+	"github.com/android-sms-gateway/client-go/smsgateway"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/client"
 	"google.golang.org/api/option"
 )
@@ -64,19 +65,29 @@ func (c *Client) Send(ctx context.Context, messages []client.Message) ([]error, 
 			continue
 		}
 
-		_, err = c.client.Send(ctx, &messaging.Message{
-			Data: data,
-			Android: &messaging.AndroidConfig{
-				Priority: "high",
-			},
-			Token: message.Token, //nolint:staticcheck //migration to Fid is planned
-		})
+		_, err = c.client.Send(ctx, newMessage(data, message.Token, message.TokenType))
 		if err != nil {
 			errs[i] = fmt.Errorf("failed to send message: %w", err)
 		}
 	}
 
 	return errs, nil
+}
+
+func newMessage(data map[string]string, token string, tokenType smsgateway.PushTokenType) *messaging.Message {
+	message := &messaging.Message{
+		Data: data,
+		Android: &messaging.AndroidConfig{
+			Priority: "high",
+		},
+	}
+	if tokenType == smsgateway.PushTokenTypeFID {
+		message.Fid = token
+	} else {
+		message.Token = token //nolint:staticcheck // legacy registration tokens are still valid during the FCM transition
+	}
+
+	return message
 }
 
 func (c *Client) Close(_ context.Context) error {

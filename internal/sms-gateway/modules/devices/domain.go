@@ -30,8 +30,11 @@ type DeviceInfo struct {
 
 type DeviceUpdate struct {
 	PushToken *string
-	SimCards  []SimCard
-	State     *DeviceState
+	// PushTokenType selects the FCM target field: "fid" for Firebase
+	// Installation IDs, anything else for legacy registration tokens.
+	PushTokenType *string
+	SimCards      []SimCard
+	State         *DeviceState
 
 	// PublicKey is a base64-encoded RSA public key (nil if no E2E).
 	// Setting a new key together with KeyVersion overwrites the previous key;

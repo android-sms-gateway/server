@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/android-sms-gateway/client-go/smsgateway"
 	cacheFactory "github.com/android-sms-gateway/server/internal/sms-gateway/cache"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push/client"
 	"github.com/go-core-fx/cachefx/cache"
@@ -89,20 +90,22 @@ func (s *Service) Run(ctx context.Context) {
 }
 
 // Enqueue adds the data to the cache and immediately sends all messages if the debounce is 0.
-func (s *Service) Enqueue(token string, event Event) error {
+func (s *Service) Enqueue(token string, tokenType smsgateway.PushTokenType, event Event) error {
 	ctx, cancel := context.WithTimeout(context.Background(), s.config.Timeout)
 	defer cancel()
 
-	if _, err := s.blacklist.Get(ctx, token); err == nil {
+	blacklistKey := string(normalizeTokenType(tokenType)) + ":" + token
+	if _, err := s.blacklist.Get(ctx, blacklistKey); err == nil {
 		s.metrics.IncBlacklist(BlacklistOperationSkipped)
 		s.logger.Debug("Skipping blacklisted token", zap.String("token", token))
 		return nil
 	}
 
 	wrapper := eventWrapper{
-		Token:   token,
-		Event:   event,
-		Retries: 0,
+		Token:     token,
+		TokenType: tokenType,
+		Event:     event,
+		Retries:   0,
 	}
 	wrapperData, err := wrapper.serialize()
 	if err != nil {
@@ -150,8 +153,9 @@ func (s *Service) sendAll(ctx context.Context) {
 		wrappers,
 		func(wrapper *eventWrapper, _ int) client.Message {
 			return client.Message{
-				Token: wrapper.Token,
-				Event: wrapper.Event,
+				Token:     wrapper.Token,
+				TokenType: wrapper.TokenType,
+				Event:     wrapper.Event,
 			}
 		},
 	)
@@ -202,19 +206,19 @@ func (s *Service) sendAll(ctx context.Context) {
 
 func (s *Service) retry(ctx context.Context, events []*eventWrapper) {
 	for _, wrapper := range events {
-		token := wrapper.Token
+		blacklistKey := string(normalizeTokenType(wrapper.TokenType)) + ":" + wrapper.Token
 
 		wrapper.Retries++
 
 		if wrapper.Retries >= maxRetries {
-			if err := s.blacklist.Set(ctx, token, []byte{}, cache.WithTTL(blacklistTimeout)); err != nil {
-				s.logger.Warn("failed to blacklist", zap.String("token", token), zap.Error(err))
+			if err := s.blacklist.Set(ctx, blacklistKey, []byte{}, cache.WithTTL(blacklistTimeout)); err != nil {
+				s.logger.Warn("failed to blacklist", zap.String("token", wrapper.Token), zap.Error(err))
 				continue
 			}
 
 			s.metrics.IncBlacklist(BlacklistOperationAdded)
 			s.logger.Warn("retries exceeded, blacklisting token",
-				zap.String("token", token),
+				zap.String("token", wrapper.Token),
 				zap.Duration("ttl", blacklistTimeout),
 			)
 			continue

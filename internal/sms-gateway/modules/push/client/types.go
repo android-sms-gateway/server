@@ -13,8 +13,9 @@ type Client interface {
 }
 
 type Message struct {
-	Token string
-	Event Event
+	Token     string
+	TokenType smsgateway.PushTokenType
+	Event     Event
 }
 
 type Event struct {
